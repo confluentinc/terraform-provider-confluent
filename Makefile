@@ -6,7 +6,12 @@ NAME        := terraform-provider-confluent
 BUILD_DIR   := bin
 VERSION     ?= $(shell git tag --sort=-creatordate | grep -v ".*deleted" | head -n 1)
 # Go variables
-GOCMD         := GO111MODULE=on go
+GOENV         := GO111MODULE=on
+GOCMD         := $(GOENV) go
+# Pinned rather than @latest: the JUnit XML it emits is a contract with `test-results publish`.
+GOTESTSUM_VERSION := v1.13.0
+# Per-test terraform debug logs under CI; pushed as a job artifact by .semaphore/semaphore.yml.
+TFLOG_DIR     := tflogs
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
 GOOS          ?= $(shell go env GOOS)
 GOARCH        ?= $(shell go env GOARCH)
@@ -95,13 +100,39 @@ build: clean ## Build binary for current OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	$(GOBUILD) -o ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME)
 
+# Under CI these run through gotestsum, which writes the JUnit XML Semaphore publishes as test
+# results. CI-only because testacc and live-test* are documented local workflows
+# (docs/DEVELOPING.md, docs/LIVE_TESTING_TEMPLATE.md) that shouldn't need gotestsum installed.
+# Two CI-only flag choices are load-bearing. -v is omitted because it strips `go test -json`'s
+# framing markers, after which TF_LOG=debug stderr parses as framing and invents test cases in
+# the report. --format testname keeps one progress line per test, which the default pkgname
+# format would not (live-test is a single package that runs for hours), while still dropping
+# passing tests' output, the thing that floods Semaphore's 16 MB log cap.
 .PHONY: test
 test:
+ifeq ($(CI),true)
+	@$(MAKE) gotestsum
+	$(GOENV) gotestsum --format testname --junitfile unit-report.xml -- ./...
+else
 	$(GOCMD) test ./...
+endif
 
+# TF_LOG_PATH_MASK routes each test's terraform debug output to its own file rather than the
+# shared stderr stream, so a failure's captured output is the assertion error alone instead of
+# whatever the other parallel tests happened to be logging. .semaphore/semaphore.yml tars
+# $(TFLOG_DIR) into a job artifact; without that push these files die with the agent.
+# The mask must be absolute: go test runs each binary from its own package directory, so a
+# relative path resolves under internal/provider rather than here, and the SDK treats a mask it
+# cannot open as fatal and kills the whole run.
 .PHONY: testacc
 testacc:
+ifeq ($(CI),true)
+	@$(MAKE) gotestsum
+	mkdir -p $(TFLOG_DIR)
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+else
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+endif
 	@echo "finished testacc"
 
 # Live integration tests with group filtering and concurrency support
@@ -111,16 +142,21 @@ testacc:
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
-	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
+	@if [ "$(CI)" = "true" ]; then \
+		$(MAKE) gotestsum || exit 1; RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
+	else \
+		RUNNER="go test"; VERBOSE="-v"; \
+	fi; \
+	if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
 	else \
 		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
@@ -129,7 +165,12 @@ live-test:
 .PHONY: live-test-rtce
 live-test-rtce:
 	@echo "Running RTCE live integration tests against Confluent Cloud (region=us-east-1)..."
+ifeq ($(CI),true)
+	@$(MAKE) gotestsum
+	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) gotestsum --format testname --junitfile live-rtce-report.xml -- ./internal/provider/ -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+else
 	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOCMD) test ./internal/provider/ -v -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+endif
 	@echo "Finished running RTCE live integration tests"
 
 # Helper targets for common group combinations
@@ -197,6 +238,12 @@ gox:
 .PHONY: goimports
 goimports:
 	go install golang.org/x/tools/cmd/goimports@latest
+
+# Skip the install when it's already there: every test target calls this, and live-tests runs
+# live-test then live-test-rtce hours apart, so the repeat would need the module proxy again.
+.PHONY: gotestsum
+gotestsum:
+	@gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
 
 .PHONY: tools
 tools: ## Install required tools
