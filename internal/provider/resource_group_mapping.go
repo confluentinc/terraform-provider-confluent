@@ -55,7 +55,7 @@ func groupMappingResource() *schema.Resource {
 			paramFilter: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 300),
+				ValidateFunc: validation.StringIsNotEmpty,
 				Description:  "A single group identifier or a condition based on [supported CEL operators](https://docs.confluent.io/cloud/current/access-management/authenticate/sso/group-mapping/overview.html#supported-cel-operators-for-group-mapping) that defines which groups are included.",
 			},
 		},
