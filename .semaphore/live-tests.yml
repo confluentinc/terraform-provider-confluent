@@ -41,7 +41,7 @@ blocks:
                 RC=$?
                 if [ $RC -ne 0 ]; then
                   echo "Live tests failed, sending Slack notification..."
-              
+
                   curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
                 fi
                 exit $RC
@@ -53,7 +53,7 @@ blocks:
                 "all"|"") TF_LIVE_TEST_GROUPS="" ;;
                 *) TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS" ;;
               esac
-              
+
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
               make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
 
@@ -64,3 +64,20 @@ blocks:
                 ""|*core*) make live-test-rtce ;;
                 *) echo "Skipping live-test-rtce (group filter excludes RTCE)" ;;
               esac
+      epilogue:
+        always:
+          commands:
+            # Epilogue so a failed run still reports (a timed-out or canceled one won't).
+            # --ignore-missing covers live-rtce: most group filters skip it, and it never runs
+            # at all if live-test fails first. --trim-output-to is set explicitly because trimming
+            # keeps the LAST N characters, and TF_LOG-style teardown noise after an assertion
+            # error would otherwise be all that survives the default window.
+            - test-results publish live-report.xml live-rtce-report.xml -N "live-tests" --ignore-missing --trim-output-to 20000
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          # 404s when the epilogue published nothing (timed out, or failed before tests ran).
+          - test-results gen-pipeline-report || echo "no test results available"
