@@ -10,7 +10,12 @@ GOENV         := GO111MODULE=on
 GOCMD         := $(GOENV) go
 # Pinned rather than @latest: the JUnit XML it emits is a contract with `test-results publish`.
 GOTESTSUM_VERSION := v1.13.0
-# Per-test terraform debug logs under CI; pushed as a job artifact by .semaphore/semaphore.yml.
+# Skips the install when the pinned version is present. Inlined rather than reached through
+# $(MAKE): make force-runs any recipe line containing $(MAKE) even under -n, and a continued recipe
+# is one line, so recursing inside live-test's shell block made `make -n` hit production for real.
+GOTESTSUM_INSTALL = gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
+# Per-test terraform debug logs under CI. Renaming needs matching edits in
+# .semaphore/semaphore.yml and .gitignore, or the artifact push becomes a green no-op.
 TFLOG_DIR     := tflogs
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
 GOOS          ?= $(shell go env GOOS)
@@ -100,34 +105,28 @@ build: clean ## Build binary for current OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	$(GOBUILD) -o ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME)
 
-# Under CI these run through gotestsum, which writes the JUnit XML Semaphore publishes as test
-# results. CI-only because testacc and live-test* are documented local workflows
-# (docs/DEVELOPING.md, docs/LIVE_TESTING_TEMPLATE.md) that shouldn't need gotestsum installed.
-# Two CI-only flag choices are load-bearing. -v is omitted because it strips `go test -json`'s
-# framing markers, after which TF_LOG=debug stderr parses as framing and invents test cases in
-# the report. --format testname keeps one progress line per test, which the default pkgname
-# format would not (live-test is a single package that runs for hours), while still dropping
-# passing tests' output, the thing that floods Semaphore's 16 MB log cap.
+# Under CI these run through gotestsum, which writes the JUnit XML Semaphore publishes. CI-only
+# because testacc and live-test* are documented local workflows (docs/DEVELOPING.md).
+# -v is omitted: it strips `go test -json`'s framing markers, after which TF_LOG=debug stderr
+# parses as framing and invents test cases. --format testname keeps the per-test progress that the
+# default pkgname format drops, while still discarding passing tests' output (the 16 MB log cap).
 .PHONY: test
 test:
 ifeq ($(CI),true)
-	@$(MAKE) gotestsum
+	@$(GOTESTSUM_INSTALL)
 	$(GOENV) gotestsum --format testname --junitfile unit-report.xml -- ./...
 else
 	$(GOCMD) test ./...
 endif
 
-# TF_LOG_PATH_MASK routes each test's terraform debug output to its own file rather than the
-# shared stderr stream, so a failure's captured output is the assertion error alone instead of
-# whatever the other parallel tests happened to be logging. .semaphore/semaphore.yml tars
-# $(TFLOG_DIR) into a job artifact; without that push these files die with the agent.
-# The mask must be absolute: go test runs each binary from its own package directory, so a
-# relative path resolves under internal/provider rather than here, and the SDK treats a mask it
-# cannot open as fatal and kills the whole run.
+# TF_LOG_PATH_MASK gives each test its own debug log, so a failure's captured output is the
+# assertion rather than whatever else was logging; semaphore.yml tars $(TFLOG_DIR) as an artifact.
+# The mask must be absolute: go test runs each binary from its own package directory, and the SDK
+# log.Fatals on a mask it cannot open.
 .PHONY: testacc
 testacc:
 ifeq ($(CI),true)
-	@$(MAKE) gotestsum
+	@$(GOTESTSUM_INSTALL)
 	mkdir -p $(TFLOG_DIR)
 	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 else
@@ -140,12 +139,17 @@ endif
 # RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
 # run them via the dedicated `live-test-rtce` target below.
 # VERBOSE is empty under CI deliberately: -v breaks gotestsum's report, per the note above `test`.
+# A failed gotestsum install degrades to plain `go test` rather than aborting: smoke-tests wraps
+# this in a PASS/FAIL that pages, so a module-proxy blip must not look like a Confluent outage.
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(MAKE) gotestsum || exit 1; RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
+	@if [ "$(CI)" != "true" ]; then \
+		RUNNER="go test"; VERBOSE="-v"; \
+	elif $(GOTESTSUM_INSTALL); then \
+		RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
 	else \
+		echo "gotestsum unavailable, running without a JUnit report"; \
 		RUNNER="go test"; VERBOSE="-v"; \
 	fi; \
 	if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
@@ -167,7 +171,7 @@ live-test:
 live-test-rtce:
 	@echo "Running RTCE live integration tests against Confluent Cloud (region=us-east-1)..."
 ifeq ($(CI),true)
-	@$(MAKE) gotestsum
+	@$(GOTESTSUM_INSTALL)
 	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) gotestsum --format testname --junitfile live-rtce-report.xml -- ./internal/provider/ -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
 else
 	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOCMD) test ./internal/provider/ -v -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
@@ -240,11 +244,10 @@ gox:
 goimports:
 	go install golang.org/x/tools/cmd/goimports@latest
 
-# Skip the install when it's already there: every test target calls this, and live-tests runs
-# live-test then live-test-rtce hours apart, so the repeat would need the module proxy again.
+# Manual entry point; the test targets inline $(GOTESTSUM_INSTALL) themselves.
 .PHONY: gotestsum
 gotestsum:
-	@gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
+	@$(GOTESTSUM_INSTALL)
 
 .PHONY: tools
 tools: ## Install required tools
