@@ -6,7 +6,17 @@ NAME        := terraform-provider-confluent
 BUILD_DIR   := bin
 VERSION     ?= $(shell git tag --sort=-creatordate | grep -v ".*deleted" | head -n 1)
 # Go variables
-GOCMD         := GO111MODULE=on go
+GOENV         := GO111MODULE=on
+GOCMD         := $(GOENV) go
+# Pinned rather than @latest: the JUnit XML it emits is a contract with `test-results publish`.
+GOTESTSUM_VERSION := v1.13.0
+# Skips the install when the pinned version is present. Inlined rather than reached through
+# $(MAKE): make force-runs any recipe line containing $(MAKE) even under -n, and a continued recipe
+# is one line, so recursing inside live-test's shell block made `make -n` hit production for real.
+GOTESTSUM_INSTALL = gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
+# Per-test terraform debug logs under CI. Renaming needs matching edits in
+# .semaphore/semaphore.yml and .gitignore, or the artifact push becomes a green no-op.
+TFLOG_DIR     := tflogs
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
 GOOS          ?= $(shell go env GOOS)
 GOARCH        ?= $(shell go env GOARCH)
@@ -83,7 +93,7 @@ fmt: ## Format all go files
 .PHONY: clean
 clean: ## Clean workspace
 	@ $(MAKE) --no-print-directory log-$@
-	rm -rf ./$(BUILD_DIR)
+	rm -rf ./$(BUILD_DIR) ./$(TFLOG_DIR) ./*-report.xml ./$(TFLOG_DIR).tar.gz
 
 .PHONY: deps
 deps: ## Fetch dependencies
@@ -95,32 +105,63 @@ build: clean ## Build binary for current OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	$(GOBUILD) -o ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME)
 
+# Under CI these run through gotestsum, which writes the JUnit XML Semaphore publishes. CI-only
+# because testacc and live-test* are documented local workflows (docs/DEVELOPING.md).
+# -v is omitted: it strips `go test -json`'s framing markers, after which TF_LOG=debug stderr
+# parses as framing and invents test cases. --format testname keeps the per-test progress that the
+# default pkgname format drops, while still discarding passing tests' output (the 16 MB log cap).
 .PHONY: test
 test:
+ifeq ($(CI),true)
+	@$(GOTESTSUM_INSTALL)
+	$(GOENV) gotestsum --format testname --junitfile unit-report.xml -- ./...
+else
 	$(GOCMD) test ./...
+endif
 
+# TF_LOG_PATH_MASK gives each test its own debug log, so a failure's captured output is the
+# assertion rather than whatever else was logging; semaphore.yml tars $(TFLOG_DIR) as an artifact.
+# The mask must be absolute: go test runs each binary from its own package directory, and the SDK
+# log.Fatals on a mask it cannot open.
 .PHONY: testacc
 testacc:
+ifeq ($(CI),true)
+	@$(GOTESTSUM_INSTALL)
+	mkdir -p $(TFLOG_DIR)
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+else
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+endif
 	@echo "finished testacc"
 
 # Live integration tests with group filtering and concurrency support
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
 # RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
 # run them via the dedicated `live-test-rtce` target below.
+# VERBOSE is empty under CI deliberately: -v breaks gotestsum's report, per the note above `test`.
+# A failed gotestsum install degrades to plain `go test` rather than aborting: smoke-tests wraps
+# this in a PASS/FAIL that pages, so a module-proxy blip must not look like a Confluent outage.
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
-	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
+	@if [ "$(CI)" != "true" ]; then \
+		RUNNER="go test"; VERBOSE="-v"; \
+	elif $(GOTESTSUM_INSTALL); then \
+		RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
+	else \
+		echo "gotestsum unavailable, running without a JUnit report"; \
+		RUNNER="go test"; VERBOSE="-v"; \
+	fi; \
+	if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
 	else \
 		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
@@ -129,7 +170,12 @@ live-test:
 .PHONY: live-test-rtce
 live-test-rtce:
 	@echo "Running RTCE live integration tests against Confluent Cloud (region=us-east-1)..."
+ifeq ($(CI),true)
+	@$(GOTESTSUM_INSTALL)
+	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) gotestsum --format testname --junitfile live-rtce-report.xml -- ./internal/provider/ -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+else
 	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOCMD) test ./internal/provider/ -v -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+endif
 	@echo "Finished running RTCE live integration tests"
 
 # Helper targets for common group combinations
@@ -197,6 +243,11 @@ gox:
 .PHONY: goimports
 goimports:
 	go install golang.org/x/tools/cmd/goimports@latest
+
+# Manual entry point; the test targets inline $(GOTESTSUM_INSTALL) themselves.
+.PHONY: gotestsum
+gotestsum:
+	@$(GOTESTSUM_INSTALL)
 
 .PHONY: tools
 tools: ## Install required tools
