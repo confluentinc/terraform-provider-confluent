@@ -217,9 +217,9 @@ func flinkComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 // flinkComputePoolConfigDelete drops the Flink compute pool config from Terraform
-// state without calling the API. The object is account-scoped and always exists, so
-// there is no endpoint that removes it; destroying the resource means Terraform stops
-// managing the settings, which keep their last-applied values.
+// state without calling the API. It is scoped to the organization and always
+// exists, so there is no endpoint that removes it; destroying the resource means Terraform
+// stops managing the settings, which keep their last-applied values.
 func flinkComputePoolConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
