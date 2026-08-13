@@ -69,7 +69,8 @@ blocks:
           commands:
             # In the epilogue so a failed run still reports; a timed-out or canceled one won't.
             # --ignore-missing covers live-rtce, which group filters skip and which never runs if
-            # live-test fails first. --trim-output-to keeps the LAST N characters, not the first.
+            # live-test fails first.
+            # --trim-output-to keeps the LAST N characters; the 1000 default drops the assertion.
             - test-results publish live-report.xml live-rtce-report.xml -N "live-tests" --ignore-missing --trim-output-to 20000
 
 after_pipeline:

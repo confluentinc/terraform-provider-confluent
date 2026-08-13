@@ -40,13 +40,13 @@ blocks:
       epilogue:
         always:
           commands:
-            # `tflogs` must match TFLOG_DIR in the Makefile, or this silently pushes nothing.
+            # `tflogs` must match TF_LOG_DIR in the Makefile, or this silently pushes nothing.
             # Non-blocking so losing debug logs can't cost the test report below, and tarred so
             # hundreds of files are one upload. The agent is ephemeral; this push is the only copy.
             - if [ -d tflogs ]; then tar -czf tflogs.tar.gz tflogs && artifact push job tflogs.tar.gz --force; else echo "no terraform debug logs to push"; fi || true
             # In the epilogue so a failed run still reports; a timed-out or canceled one won't.
-            # --ignore-missing covers `make all` failing before testacc writes its report, and
-            # --trim-output-to keeps the LAST N characters (the 1000 default drops the assertion).
+            # --ignore-missing covers `make all` failing before testacc writes its report.
+            # --trim-output-to keeps the LAST N characters; the 1000 default drops the assertion.
             - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing --trim-output-to 20000
 
 after_pipeline:

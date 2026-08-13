@@ -64,7 +64,8 @@ blocks:
           commands:
             # In the epilogue so a failed run still reports; a timed-out or canceled one won't.
             # The file is live-report.xml because live-test-smoke delegates to live-test; -N is
-            # what distinguishes this pipeline. --trim-output-to keeps the LAST N characters.
+            # what distinguishes this pipeline.
+            # --trim-output-to keeps the LAST N characters; the 1000 default drops the assertion.
             - test-results publish live-report.xml -N "smoke-tests" --ignore-missing --trim-output-to 20000
 
 after_pipeline:

@@ -16,7 +16,7 @@ GOTESTSUM_VERSION := v1.13.0
 GOTESTSUM_INSTALL = gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
 # Per-test terraform debug logs under CI. Renaming needs matching edits in
 # .semaphore/semaphore.yml and .gitignore, or the artifact push becomes a green no-op.
-TFLOG_DIR     := tflogs
+TF_LOG_DIR    := tflogs
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
 GOOS          ?= $(shell go env GOOS)
 GOARCH        ?= $(shell go env GOARCH)
@@ -93,7 +93,7 @@ fmt: ## Format all go files
 .PHONY: clean
 clean: ## Clean workspace
 	@ $(MAKE) --no-print-directory log-$@
-	rm -rf ./$(BUILD_DIR) ./$(TFLOG_DIR) ./*-report.xml ./$(TFLOG_DIR).tar.gz
+	rm -rf ./$(BUILD_DIR) ./$(TF_LOG_DIR) ./*-report.xml ./$(TF_LOG_DIR).tar.gz
 
 .PHONY: deps
 deps: ## Fetch dependencies
@@ -107,9 +107,10 @@ build: clean ## Build binary for current OS/ARCH
 
 # Under CI these run through gotestsum, which writes the JUnit XML Semaphore publishes. CI-only
 # because testacc and live-test* are documented local workflows (docs/DEVELOPING.md).
-# -v is omitted: it strips `go test -json`'s framing markers, after which TF_LOG=debug stderr
-# parses as framing and invents test cases. --format testname keeps the per-test progress that the
-# default pkgname format drops, while still discarding passing tests' output (the 16 MB log cap).
+# -v is omitted from every CI invocation: it strips `go test -json`'s framing markers, after which
+# stray stderr parses as framing and invents test cases. --format testname keeps the per-test
+# progress the default pkgname format drops, while still discarding passing tests' output.
+# Unlike live-test*, a failed install fails the build here, since nothing pages on semaphore.yml.
 .PHONY: test
 test:
 ifeq ($(CI),true)
@@ -120,15 +121,15 @@ else
 endif
 
 # TF_LOG_PATH_MASK gives each test its own debug log, so a failure's captured output is the
-# assertion rather than whatever else was logging; semaphore.yml tars $(TFLOG_DIR) as an artifact.
+# assertion rather than whatever else was logging; semaphore.yml tars $(TF_LOG_DIR) as an artifact.
 # The mask must be absolute: go test runs each binary from its own package directory, and the SDK
 # log.Fatals on a mask it cannot open.
 .PHONY: testacc
 testacc:
 ifeq ($(CI),true)
 	@$(GOTESTSUM_INSTALL)
-	mkdir -p $(TFLOG_DIR)
-	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+	mkdir -p $(TF_LOG_DIR)
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TF_LOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 else
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 endif
@@ -248,11 +249,6 @@ gox:
 .PHONY: goimports
 goimports:
 	go install golang.org/x/tools/cmd/goimports@latest
-
-# Manual entry point; the test targets inline $(GOTESTSUM_INSTALL) themselves.
-.PHONY: gotestsum
-gotestsum:
-	@$(GOTESTSUM_INSTALL)
 
 .PHONY: tools
 tools: ## Install required tools
