@@ -66,16 +66,6 @@ func certificatePoolResource() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(0, 300),
 				Description:  "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate identity pool (see [CEL filter for mTLS](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) for more details).",
 			},
-			paramPrincipal: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Represents the federated identity associated with this pool.",
-			},
-			paramState: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The current state of the certificate identity pool.",
-			},
 		},
 	}
 }
@@ -178,12 +168,6 @@ func setCertificatePoolAttributes(d *schema.ResourceData, certificatePool certif
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramFilter, certificatePool.GetFilter()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramPrincipal, certificatePool.GetPrincipal()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramState, certificatePool.GetState()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	d.SetId(certificatePool.GetId())
