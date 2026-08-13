@@ -34,7 +34,7 @@ func flinkComputePoolConfigDataSource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The unique identifier for the flink compute pool config.",
+				Description: "The unique identifier for the Flink compute pool config.",
 			},
 			paramDefaultPoolEnabled: {
 				Type:        schema.TypeBool,
@@ -61,18 +61,18 @@ func flinkComputePoolConfigDataSource() *schema.Resource {
 }
 
 func flinkComputePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, "Reading flink compute pool config")
+	tflog.Debug(ctx, "Reading Flink compute pool config")
 
 	c := meta.(*Client)
 	flinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
 	if err != nil {
-		return diag.Errorf("error reading flink compute pool config: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Flink compute pool config: %s", createDescriptiveError(err, resp))
 	}
 	flinkComputePoolConfigJson, err := json.Marshal(flinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error reading flink compute pool config: error marshaling %#v to json: %s", flinkComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink compute pool config: error marshaling %#v to json: %s", flinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched flink compute pool config: %s", flinkComputePoolConfigJson))
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink compute pool config: %s", flinkComputePoolConfigJson))
 
 	if _, err := setFlinkComputePoolConfigAttributes(d, flinkComputePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
