@@ -77,16 +77,6 @@ func certificatePoolDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate identity pool (see [CEL filter for mTLS](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) for more details).",
 			},
-			paramPrincipal: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Represents the federated identity associated with this pool.",
-			},
-			paramState: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The current state of the certificate identity pool.",
-			},
 		},
 	}
 }
@@ -162,8 +152,9 @@ func certificatePoolDataSourceReadUsingId(ctx context.Context, d *schema.Resourc
 //
 // Emitted because terraform.emit_list_all_helper is set, which happens for either of two
 // reasons: a caller outside this file needs it (importers.go is the usual one), or a
-// display_name lookup has to scan client-side because the SDK's List exposes no filter.
-// Which one applies is not derivable here, so grep for callers before removing it.
+// display_name lookup has to scan client-side, because the SDK's List request either has no
+// DisplayName(...) filter method or could not be checked for one (no --sdk-path given).
+// Which reason applies is not derivable here, so grep for callers before removing it.
 func loadCertificatePools(ctx context.Context, c *Client, certificateAuthorityId string) ([]certificateauthorityv2.IamV2CertificateIdentityPool, error) {
 	certificatePools := make([]certificateauthorityv2.IamV2CertificateIdentityPool, 0)
 
