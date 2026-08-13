@@ -27,8 +27,6 @@ import (
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 )
 
-var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}
-
 func schemaRegistryClusterDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: schemaRegistryDataSourceRead,
