@@ -167,15 +167,20 @@ live-test:
 
 # RTCE live tests — pinned to aws.us-east-1 because that's the only region
 # where RTCE is enabled in prod. Run separately from the main live-test target.
+# Degrades on a failed install for the same reason as live-test: live-tests.yml pages on any
+# nonzero exit here, so a module-proxy blip must not look like a Confluent outage.
 .PHONY: live-test-rtce
 live-test-rtce:
 	@echo "Running RTCE live integration tests against Confluent Cloud (region=us-east-1)..."
-ifeq ($(CI),true)
-	@$(GOTESTSUM_INSTALL)
-	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) gotestsum --format testname --junitfile live-rtce-report.xml -- ./internal/provider/ -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
-else
-	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOCMD) test ./internal/provider/ -v -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
-endif
+	@if [ "$(CI)" != "true" ]; then \
+		RUNNER="go test"; VERBOSE="-v"; \
+	elif $(GOTESTSUM_INSTALL); then \
+		RUNNER="gotestsum --format testname --junitfile live-rtce-report.xml --"; VERBOSE=""; \
+	else \
+		echo "gotestsum unavailable, running without a JUnit report"; \
+		RUNNER="go test"; VERBOSE="-v"; \
+	fi; \
+	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) $$RUNNER ./internal/provider/ $$VERBOSE -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
 	@echo "Finished running RTCE live integration tests"
 
 # Helper targets for common group combinations
