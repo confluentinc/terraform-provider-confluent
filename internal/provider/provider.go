@@ -322,7 +322,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ksql_cluster":                       ksqlDataSource(),
 				"confluent_flink_artifact":                     flinkArtifactDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
-				"confluent_flink_compute_pool_config":          computePoolConfigDataSource(),
+				"confluent_flink_compute_pool_config":          flinkComputePoolConfigDataSource(),
 				"confluent_flink_connection":                   flinkConnectionDataSource(),
 				"confluent_flink_materialized_table":           flinkMaterializedTableDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),

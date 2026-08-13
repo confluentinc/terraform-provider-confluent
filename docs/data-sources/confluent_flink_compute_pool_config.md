@@ -15,9 +15,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-data "confluent_flink_compute_pool_config" "example" {
-  id = "org-123"
-}
+data "confluent_flink_compute_pool_config" "example" {}
 
 output "example" {
   value = data.confluent_flink_compute_pool_config.example
@@ -29,7 +27,7 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The Organization ID of the Flink Compute Pool Config, for example, `org-123`.
+- `id` - (Optional String) The Organization ID of the Flink Compute Pool Config, for example, `org-123`. There is exactly one compute pool config per organization and the API resolves it from your credentials, so this does not need to be set; it is exported either way.
 
 ## Attributes Reference
 
