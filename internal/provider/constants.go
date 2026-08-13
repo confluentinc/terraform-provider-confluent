@@ -595,6 +595,7 @@ const (
 	paramSourceKafkaCredentials                          = "source_kafka_cluster.0.credentials"
 	paramSourceKafkaTopic                                = "source_kafka_topic"
 	paramStandardCluster                                 = "standard"
+	paramState                                           = "state"
 	paramStatement                                       = "statement"
 	paramStatementName                                   = "statement_name"
 	paramStatus                                          = "status"

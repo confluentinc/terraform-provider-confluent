@@ -61,6 +61,16 @@ func certificatePoolDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate pool.",
 			},
+			paramPrincipal: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Represents the federated identity associated with this pool.",
+			},
+			paramState: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The current state of the identity pool",
+			},
 		},
 	}
 }
@@ -95,7 +105,7 @@ func certificatePoolDataSourceReadUsingId(ctx context.Context, d *schema.Resourc
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
-	if _, err := setCertificatePoolAttributes(d, certificatePool, certificateProviderId); err != nil {
+	if _, err := setCertificatePoolDataSourceAttributes(d, certificatePool, certificateProviderId); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
@@ -115,7 +125,7 @@ func certificatePoolDataSourceReadUsingDisplayName(ctx context.Context, d *schem
 
 	for _, certificatePool := range certificatePools {
 		if certificatePool.GetDisplayName() == displayName {
-			if _, err := setCertificatePoolAttributes(d, certificatePool, certificateProviderId); err != nil {
+			if _, err := setCertificatePoolDataSourceAttributes(d, certificatePool, certificateProviderId); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil
@@ -189,4 +199,18 @@ func certificateAuthorityDataSourceSchema() *schema.Schema {
 		Required: true,
 		MaxItems: 1,
 	}
+}
+
+// setCertificatePoolDataSourceAttributes is a temporary seam, removed by the follow-up PR that
+// generates this data source. The generated resource sets the parent certificate_authority block
+// in its Import function rather than in the shared setter, which is correct for the resource but
+// leaves this data source — which has no Import — with nowhere to set it.
+func setCertificatePoolDataSourceAttributes(d *schema.ResourceData, certificatePool certificateauthorityv2.IamV2CertificateIdentityPool, certificateAuthorityId string) (*schema.ResourceData, error) {
+	if _, err := setCertificatePoolAttributes(d, certificatePool); err != nil {
+		return nil, err
+	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramCertificateAuthority, paramId, certificateAuthorityId, d); err != nil {
+		return nil, err
+	}
+	return d, nil
 }
