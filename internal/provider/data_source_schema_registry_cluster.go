@@ -188,8 +188,8 @@ func schemaRegistryClusterDataSourceReadUsingId(ctx context.Context, d *schema.R
 	return nil
 }
 
-func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, clusterId string) (srcmv3.SrcmV3Cluster, *http.Response, error) {
-	req := c.srcmV3Client.ClustersSrcmV3Api.GetSrcmV3Cluster(c.srcmV3ApiContext(ctx), clusterId).Environment(environmentId)
+func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, schemaRegistryClusterId string) (srcmv3.SrcmV3Cluster, *http.Response, error) {
+	req := c.srcmV3Client.ClustersSrcmV3Api.GetSrcmV3Cluster(c.srcmV3ApiContext(ctx), schemaRegistryClusterId).Environment(environmentId)
 	return req.Execute()
 }
 
