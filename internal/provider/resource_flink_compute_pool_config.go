@@ -70,7 +70,7 @@ func flinkComputePoolConfigResource() *schema.Resource {
 }
 
 // flinkComputePoolConfigCreate sends the configured settings to the update endpoint.
-// The flink compute pool config always exists -- the API has no POST, and no way to
+// The Flink compute pool config always exists -- the API has no POST, and no way to
 // bring one into being -- so "create" here means "take ownership of the existing object
 // and set it to the configured values".
 func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -95,50 +95,54 @@ func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, m
 
 	createFlinkComputePoolConfigRequestJson, err := json.Marshal(createFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error creating flink compute pool config: error marshaling %#v to json: %s", createFlinkComputePoolConfigRequest, createDescriptiveError(err))
+		return diag.Errorf("error creating Flink compute pool config: error marshaling %#v to json: %s", createFlinkComputePoolConfigRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Creating new flink compute pool config: %s", createFlinkComputePoolConfigRequestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink compute pool config: %s", createFlinkComputePoolConfigRequestJson))
 
 	createdFlinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, createFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error creating flink compute pool config: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink compute pool config: %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdFlinkComputePoolConfig.GetOrganizationId())
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return flinkComputePoolConfigRead(ctx, d, meta)
 }
 
 func flinkComputePoolConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	c := meta.(*Client)
 	flinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading flink compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink compute pool config %q: %s", d.Id(), readErr), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing flink compute pool config %q in TF state because it could not be found on the server", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+			tflog.Warn(ctx, fmt.Sprintf("Removing Flink compute pool config %q in TF state because it could not be found on the server", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 	flinkComputePoolConfigJson, err := json.Marshal(flinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error reading flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), flinkComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), flinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched flink compute pool config %q: %s", d.Id(), flinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink compute pool config %q: %s", d.Id(), flinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	if _, err := setFlinkComputePoolConfigAttributes(d, flinkComputePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return nil
 }
@@ -173,7 +177,7 @@ func setFlinkComputePoolConfigAttributes(d *schema.ResourceData, flinkComputePoo
 
 func flinkComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramDefaultPoolEnabled, paramMaxCFU) {
-		return diag.Errorf("error updating flink compute pool config %q: only %q, %q attributes can be updated for flink compute pool config", d.Id(), paramDefaultPoolEnabled, paramMaxCFU)
+		return diag.Errorf("error updating Flink compute pool config %q: only %q, %q attributes can be updated for Flink compute pool config", d.Id(), paramDefaultPoolEnabled, paramMaxCFU)
 	}
 
 	c := meta.(*Client)
@@ -194,47 +198,47 @@ func flinkComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	updateFlinkComputePoolConfigRequestJson, err := json.Marshal(updateFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error updating flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updateFlinkComputePoolConfigRequest, createDescriptiveError(err))
+		return diag.Errorf("error updating Flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updateFlinkComputePoolConfigRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating flink compute pool config %q: %s", d.Id(), updateFlinkComputePoolConfigRequestJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Updating Flink compute pool config %q: %s", d.Id(), updateFlinkComputePoolConfigRequestJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	updatedFlinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, updateFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error updating flink compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Flink compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedFlinkComputePoolConfigJson, err := json.Marshal(updatedFlinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error updating flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updatedFlinkComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error updating Flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updatedFlinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating flink compute pool config %q: %s", d.Id(), updatedFlinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink compute pool config %q: %s", d.Id(), updatedFlinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return flinkComputePoolConfigRead(ctx, d, meta)
 }
 
-// flinkComputePoolConfigDelete drops the flink compute pool config from Terraform
+// flinkComputePoolConfigDelete drops the Flink compute pool config from Terraform
 // state without calling the API. The object is account-scoped and always exists, so
 // there is no endpoint that removes it; destroying the resource means Terraform stops
 // managing the settings, which keep their last-applied values.
 func flinkComputePoolConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return nil
 }
 
 func flinkComputePoolConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Importing Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if diagnostics := flinkComputePoolConfigRead(ctx, d, meta); diagnostics != nil {
-		return nil, fmt.Errorf("error importing flink compute pool config %q: %s", d.Id(), diagnostics[0].Summary)
+	if diagnostics := flinkComputePoolConfigRead(ctx, d, meta); len(diagnostics) > 0 {
+		return nil, fmt.Errorf("error importing Flink compute pool config %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
 }
