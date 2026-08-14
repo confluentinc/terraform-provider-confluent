@@ -81,7 +81,7 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func certificatePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateProviderId, certificatePoolId string) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading Certificate Pool %q=%q", paramId, certificatePoolId), map[string]interface{}{certificatePoolKey: certificatePoolId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Certificate Pool %q=%q", paramId, certificatePoolId), map[string]interface{}{certificatePoolLoggingKey: certificatePoolId})
 
 	c := meta.(*Client)
 	request := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateProviderId, certificatePoolId)
@@ -93,9 +93,9 @@ func certificatePoolDataSourceReadUsingId(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolLoggingKey: certificatePoolId})
 
-	if _, err := setCertificatePoolAttributes(d, certificatePool, certificateProviderId); err != nil {
+	if _, err := setCertificatePoolDataSourceAttributes(d, certificatePool, certificateProviderId); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
@@ -115,7 +115,7 @@ func certificatePoolDataSourceReadUsingDisplayName(ctx context.Context, d *schem
 
 	for _, certificatePool := range certificatePools {
 		if certificatePool.GetDisplayName() == displayName {
-			if _, err := setCertificatePoolAttributes(d, certificatePool, certificateProviderId); err != nil {
+			if _, err := setCertificatePoolDataSourceAttributes(d, certificatePool, certificateProviderId); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil
@@ -189,4 +189,18 @@ func certificateAuthorityDataSourceSchema() *schema.Schema {
 		Required: true,
 		MaxItems: 1,
 	}
+}
+
+// setCertificatePoolDataSourceAttributes is a temporary seam, removed by the follow-up PR that
+// generates this data source. The generated resource sets the parent certificate_authority block
+// in its Import function rather than in the shared setter, which is correct for the resource but
+// leaves this data source — which has no Import — with nowhere to set it.
+func setCertificatePoolDataSourceAttributes(d *schema.ResourceData, certificatePool certificateauthorityv2.IamV2CertificateIdentityPool, certificateAuthorityId string) (*schema.ResourceData, error) {
+	if _, err := setCertificatePoolAttributes(d, certificatePool); err != nil {
+		return nil, err
+	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramCertificateAuthority, paramId, certificateAuthorityId, d); err != nil {
+		return nil, err
+	}
+	return d, nil
 }
