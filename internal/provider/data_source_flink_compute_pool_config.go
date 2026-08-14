@@ -72,7 +72,7 @@ func computePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData
 	}
 	d.SetId(computePoolConfig.GetOrganizationId())
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, computePoolConfigJson))
-	if _, err := setComputePoolConfigAttributes(d, computePoolConfig); err != nil {
+	if _, err := setFlinkComputePoolConfigAttributes(d, computePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
