@@ -81,6 +81,8 @@ resource "confluent_flink_materialized_table" "example" {
 }
 ```
 
+!> **Warning:** With Option #2, `flink_principal_id` in the `provider` block takes precedence over the `principal` block of the resource, which is silently ignored. To run resources under different principals, use Option #1, or declare one [aliased provider](https://developer.hashicorp.com/terraform/language/providers/configuration) per principal and select it with the `provider` meta-argument.
+
 ### Stopping and Resuming a Materialized Table
 
 A running Materialized Table can be paused and later resumed by toggling the `stopped` attribute. The default value is `false` (running). To stop the table, set `stopped = true` and run `terraform apply`; to resume it, set `stopped = false` (or remove the attribute) and apply again. The Materialized Table is preserved across stop/resume — only its execution is paused.

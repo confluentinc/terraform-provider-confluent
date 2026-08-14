@@ -94,7 +94,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `azure` - (Optional Configuration Block) The Azure-specific network details if available. It supports the following:
   - `private_link_service_aliases` - (Optional Map) The mapping of zones to Private Link Service Aliases if available. Keys are zones and values are [Azure Private Link Service Aliases](https://docs.microsoft.com/en-us/azure/private-link/private-link-service-overview#share-your-service).
     - `zone` - (Required String) The zone name, for example, `1`.
-    - `private_link_service_aliase` - (Required String) The Private Link Service Alias, for example, `s-aa11a-privatelink-1.1c12abc3-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
+    - `private_link_service_alias` - (Required String) The Private Link Service Alias, for example, `s-aa11a-privatelink-1.1c12abc3-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
 - `gcp` - (Optional Configuration Block) The GCP-specific network details if available. It supports the following:
   - `project` - (Required String) The GCP Project ID associated with the Confluent Cloud VPC.
   - `vpc_network` - (Required String) The network name of the Confluent Cloud VPC.

@@ -277,7 +277,7 @@ func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, 
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q", dnsRecordId, stateCreated), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q", dnsRecordId, stateCreated), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
@@ -589,7 +589,7 @@ func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, 
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q to be deleted", dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q to be deleted", dnsRecordId), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
@@ -1104,11 +1104,11 @@ func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId stri
 	return func() (result interface{}, s string, err error) {
 		dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 			return nil, stateUnknown, err
 		}
 
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q or %q: current status is %q", dnsRecordId, stateReady, stateCreated, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q or %q: current status is %q", dnsRecordId, stateReady, stateCreated, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 		if dnsRecord.Status.GetPhase() == stateProvisioning || dnsRecord.Status.GetPhase() == stateReady || dnsRecord.Status.GetPhase() == stateCreated {
 			return dnsRecord, dnsRecord.Status.GetPhase(), nil
 		} else if dnsRecord.Status.GetPhase() == stateFailed {
@@ -1127,7 +1127,7 @@ func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId s
 			return nil, stateUnknown, err
 		}
 
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Forwarder %q provisioning status to become %q or %q: current status is %q", dnsForwarderId, stateReady, stateCreated, dnsForwarder.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsForwarderId})
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Forwarder %q provisioning status to become %q or %q: current status is %q", dnsForwarderId, stateReady, stateCreated, dnsForwarder.Status.GetPhase()), map[string]interface{}{dnsForwarderKey: dnsForwarderId})
 		if dnsForwarder.Status.GetPhase() == stateProvisioning || dnsForwarder.Status.GetPhase() == stateReady || dnsForwarder.Status.GetPhase() == stateCreated {
 			return dnsForwarder, dnsForwarder.Status.GetPhase(), nil
 		} else if dnsForwarder.Status.GetPhase() == stateFailed {
@@ -1571,18 +1571,18 @@ func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRec
 	return func() (result interface{}, s string, err error) {
 		dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
-				tflog.Debug(ctx, fmt.Sprintf("Finishing DNS Record %q deletion process: Received %d status code when reading %q DNS Record", dnsRecordId, resp.StatusCode, dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
+				tflog.Debug(ctx, fmt.Sprintf("Finishing DNS Record %q deletion process: Received %d status code when reading %q DNS Record", dnsRecordId, resp.StatusCode, dnsRecordId), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting DNS Record %q deletion process: Failed when reading DNS Record: %s: %s", dnsRecordId, createDescriptiveError(err, resp), dnsRecord.Status.GetErrorMessage()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting DNS Record %q deletion process: Failed when reading DNS Record: %s: %s", dnsRecordId, createDescriptiveError(err, resp), dnsRecord.Status.GetErrorMessage()), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 				return nil, stateFailed, err
 			}
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Performing DNS Record %q deletion process: DNS Record %d's status is %q", dnsRecordId, resp.StatusCode, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+		tflog.Debug(ctx, fmt.Sprintf("Performing DNS Record %q deletion process: DNS Record %d's status is %q", dnsRecordId, resp.StatusCode, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 		return dnsRecord, stateInProgress, nil
 	}
 }
