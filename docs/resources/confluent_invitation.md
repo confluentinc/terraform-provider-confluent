@@ -10,16 +10,18 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_invitation` provides an Invitation resource that enables creating, editing, and deleting Invitations on Confluent Cloud.
-
--> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental invitation deletion. This setting rejects plans that would destroy or recreate the invitation, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+`confluent_invitation` provides an invitation resource that enables creating, reading, and deleting invitation on Confluent Cloud.
 
 ## Example Usage
 
 ```terraform
-resource "confluent_invitation" "example" {
-  email = "johndoe@confluent.io"
-  auth_type = "AUTH_TYPE_SSO"
+resource "confluent_invitation" "main" {
+    email = ""
+}
+
+resource "confluent_invitation" "main2" {
+    email = ""
+    auth_type = "AUTH_TYPE_LOCAL"
 }
 ```
 
@@ -28,22 +30,22 @@ resource "confluent_invitation" "example" {
 
 The following arguments are supported:
 
-- `email` - (Required String) The user/invitee's email address
-- `auth_type` - (Optional String) The user/invitee's authentication type. Note that only the [OrganizationAdmin role](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#organizationadmin) can invite AUTH_TYPE_LOCAL users to SSO organizations. The user's auth_type is set as AUTH_TYPE_SSO by default if the organization has SSO enabled. Otherwise, the user's auth_type is AUTH_TYPE_LOCAL by default.
+- `email` - (Required String) The user/invitee's email address.
+- `auth_type` - (Optional String) Accepted values are: `AUTH_TYPE_LOCAL` and `AUTH_TYPE_SSO`. The user/invitee's authentication type. Note that only the [`OrganizationAdmin role`](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#organizationadmin) can invite `AUTH_TYPE_LOCAL` users to SSO organizations. The user's auth_type is set as `AUTH_TYPE_SSO` by default if the organization has SSO enabled. Otherwise, the user's auth_type is `AUTH_TYPE_LOCAL` by default.
 - `allow_deletion` - (Optional Boolean) Boolean attribute that determines whether accepted invitations can be deleted from the Terraform state file. Defaults to `false`. See issue [#263](https://github.com/confluentinc/terraform-provider-confluent/issues/263#issuecomment-1601558298) for more context.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (Required String) The ID of the Invitation, for example, `inv-abc123`.
-- `status` - (Required String) The status of invitations
-- `accepted_at` - (Required String) The timestamp that the invitation was accepted
-- `expires_at` - (Required String) The timestamp that the invitation will expire
-- `user` - (Required Configuration Block) The user/invitee. Supports the following:
-    - `id` - (Required String) The ID of the User.
-- `creator` - (Required Configuration Block) The invitation creator. Supports the following:
-    - `id` - (Required String) The ID of the Creator.
+- `id` - (Required String) The ID of the Invitation, for example, `i-zyw30`.
+- `status` - (Optional String) The status of invitations. Accepted values are: `INVITE_STATUS_SENT`,`INVITE_STATUS_STAGED`,`INVITE_STATUS_ACCEPTED`,`INVITE_STATUS_EXPIRED`, and `INVITE_STATUS_DEACTIVATED`.
+- `accepted_at` - (Optional String) The timestamp that the invitation was accepted.
+- `expires_at` - (Optional String) The timestamp that the invitation will expire.
+- `user` - (Required Configuration Block) supports the following:
+  - `id` - (Required String) The id of user/invitee.
+- `creator` - (Required Configuration Block) supports the following:
+  - `id` - (Required String) The id of invitation creator.
 
 ## Import
 
@@ -54,7 +56,7 @@ You can import an Invitation by using Invitation ID, for example:
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_invitation.example inv-abc123
+$ terraform import confluent_invitation.main i-gxxn1
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
