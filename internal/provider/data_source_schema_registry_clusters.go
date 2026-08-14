@@ -65,6 +65,7 @@ func schemaRegistryClustersSchema() *schema.Schema {
 				paramDisplayName: {
 					Type:        schema.TypeString,
 					Computed:    true,
+					Optional:    true,
 					Description: "The cluster name.",
 				},
 				paramRestEndpoint: {
