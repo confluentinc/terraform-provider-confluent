@@ -12,17 +12,19 @@ description: |-
 
 `confluent_certificate_pool` provides a Certificate Pool resource that enables creating, editing, and deleting Certificate Pools on Confluent Cloud.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental certificate pool deletion. This setting rejects plans that would destroy or recreate the certificate pool, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ```terraform
-resource "confluent_certificate_pool" "main" {
+resource "confluent_certificate_pool" "example" {
   certificate_authority {
-    id = confluent_certificate_authority.main.id
+    id = "op-abc123"
   }
-  display_name = "my-certificate-pool"
-  description = "example description"
-  external_identifier = "CN"
-  filter = "CN == \"test\""
+  display_name = "My Identity Pool"
+  description = "Prod Access to Kafka clusters to Release Engineering"
+  external_identifier = "UID"
+  filter = "C=='Canada' && O=='Confluent'"
 }
 ```
 
@@ -31,23 +33,31 @@ resource "confluent_certificate_pool" "main" {
 
 The following arguments are supported:
 
-- `certificate_authority` (Required Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Certificate Authority for this Certificate Pool, for example, `op-123abc`.
-- `display_name` - (Required String) The name of the Certificate Pool.
-- `description` - (Required String) A description of the Certificate Pool.
-- `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identity for audit logging.
-- `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate pool.
+- `certificate_authority` - (Required Configuration Block) The certificate authority that the resource belongs to. Supports the following:
+    - `id` - (Required String) The ID of the Certificate Authority.
+- `display_name` - (Required String) The name of the certificate identity pool.
+- `description` - (Required String) A description of how this certificate identity pool is used.
+- `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identifier for audit logging.
+- `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate identity pool (see [CEL filter for mTLS](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) for more details).
+
+## Attributes Reference
+
+In addition to the preceding arguments, the following attributes are exported:
+
+- `id` - (Required String) The ID of the Certificate Pool, for example, `pool-abc123`.
+- `principal` - (Required String) Represents the federated identity associated with this pool.
+- `state` - (Required String) The current state of the certificate identity pool.
 
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Certificate Pool.
 
-You can import a Certificate Pool by using Certificate Authority ID and Certificate Pool ID, in the format `<Certificate Authority ID>/<Certificate Pool ID>`. The following example shows how to import a Certificate Pool:
+You can import a Certificate Pool by using the composite ID `<Certificate Authority ID>/<Certificate Pool ID>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_certificate_pool.main op-abc123/pool-abc123
+$ terraform import confluent_certificate_pool.example op-abc123/pool-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
