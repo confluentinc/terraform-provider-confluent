@@ -28,6 +28,10 @@ import (
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 )
 
+// acceptedBillingPackages was previously declared in data_source_schema_registry_cluster.go
+// (now generated); relocated here, next to its only user (the Stream Governance package field).
+var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}
+
 func environmentResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: environmentCreate,
