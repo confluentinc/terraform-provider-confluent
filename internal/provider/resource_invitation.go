@@ -192,10 +192,26 @@ func setInvitationAttributes(d *schema.ResourceData, invitation iamv2.IamV2Invit
 	if err := d.Set(paramStatus, invitation.GetStatus()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramAcceptedAt, invitation.GetAcceptedAt().String()); err != nil {
+	// The plain getter returns the zero time when this timestamp is absent, which would
+	// persist "0001-01-01 00:00:00 +0000 UTC" into state. Written as "" rather than left
+	// unset so a Read also clears a stale value. ok is true with a nil pointer for an
+	// explicit JSON null, hence both checks.
+	acceptedAt := ""
+	if v, ok := invitation.GetAcceptedAtOk(); ok && v != nil {
+		acceptedAt = v.String()
+	}
+	if err := d.Set(paramAcceptedAt, acceptedAt); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramExpiresAt, invitation.GetExpiresAt().String()); err != nil {
+	// The plain getter returns the zero time when this timestamp is absent, which would
+	// persist "0001-01-01 00:00:00 +0000 UTC" into state. Written as "" rather than left
+	// unset so a Read also clears a stale value. ok is true with a nil pointer for an
+	// explicit JSON null, hence both checks.
+	expiresAt := ""
+	if v, ok := invitation.GetExpiresAtOk(); ok && v != nil {
+		expiresAt = v.String()
+	}
+	if err := d.Set(paramExpiresAt, expiresAt); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	userRef := invitation.GetUser()
