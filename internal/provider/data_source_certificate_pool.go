@@ -77,6 +77,16 @@ func certificatePoolDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate identity pool (see [CEL filter for mTLS](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) for more details).",
 			},
+			paramPrincipal: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Represents the federated identity associated with this pool.",
+			},
+			paramState: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The current state of the certificate identity pool.",
+			},
 		},
 	}
 }
