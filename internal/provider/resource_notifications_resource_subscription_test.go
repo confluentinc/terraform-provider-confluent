@@ -123,6 +123,8 @@ func TestAccNotificationsResourceSubscription(t *testing.T) {
 	integrations := "[\"\"]"
 	// in order to test tf update (step #3)
 	resourceValueUpdated := "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector_updated"
+	resourceTypeUpdated := "ENVIRONMENT"
+	currentStateUpdated := "DISABLED"
 	resourceSubscriptionResourceLabel := "test_resource_subscription_resource_label"
 	fullResourceSubscriptionResourceLabel := fmt.Sprintf("confluent_notifications_resource_subscription.%s", resourceSubscriptionResourceLabel)
 
@@ -156,13 +158,13 @@ func TestAccNotificationsResourceSubscription(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckNotificationsResourceSubscriptionConfig(mockServerUrl, resourceSubscriptionResourceLabel, resourceValueUpdated, resourceType, currentState, notificationType, integrations),
+				Config: testAccCheckNotificationsResourceSubscriptionConfig(mockServerUrl, resourceSubscriptionResourceLabel, resourceValueUpdated, resourceTypeUpdated, currentStateUpdated, notificationType, integrations),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsResourceSubscriptionExists(fullResourceSubscriptionResourceLabel),
 					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "id", resourceSubscriptionId),
 					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "resource", resourceValueUpdated),
-					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "resource_type", resourceType),
-					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "current_state", currentState),
+					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "resource_type", resourceTypeUpdated),
+					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "current_state", currentStateUpdated),
 					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "notification_type.0.id", notificationType),
 					resource.TestCheckResourceAttr(fullResourceSubscriptionResourceLabel, "integrations.#", "1"),
 					resource.TestCheckTypeSetElemAttr(fullResourceSubscriptionResourceLabel, "integrations.*", ""),

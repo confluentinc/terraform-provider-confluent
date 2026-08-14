@@ -1,6 +1,6 @@
 {
   "api_version": "notifications/v1",
-  "current_state": "ENABLED",
+  "current_state": "DISABLED",
   "id": "dlz-f3a90de",
   "integrations": [
     {

@@ -1,6 +1,6 @@
 {
   "api_version": "notifications/v1",
-  "current_state": "ENABLED",
+  "current_state": "DISABLED",
   "id": "dlz-f3a90de",
   "integrations": [
     {
@@ -23,5 +23,5 @@
     "resource_name": "https://example.com"
   },
   "resource": "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector_updated",
-  "resource_type": "CONNECTOR"
+  "resource_type": "ENVIRONMENT"
 }

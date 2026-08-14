@@ -367,14 +367,18 @@ func readIntegrationAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	c := meta.(*Client)
 	integration, resp, err := executeIntegrationRead(ctx, c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading integration %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{integrationLoggingKey: d.Id()})
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading integration %q: %s", d.Id(), readErr), map[string]interface{}{integrationLoggingKey: d.Id()})
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing integration %q in TF state because integration could not be found on the server", d.Id()), map[string]interface{}{integrationLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error reading integration %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading integration %q: %s", d.Id(), readErr)
 	}
 
 	integrationJson, err := json.Marshal(integration)
@@ -384,7 +388,8 @@ func readIntegrationAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	tflog.Debug(ctx, fmt.Sprintf("Fetched integration %q: %s", d.Id(), integrationJson), map[string]interface{}{integrationLoggingKey: d.Id()})
 
 	if _, err := setIntegrationAttributes(d, integration); err != nil {
-		return nil, fmt.Errorf("error setting integration attributes %q: %s", d.Id(), createDescriptiveError(err, resp))
+		// No resp: a d.Set failure is not an API error, and resp.Body is already consumed.
+		return nil, fmt.Errorf("error setting integration attributes %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading integration %q", d.Id()), map[string]interface{}{integrationLoggingKey: d.Id()})
 

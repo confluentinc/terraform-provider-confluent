@@ -1,6 +1,6 @@
 {
   "api_version": "notifications/v1",
-  "current_state": "ENABLED",
+  "current_state": "DISABLED",
   "id": "dlz-f3a90de",
   "kind": "ResourcePreference",
   "metadata": {
@@ -11,5 +11,5 @@
     "updated_at": "2006-01-02T15:04:05-07:00"
   },
   "resource": "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector_updated",
-  "resource_type": "CONNECTOR"
+  "resource_type": "ORGANIZATION"
 }

@@ -132,16 +132,20 @@ func subscriptionRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	c := meta.(*Client)
 	subscription, resp, err := executeSubscriptionRead(c.notificationsV1ApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading subscription %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{subscriptionLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading subscription %q: %s", d.Id(), readErr), map[string]interface{}{subscriptionLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing subscription %q in TF state because subscription could not be found on the server", d.Id()), map[string]interface{}{subscriptionLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 
 	subscriptionJson, err := json.Marshal(subscription)
