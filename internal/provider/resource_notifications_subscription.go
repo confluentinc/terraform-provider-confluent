@@ -47,7 +47,7 @@ func subscriptionResource() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ENABLED", "DISABLED"}, false),
-				Description:  "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
+				Description:  "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
 			},
 			paramNotificationType: notificationTypeSchema(),
 			paramIntegrations: {

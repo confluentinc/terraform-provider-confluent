@@ -38,7 +38,7 @@ func subscriptionDataSource() *schema.Resource {
 			paramCurrentState: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
+				Description: "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
 			},
 			paramNotificationType: {
 				Type:     schema.TypeList,
