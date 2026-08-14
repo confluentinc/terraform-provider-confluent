@@ -109,7 +109,7 @@ const (
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
 		"The guide will be published once version 3.0.0 is released."
 	dnsForwarderKey                                      = "dns_forwarder_id"
-	dnsRecordKey                                         = "dns_record_id"
+	dnsRecordLoggingKey                                  = "dns_record_id"
 	docsClusterConfigUrl                                 = "https://docs.confluent.io/cloud/current/clusters/broker-config.html#change-cluster-settings-for-dedicated-clusters"
 	docsClusterLinkConfigUrl                             = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
 	docsUrl                                              = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
@@ -563,6 +563,7 @@ const (
 	paramRestEndpointPrivate                             = "private_rest_endpoint"
 	paramRestEndpointPrivateRegional                     = "private_regional_rest_endpoints"
 	paramDataRetentionMs                                 = "data_retention_ms"
+	paramPrivateLinkAccessPointResourceId                = "id"
 	paramRetentionMs                                     = "retention_ms"
 	paramRoleName                                        = "role_name"
 	paramRoutes                                          = "routes"

@@ -78,6 +78,8 @@ resource "confluent_flink_connection" "example" {
 }
 ```
 
+!> **Warning:** With Option #2, `flink_principal_id` in the `provider` block takes precedence over the `principal` block of the resource, which is silently ignored. To run resources under different principals, use Option #1, or declare one [aliased provider](https://developer.hashicorp.com/terraform/language/providers/configuration) per principal and select it with the `provider` meta-argument.
+
 The following arguments are supported:
 
 - `organization` (Optional Configuration Block) supports the following:
