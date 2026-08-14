@@ -3,7 +3,7 @@
 page_title: "confluent_certificate_pool Data Source - terraform-provider-confluent"
 subcategory: ""
 description: |-
-  
+   
 ---
 
 # confluent_certificate_pool Data Source
@@ -20,12 +20,26 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_certificate_pool" "example" {
-  id = "pool-abc123"
+data "confluent_certificate_pool" "main" {
+  id = "pool-def456"
+  certificate_authority {
+    id = "op-abc123"
+  }
 }
 
-output "example" {
-  value = data.confluent_certificate_pool.example
+output "certificate_pool" {
+  value = data.confluent_certificate_pool.main
+}
+
+data "confluent_certificate_pool" "example_using_name" {
+  display_name = "My Certificate Pool"
+  certificate_authority {
+    id = "op-abc123"
+  }
+}
+
+output "example_using_name" {
+  value = data.confluent_certificate_pool.example_using_name
 }
 ```
 
@@ -33,8 +47,11 @@ output "example" {
 ## Argument Reference
 
 The following arguments are supported:
+
 - `id` - (Optional String) The ID of the Certificate Pool, for example, `pool-abc123`.
-- `display_name` - (Optional String) The name of the certificate identity pool.
+- `certificate_authority` (Required Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Certificate Authority for this Certificate Pool, for example, `op-123abc`.
+- `display_name` - (Optional String) A human-readable name for the Certificate Pool.
 
 -> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
@@ -42,8 +59,6 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `description` - (String) A description of how this certificate identity pool is used.
-- `external_identifier` - (String) The certificate field that will be used to represent the pool's external identifier for audit logging.
-- `filter` - (String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate identity pool (see [CEL filter for mTLS](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) for more details).
-- `principal` - (String) Represents the federated identity associated with this pool.
-- `state` - (String) The current state of the certificate identity pool.
+- `description` - (Required String) A description of the Certificate Pool.
+- `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identity for audit logging, for example, `UID`.
+- `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate pool.
