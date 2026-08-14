@@ -42,7 +42,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `resource` - (String) Denotes the Confluent Cloud resource definition.
 - `resource_type` - (String) Denotes the Confluent Cloud resource type.
-- `current_state` - (String) Denotes the state of the resource preference. When the resource preference is ENABLED, the user will receive notifications for the Confluent Cloud resource. If the resource preference is DISABLED, the user will not receive any notification for the resource. Note that, you will still receive notifications for `REQUIRED` notification type even when it is DISABLED.
+- `current_state` - (String) Denotes the state of the resource subscription. When the resource subscription is ENABLED, the user will receive notifications of the configured notification type for the Confluent Cloud resource. If the resource subscription is DISABLED, the user will not receive them. Note that, you will still receive notifications for `REQUIRED` notification type even when it is DISABLED.
 - `notification_type` - (Configuration Block) The type of notification to subscribe to. Supports the following:
     - `id` - (String) The ID of the Notification Type.
 - `integrations` - (Set of Strings) Integrations to which notifications are to be sent.

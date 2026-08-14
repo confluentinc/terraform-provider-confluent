@@ -47,7 +47,7 @@ func subscriptionResource() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ENABLED", "DISABLED"}, false),
-				Description:  "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not recieve any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
+				Description:  "Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.",
 			},
 			paramNotificationType: notificationTypeSchema(),
 			paramIntegrations: {
@@ -78,7 +78,6 @@ func subscriptionResource() *schema.Resource {
 
 func subscriptionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
-	createSubscriptionIdentifier := d.Get(paramIntegrations).(string)
 	createSubscriptionRequest := notificationsv1.NewNotificationsV1Subscription()
 
 	// Set required attributes
@@ -107,7 +106,7 @@ func subscriptionCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	// Make API call
 	createdSubscription, resp, err := executeSubscriptionCreate(c.notificationsV1ApiContext(ctx), c, createSubscriptionRequest)
 	if err != nil {
-		return diag.Errorf("error creating subscription %q: %s", createSubscriptionIdentifier, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating subscription: %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdSubscription.GetId())

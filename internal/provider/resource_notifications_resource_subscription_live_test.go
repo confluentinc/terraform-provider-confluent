@@ -71,7 +71,7 @@ func TestAccResourceSubscriptionLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourceSubscriptionResourceLabel := fmt.Sprintf("test_live_resource_subscription_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 	notificationType := os.Getenv("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID")
 	if notificationType == "" {
 		t.Fatal("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID must be set for live tests")
@@ -126,10 +126,10 @@ func TestAccResourceSubscriptionUpdateLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourceSubscriptionResourceLabel := fmt.Sprintf("test_live_resource_subscription_update_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 	notificationType := os.Getenv("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID")
 	resourceValueUpdated := fmt.Sprintf("tf_live_resource_subscription_update_%d", randomSuffix)
-	resourceTypeUpdated := fmt.Sprintf("tf_live_resource_subscription_update_%d", randomSuffix)
+	resourceTypeUpdated := resourceType
 	if notificationType == "" {
 		t.Fatal("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID must be set for live tests")
 	}
@@ -190,7 +190,7 @@ func TestAccResourceSubscriptionMinimalLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourceSubscriptionResourceLabel := fmt.Sprintf("test_live_resource_subscription_minimal_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_subscription_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 	notificationType := os.Getenv("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID")
 	if notificationType == "" {
 		t.Fatal("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID must be set for live tests")

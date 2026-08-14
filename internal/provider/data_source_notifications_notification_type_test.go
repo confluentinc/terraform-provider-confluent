@@ -62,7 +62,7 @@ func TestAccDataSourceNotificationsNotificationType(t *testing.T) {
 	category := "BILLING_LICENSING"
 	description := "Cluster shrink operation is completed"
 	subscriptionPriority := "REQUIRED"
-	isIncludedInPlan := ""
+	isIncludedInPlan := "false"
 	severity := "INFO"
 	notificationTypeDataSourceLabel := "test_notification_type_data_source_label"
 	fullNotificationTypeDataSourceLabel := fmt.Sprintf("data.confluent_notifications_notification_type.%s", notificationTypeDataSourceLabel)

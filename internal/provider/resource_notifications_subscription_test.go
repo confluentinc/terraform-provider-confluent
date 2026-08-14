@@ -120,7 +120,6 @@ func TestAccNotificationsSubscription(t *testing.T) {
 	notificationType := "not-abc123"
 	integrations := "[\"\"]"
 	// in order to test tf update (step #3)
-	currentStateUpdated := "ENABLED_updated"
 	subscriptionResourceLabel := "test_subscription_resource_label"
 	fullSubscriptionResourceLabel := fmt.Sprintf("confluent_notifications_subscription.%s", subscriptionResourceLabel)
 
@@ -152,11 +151,11 @@ func TestAccNotificationsSubscription(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckNotificationsSubscriptionConfig(mockServerUrl, subscriptionResourceLabel, currentStateUpdated, notificationType, integrations),
+				Config: testAccCheckNotificationsSubscriptionConfig(mockServerUrl, subscriptionResourceLabel, currentState, notificationType, integrations),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsSubscriptionExists(fullSubscriptionResourceLabel),
 					resource.TestCheckResourceAttr(fullSubscriptionResourceLabel, "id", subscriptionId),
-					resource.TestCheckResourceAttr(fullSubscriptionResourceLabel, "current_state", currentStateUpdated),
+					resource.TestCheckResourceAttr(fullSubscriptionResourceLabel, "current_state", currentState),
 					resource.TestCheckResourceAttr(fullSubscriptionResourceLabel, "notification_type.0.id", notificationType),
 					resource.TestCheckResourceAttr(fullSubscriptionResourceLabel, "integrations.#", "1"),
 					resource.TestCheckTypeSetElemAttr(fullSubscriptionResourceLabel, "integrations.*", ""),

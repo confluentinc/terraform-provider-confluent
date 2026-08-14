@@ -58,7 +58,7 @@ func resourceSubscriptionResource() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ENABLED", "DISABLED"}, false),
-				Description:  "Denotes the state of the resource preference. When the resource preference is ENABLED, the user will receive notifications for the Confluent Cloud resource. If the resource preference is DISABLED, the user will not receive any notification for the resource. Note that, you will still receive notifications for `REQUIRED` notification type even when it is DISABLED.",
+				Description:  "Denotes the state of the resource subscription. When the resource subscription is ENABLED, the user will receive notifications of the configured notification type for the Confluent Cloud resource. If the resource subscription is DISABLED, the user will not receive them. Note that, you will still receive notifications for `REQUIRED` notification type even when it is DISABLED.",
 			},
 			paramNotificationType: notificationTypeSchema(),
 			paramIntegrations: {

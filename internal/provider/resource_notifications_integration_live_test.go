@@ -82,7 +82,7 @@ func TestAccIntegrationLive(t *testing.T) {
 		CheckDestroy:      testAccCheckIntegrationLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckIntegrationLiveConfig(endpoint, integrationResourceLabel, displayName, apiKey, apiSecret),
+				Config: testAccCheckIntegrationLiveConfig(endpoint, integrationResourceLabel, displayName, slackTargetWebhookUrl, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationLiveExists(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel), "display_name", displayName),
@@ -133,7 +133,7 @@ func TestAccIntegrationUpdateLive(t *testing.T) {
 		CheckDestroy:      testAccCheckIntegrationLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckIntegrationLiveConfig(endpoint, integrationResourceLabel, displayName, apiKey, apiSecret),
+				Config: testAccCheckIntegrationLiveConfig(endpoint, integrationResourceLabel, displayName, slackTargetWebhookUrl, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationLiveExists(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel), "display_name", displayName),
@@ -141,7 +141,7 @@ func TestAccIntegrationUpdateLive(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckIntegrationUpdateLiveConfig(endpoint, integrationResourceLabel, displayNameUpdated, apiKey, apiSecret),
+				Config: testAccCheckIntegrationUpdateLiveConfig(endpoint, integrationResourceLabel, displayNameUpdated, slackTargetWebhookUrl, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationLiveExists(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel), "display_name", displayNameUpdated),
@@ -186,7 +186,7 @@ func TestAccIntegrationMinimalLive(t *testing.T) {
 		CheckDestroy:      testAccCheckIntegrationLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckIntegrationMinimalLiveConfig(endpoint, integrationResourceLabel, displayName, apiKey, apiSecret),
+				Config: testAccCheckIntegrationMinimalLiveConfig(endpoint, integrationResourceLabel, displayName, slackTargetWebhookUrl, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationLiveExists(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_notifications_integration.%s", integrationResourceLabel), "display_name", displayName),

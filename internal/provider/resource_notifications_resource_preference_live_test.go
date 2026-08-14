@@ -71,7 +71,7 @@ func TestAccResourcePreferenceLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourcePreferenceResourceLabel := fmt.Sprintf("test_live_resource_preference_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -119,9 +119,9 @@ func TestAccResourcePreferenceUpdateLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourcePreferenceResourceLabel := fmt.Sprintf("test_live_resource_preference_update_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 	resourceValueUpdated := fmt.Sprintf("tf_live_resource_preference_update_%d", randomSuffix)
-	resourceTypeUpdated := fmt.Sprintf("tf_live_resource_preference_update_%d", randomSuffix)
+	resourceTypeUpdated := resourceType
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -173,7 +173,7 @@ func TestAccResourcePreferenceMinimalLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	resourcePreferenceResourceLabel := fmt.Sprintf("test_live_resource_preference_minimal_%d", randomSuffix)
 	resourceValue := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
-	resourceType := fmt.Sprintf("tf_live_resource_preference_%d", randomSuffix)
+	resourceType := "CONNECTOR"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

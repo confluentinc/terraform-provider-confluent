@@ -121,8 +121,6 @@ func TestAccNotificationsResourcePreference(t *testing.T) {
 	currentState := "ENABLED"
 	// in order to test tf update (step #3)
 	resourceValueUpdated := "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector_updated"
-	resourceTypeUpdated := "CONNECTOR_updated"
-	currentStateUpdated := "ENABLED_updated"
 	resourcePreferenceResourceLabel := "test_resource_preference_resource_label"
 	fullResourcePreferenceResourceLabel := fmt.Sprintf("confluent_notifications_resource_preference.%s", resourcePreferenceResourceLabel)
 
@@ -153,13 +151,13 @@ func TestAccNotificationsResourcePreference(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckNotificationsResourcePreferenceConfig(mockServerUrl, resourcePreferenceResourceLabel, resourceValueUpdated, resourceTypeUpdated, currentStateUpdated),
+				Config: testAccCheckNotificationsResourcePreferenceConfig(mockServerUrl, resourcePreferenceResourceLabel, resourceValueUpdated, resourceType, currentState),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsResourcePreferenceExists(fullResourcePreferenceResourceLabel),
 					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "id", resourcePreferenceId),
 					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "resource", resourceValueUpdated),
-					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "resource_type", resourceTypeUpdated),
-					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "current_state", currentStateUpdated),
+					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "resource_type", resourceType),
+					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "current_state", currentState),
 					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "api_version", "notifications/v1"),
 					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "kind", "ResourcePreference"),
 					resource.TestCheckResourceAttr(fullResourcePreferenceResourceLabel, "resource_name", "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/resource-preference=rp-12345"),

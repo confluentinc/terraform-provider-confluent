@@ -31,7 +31,7 @@ resource "confluent_notifications_subscription" "example" {
 
 The following arguments are supported:
 
-- `current_state` - (Optional String) Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not recieve any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.
+- `current_state` - (Optional String) Denotes the state of the subscription. When the subscription is ENABLED, the user will receive notification on the configured Integrations. If the subscription is DISABLED, the user will not receive any notification for the configured notification type. Note that, you cannot disable a subscription for `REQUIRED` notification type.
 - `notification_type` - (Required Configuration Block) The type of notification to subscribe to. Supports the following:
     - `id` - (Required String) The ID of the Notification Type.
 - `integrations` - (Required Set of Strings) Integrations to which notifications are to be sent.
