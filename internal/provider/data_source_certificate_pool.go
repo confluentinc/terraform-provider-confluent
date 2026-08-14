@@ -61,16 +61,6 @@ func certificatePoolDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate pool.",
 			},
-			paramPrincipal: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Represents the federated identity associated with this pool.",
-			},
-			paramState: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The current state of the identity pool",
-			},
 		},
 	}
 }
