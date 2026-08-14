@@ -1,3 +1,10 @@
+## 2.83.0 (August 12th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.82.0...v2.83.0)
+
+**Bug fixes:**
+* Removed the client-side 300-character limit on the `filter` attribute of the `confluent_identity_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_pool), `confluent_certificate_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_pool), and `confluent_group_mapping` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_group_mapping).
+
 ## 2.82.0 (August 11th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.81.0...v2.82.0)
