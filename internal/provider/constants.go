@@ -186,6 +186,7 @@ const (
 	linkModeConfigKey                                    = "link.mode"
 	linkModeDestination                                  = "DESTINATION"
 	linkModeSource                                       = "SOURCE"
+	listCertificatePoolsPageSize                         = 99
 	listComputePoolsPageSize                             = 99
 	listEndpointsPageSize                                = 100
 	listEnvironmentsPageSize                             = 99
