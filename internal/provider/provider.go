@@ -489,6 +489,24 @@ func environmentDataSourceSchema() *schema.Schema {
 	}
 }
 
+// gatewayDataSourceSchema is shared by the access_point and endpoint data sources. It used to live
+// in data_source_dns_record.go, which was incidental; that file is now generated, and a generated
+// file declares only the helpers its own resource needs.
+func gatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion, additionalUserAgent string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
