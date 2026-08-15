@@ -59,7 +59,7 @@ const (
 	byokKeyLoggingKey                         = "byok_key_id"
 	catalogIntegrationKey                     = "catalog_integration_id"
 	certificateAuthorityKey                   = "certificate_authority_id"
-	certificatePoolKey                        = "certificate_pool_id"
+	certificatePoolLoggingKey                 = "certificate_pool_id"
 	cloudKindInLowercase                      = "cloud"
 	clusterKind                               = "Cluster"
 	clusterLinkLoggingKey                     = "cluster_link_id"
@@ -186,6 +186,7 @@ const (
 	linkModeConfigKey                                    = "link.mode"
 	linkModeDestination                                  = "DESTINATION"
 	linkModeSource                                       = "SOURCE"
+	listCertificatePoolsPageSize                         = 99
 	listComputePoolsPageSize                             = 99
 	listEndpointsPageSize                                = 100
 	listEnvironmentsPageSize                             = 99
