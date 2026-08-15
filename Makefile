@@ -124,14 +124,19 @@ endif
 # assertion rather than whatever else was logging; semaphore.yml tars $(TF_LOG_DIR) as an artifact.
 # The mask must be absolute: go test runs each binary from its own package directory, and the SDK
 # log.Fatals on a mask it cannot open.
+# DEMO BRANCH ONLY (do not merge): testacc is scoped to the single regression test so CI runs
+# just it and goes red quickly and unambiguously on master's read-path bug. On `master` this
+# test FAILS (the surfaced error's "raw response body" is empty); with the one-line fix in the
+# companion PR it PASSES. On the real branches this target runs the whole acceptance suite.
+DEMO_RUN := -run 'TestAccServiceAccountReadErrorSurfacesResponseBody$$'
 .PHONY: testacc
 testacc:
 ifeq ($(CI),true)
 	@$(GOTESTSUM_INSTALL)
 	mkdir -p $(TF_LOG_DIR)
-	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TF_LOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TF_LOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- ./internal/provider/ $(DEMO_RUN) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 else
-	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+	TF_LOG=debug TF_ACC=1 $(GOCMD) test ./internal/provider/ -v $(DEMO_RUN) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 endif
 	@echo "finished testacc"
 
