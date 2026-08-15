@@ -950,6 +950,9 @@ func ResponseHasStatusForbiddenDueToInvalidAPIKey(response *http.Response) bool 
 		if err != nil {
 			return false
 		}
+		// An http.Response body is a one-shot stream; restore it after reading so a later
+		// reader (e.g. createDescriptiveError) still sees the raw body instead of an empty one.
+		response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		bodyString := string(bodyBytes)
 		// Search for a specific error message that indicates the invalid Cloud API Key has been used
 		return strings.Contains(bodyString, "invalid API key")
