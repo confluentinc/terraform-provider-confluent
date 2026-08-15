@@ -111,13 +111,18 @@ build: clean ## Build binary for current OS/ARCH
 # stray stderr parses as framing and invents test cases. --format testname keeps the per-test
 # progress the default pkgname format drops, while still discarding passing tests' output.
 # Unlike live-test*, a failed install fails the build here, since nothing pages on semaphore.yml.
+# DEMO BRANCH ONLY (do not merge): scoped to the single regression test so CI runs just it and
+# goes red quickly and unambiguously on master's 403 body-consumption bug. On `master` this test
+# FAILS (the classifier drains resp.Body and does not restore it); the one-line fix in the
+# companion PR makes it PASS. On the real branches this target runs the whole `./...` suite.
+DEMO_RUN := -run 'TestResponseHasStatusForbiddenDueToInvalidAPIKeyPreservesBody$$'
 .PHONY: test
 test:
 ifeq ($(CI),true)
 	@$(GOTESTSUM_INSTALL)
-	$(GOENV) gotestsum --format testname --junitfile unit-report.xml -- ./...
+	$(GOENV) gotestsum --format testname --junitfile unit-report.xml -- ./internal/provider/ $(DEMO_RUN)
 else
-	$(GOCMD) test ./...
+	$(GOCMD) test ./internal/provider/ $(DEMO_RUN)
 endif
 
 # TF_LOG_PATH_MASK gives each test its own debug log, so a failure's captured output is the
