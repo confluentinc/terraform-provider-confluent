@@ -128,7 +128,13 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 }
 
 // loadServiceAccounts paginates through every page of the List endpoint and returns all
-// service accounts. Used by the provider's bulk state-import flow (importers.go).
+// service accounts.
+//
+// Emitted because terraform.emit_list_all_helper is set, which happens for either of two
+// reasons: a caller outside this file needs it (importers.go is the usual one), or a
+// display_name lookup has to scan client-side, because the SDK's List request either has no
+// DisplayName(...) filter method or could not be checked for one (no --sdk-path given).
+// Which reason applies is not derivable here, so grep for callers before removing it.
 func loadServiceAccounts(ctx context.Context, c *Client) ([]iamv2.IamV2ServiceAccount, error) {
 	serviceAccounts := make([]iamv2.IamV2ServiceAccount, 0)
 
