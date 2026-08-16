@@ -37,7 +37,7 @@ func flinkRegionDataSource() *schema.Resource {
 			paramId: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The ID of the flink region.",
+				Description: "The ID of the Flink region.",
 			},
 			paramCloud: {
 				Type:             schema.TypeString,
@@ -75,31 +75,31 @@ func flinkRegionDataSource() *schema.Resource {
 	}
 }
 
-// flinkRegionDataSourceRead selects a single flink region from the List
+// flinkRegionDataSourceRead selects a single Flink region from the List
 // endpoint using the required filters. The endpoint has no GET-by-id, so the filters are
 // the lookup: zero matches and more than one match are both errors.
 func flinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloud := d.Get(paramCloud).(string)
 	regionName := d.Get(paramRegion).(string)
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading flink region with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName))
+	tflog.Debug(ctx, fmt.Sprintf("Reading Flink region with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName))
 
 	c := meta.(*Client)
 	flinkRegionList, resp, err := executeListFlinkRegions(ctx, c, cloud, regionName)
 	if err != nil {
-		return diag.Errorf("error reading flink region: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Flink region: %s", createDescriptiveError(err, resp))
 	}
 	flinkRegionJson, err := json.Marshal(flinkRegionList)
 	if err != nil {
-		return diag.Errorf("error reading flink region: error marshaling %#v to json: %s", flinkRegionList, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink region: error marshaling %#v to json: %s", flinkRegionList, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched flink regions: %s", flinkRegionJson))
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink regions: %s", flinkRegionJson))
 
 	if len(flinkRegionList.GetData()) == 0 {
-		return diag.Errorf("error reading flink region: there aren't any flink regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName)
+		return diag.Errorf("error reading Flink region: there aren't any Flink regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName)
 	}
 	if len(flinkRegionList.GetData()) > 1 {
-		return diag.Errorf("error reading flink region: there are multiple flink regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName)
+		return diag.Errorf("error reading Flink region: there are multiple Flink regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, regionName)
 	}
 
 	if _, err := setFlinkRegionAttributes(d, flinkRegionList.GetData()[0]); err != nil {
