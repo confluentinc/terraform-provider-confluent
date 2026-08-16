@@ -127,7 +127,13 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 }
 
 // loadGroupMappings paginates through every page of the List endpoint and returns all
-// group mappings. Used by the provider's bulk state-import flow (importers.go).
+// group mappings.
+//
+// Emitted because terraform.emit_list_all_helper is set, which happens for either of two
+// reasons: a caller outside this file needs it (importers.go is the usual one), or a
+// display_name lookup has to scan client-side, because the SDK's List request either has no
+// DisplayName(...) filter method or could not be checked for one (no --sdk-path given).
+// Which reason applies is not derivable here, so grep for callers before removing it.
 func loadGroupMappings(ctx context.Context, c *Client) ([]ssov2.IamV2SsoGroupMapping, error) {
 	groupMappings := make([]ssov2.IamV2SsoGroupMapping, 0)
 
