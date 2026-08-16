@@ -304,7 +304,7 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err, resp))
 		}
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
+		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Subject Mode %q", d.Id()), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 	}
 	return subjectModeRead(ctx, d, meta)
