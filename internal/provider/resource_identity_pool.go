@@ -116,16 +116,20 @@ func identityPoolRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
 	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, identityProviderId, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading identity pool %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityPoolLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading identity pool %q: %s", d.Id(), readErr), map[string]interface{}{identityPoolLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing identity pool %q in TF state because identity pool could not be found on the server", d.Id()), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 
 	identityPoolJson, err := json.Marshal(identityPool)
