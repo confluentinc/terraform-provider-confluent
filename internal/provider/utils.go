@@ -947,6 +947,11 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 func ResponseHasStatusForbiddenDueToInvalidAPIKey(response *http.Response) bool {
 	if ResponseHasExpectedStatusCode(response, http.StatusForbidden) {
 		bodyBytes, err := io.ReadAll(response.Body)
+		// An http.Response body is a one-shot stream: close the original to release it, then
+		// hand later readers (e.g. createDescriptiveError) a fresh reader over the bytes we
+		// consumed, so the raw body is preserved even if the read above returned an error.
+		_ = response.Body.Close()
+		response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		if err != nil {
 			return false
 		}
