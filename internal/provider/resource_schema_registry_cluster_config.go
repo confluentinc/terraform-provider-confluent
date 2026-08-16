@@ -275,7 +275,7 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err, resp))
 		}
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
+		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Schema Registry Cluster Config %q", d.Id()), map[string]interface{}{schemaRegistryClusterConfigLoggingKey: d.Id()})
 	}
 	return schemaRegistryClusterConfigRead(ctx, d, meta)
