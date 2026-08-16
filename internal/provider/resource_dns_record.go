@@ -245,14 +245,18 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	dnsRecord, resp, err := executeDnsRecordRead(ctx, c, environmentId, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS record %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS record %q: %s", d.Id(), readErr), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing DNS record %q in TF state because DNS record could not be found on the server", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error reading DNS record %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading DNS record %q: %s", d.Id(), readErr)
 	}
 
 	dnsRecordJson, err := json.Marshal(dnsRecord)
@@ -262,7 +266,8 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS record %q: %s", d.Id(), dnsRecordJson), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	if _, err := setDnsRecordAttributes(d, dnsRecord); err != nil {
-		return nil, fmt.Errorf("error setting DNS record attributes %q: %s", d.Id(), createDescriptiveError(err, resp))
+		// No resp: a d.Set failure is not an API error, and resp.Body is already consumed.
+		return nil, fmt.Errorf("error setting DNS record attributes %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading DNS record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
