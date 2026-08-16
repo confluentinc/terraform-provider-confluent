@@ -73,7 +73,7 @@ func roleBindingResource() *schema.Resource {
 
 func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
-	createRoleBindingIdentifier := d.Get(paramPrincipal).(string)
+	createRoleBindingIdentifier := d.Get(paramRoleName).(string)
 	createRoleBindingRequest := mdsv2.NewIamV2RoleBinding()
 
 	// Set required attributes
@@ -122,16 +122,20 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 	c := meta.(*Client)
 	roleBinding, resp, err := executeRoleBindingRead(c.mdsV2ApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading role binding %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{roleBindingLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading role binding %q: %s", d.Id(), readErr), map[string]interface{}{roleBindingLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing role binding %q in TF state because role binding could not be found on the server", d.Id()), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 
 	roleBindingJson, err := json.Marshal(roleBinding)
@@ -148,17 +152,16 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 	// Default is only applied during diff computation (plan time), not during an
 	// arbitrary Read — including the post-import Read — so without this, importing
 	// can leave this Optional+Default field genuinely unset rather than defaulted,
-	// which shows up as a spurious diff on the next plan. See the analogous guards
-	// in resource_api_key.go / resource_tag_binding.go (hand-written; same
-	// disable_wait_for_ready shape) and resource_schema_registry_kek.go /
-	// resource_schema.go / resource_schema_registry_dek.go / resource_subject_mode.go
-	// / resource_schema_registry_cluster_mode.go (other Optional+Default flags with
-	// the identical "Must be unset when importing" doc note). Scoped to this
-	// resource-only Read function (not the shared setRoleBindingAttributes) because
-	// the data source reuses that setter too, and its schema has no
-	// paramDisableWaitForReady key at all — calling d.Set
-	// on a key absent from the current ResourceData's schema fails with
-	// "Invalid address to set", not a no-op.
+	// which shows up as a spurious diff on the next plan. Every hand-written
+	// Optional+Default flag in the provider guards itself the same way —
+	// resource_api_key.go / resource_tag_binding.go, and resource_schema.go /
+	// resource_schema_registry_kek.go / resource_schema_registry_dek.go /
+	// resource_subject_mode.go / resource_schema_registry_cluster_mode.go — each
+	// carrying the identical "Must be unset when importing" doc note. Scoped to
+	// this resource-only Read function (not the shared setRoleBindingAttributes)
+	// because the data source reuses that setter too, and its schema has no
+	// paramDisableWaitForReady key at all — calling d.Set on a key absent from the
+	// current ResourceData's schema fails with "Invalid address to set", not a no-op.
 	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
 		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
 			return diag.FromErr(createDescriptiveError(err))
