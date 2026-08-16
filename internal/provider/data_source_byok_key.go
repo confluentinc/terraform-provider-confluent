@@ -33,7 +33,7 @@ func byokKeyDataSource() *schema.Resource {
 			paramId: {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of the byok key.",
+				Description: "The ID of the BYOK key.",
 			},
 			paramAws:   awsByokKeyDataSourceSchema(),
 			paramAzure: azureByokKeyDataSourceSchema(),
@@ -111,21 +111,21 @@ func gcpByokKeyDataSourceSchema() *schema.Schema {
 func byokKeyDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	byokKeyId := d.Get(paramId).(string)
 	if byokKeyId == "" {
-		return diag.Errorf("error reading byok key: byok key id is missing")
+		return diag.Errorf("error reading BYOK key: BYOK key id is missing")
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q=%q", paramId, byokKeyId), map[string]interface{}{byokKeyLoggingKey: byokKeyId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading BYOK key %q=%q", paramId, byokKeyId), map[string]interface{}{byokKeyLoggingKey: byokKeyId})
 
 	c := meta.(*Client)
 	byokKey, resp, err := executeByokKeyRead(c.byokV1ApiContext(ctx), c, byokKeyId)
 	if err != nil {
-		return diag.Errorf("error reading byok key %q: %s", byokKeyId, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading BYOK key %q: %s", byokKeyId, createDescriptiveError(err, resp))
 	}
 	byokKeyJson, err := json.Marshal(byokKey)
 	if err != nil {
-		return diag.Errorf("error reading byok key %q: error marshaling %#v to json: %s", byokKeyId, byokKey, createDescriptiveError(err))
+		return diag.Errorf("error reading BYOK key %q: error marshaling %#v to json: %s", byokKeyId, byokKey, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched byok key %q: %s", byokKeyId, byokKeyJson), map[string]interface{}{byokKeyLoggingKey: byokKeyId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched BYOK key %q: %s", byokKeyId, byokKeyJson), map[string]interface{}{byokKeyLoggingKey: byokKeyId})
 
 	if _, err := setByokKeyAttributes(d, byokKey); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
