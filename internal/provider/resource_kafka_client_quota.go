@@ -40,7 +40,7 @@ func kafkaClientQuotaResource() *schema.Resource {
 			StateContext: kafkaClientQuotaImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramCluster: clusterSchema(),
+			paramKafkaCluster: clusterSchema(),
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -73,7 +73,7 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	// Set required attributes
 	clusterRef := kafkaquotasv1.NewEnvScopedObjectReferenceWithDefaults()
-	clusterRef.SetId(extractStringValueFromBlock(d, paramCluster, paramId))
+	clusterRef.SetId(extractStringValueFromBlock(d, paramKafkaCluster, paramId))
 	spec.SetCluster(*clusterRef)
 	spec.SetDisplayName(d.Get(paramDisplayName).(string))
 	environmentRef := kafkaquotasv1.NewGlobalObjectReferenceWithDefaults()
@@ -101,14 +101,14 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	// Logging
 	createKafkaClientQuotaRequestJson, err := json.Marshal(createKafkaClientQuotaRequest)
 	if err != nil {
-		return diag.Errorf("error creating kafka client quota: error marshaling %#v to json: %s", createKafkaClientQuotaRequest, createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka client quota: error marshaling %#v to json: %s", createKafkaClientQuotaRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Creating new kafka client quota: %s", createKafkaClientQuotaRequestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka client quota: %s", createKafkaClientQuotaRequestJson))
 
 	// Make API call
 	createdKafkaClientQuota, resp, err := executeKafkaClientQuotaCreate(c.kafkaQuotasV1ApiContext(ctx), c, createKafkaClientQuotaRequest)
 	if err != nil {
-		return diag.Errorf("error creating kafka client quota %q: %s", createKafkaClientQuotaIdentifier, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Kafka client quota %q: %s", createKafkaClientQuotaIdentifier, createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdKafkaClientQuota.GetId())
@@ -116,9 +116,9 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	// Logging
 	createdKafkaClientQuotaJson, err := json.Marshal(createdKafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error creating kafka client quota %q: error marshaling %#v to json: %s", d.Id(), createdKafkaClientQuota, createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka client quota %q: error marshaling %#v to json: %s", d.Id(), createdKafkaClientQuota, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating kafka client quota %q: %s", d.Id(), createdKafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka client quota %q: %s", d.Id(), createdKafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterCreate, c.isAcceptanceTestMode, c.isLiveProductionTestMode)
 
 	return kafkaClientQuotaRead(ctx, d, meta)
@@ -130,34 +130,38 @@ func executeKafkaClientQuotaCreate(ctx context.Context, c *Client, kafkaClientQu
 }
 
 func kafkaClientQuotaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	c := meta.(*Client)
 	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.kafkaQuotasV1ApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading kafka client quota %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka client quota %q: %s", d.Id(), readErr), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing kafka client quota %q in TF state because kafka client quota could not be found on the server", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+			tflog.Warn(ctx, fmt.Sprintf("Removing Kafka client quota %q in TF state because Kafka client quota could not be found on the server", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 
 	kafkaClientQuotaJson, err := json.Marshal(kafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error reading kafka client quota %q: error marshaling %#v to json: %s", d.Id(), kafkaClientQuota, createDescriptiveError(err))
+		return diag.Errorf("error reading Kafka client quota %q: error marshaling %#v to json: %s", d.Id(), kafkaClientQuota, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched kafka client quota %q: %s", d.Id(), kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka client quota %q: %s", d.Id(), kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	if _, err := setKafkaClientQuotaAttributes(d, kafkaClientQuota); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	return nil
 }
@@ -170,7 +174,7 @@ func executeKafkaClientQuotaRead(ctx context.Context, c *Client, kafkaClientQuot
 func setKafkaClientQuotaAttributes(d *schema.ResourceData, kafkaClientQuota kafkaquotasv1.KafkaQuotasV1ClientQuota) (*schema.ResourceData, error) {
 	spec := kafkaClientQuota.GetSpec()
 	clusterRef := spec.GetCluster()
-	if err := d.Set(paramCluster, []interface{}{map[string]interface{}{
+	if err := d.Set(paramKafkaCluster, []interface{}{map[string]interface{}{
 		paramId: clusterRef.GetId(),
 	}}); err != nil {
 		return nil, createDescriptiveError(err)
@@ -208,7 +212,7 @@ func setKafkaClientQuotaAttributes(d *schema.ResourceData, kafkaClientQuota kafk
 
 func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramDescription, paramDisplayName, paramPrincipals, paramThroughput) {
-		return diag.Errorf("error updating kafka client quota %q: only %q, %q, %q, %q can be updated", d.Id(), paramDescription, paramDisplayName, paramPrincipals, paramThroughput)
+		return diag.Errorf("error updating Kafka client quota %q: only %q, %q, %q, %q can be updated", d.Id(), paramDescription, paramDisplayName, paramPrincipals, paramThroughput)
 	}
 
 	updateKafkaClientQuotaRequest := kafkaquotasv1.NewKafkaQuotasV1ClientQuotaUpdate()
@@ -241,52 +245,52 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 	updateKafkaClientQuotaRequestJson, err := json.Marshal(updateKafkaClientQuotaRequest)
 	if err != nil {
-		return diag.Errorf("error updating kafka client quota %q: error marshaling %#v to json: %s", d.Id(), updateKafkaClientQuotaRequest, createDescriptiveError(err))
+		return diag.Errorf("error updating Kafka client quota %q: error marshaling %#v to json: %s", d.Id(), updateKafkaClientQuotaRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating kafka client quota %q: %s", d.Id(), updateKafkaClientQuotaRequestJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Updating Kafka client quota %q: %s", d.Id(), updateKafkaClientQuotaRequestJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	c := meta.(*Client)
 	updatedKafkaClientQuota, resp, err := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.UpdateKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx), d.Id()).KafkaQuotasV1ClientQuotaUpdate(*updateKafkaClientQuotaRequest).Execute()
 	if err != nil {
-		return diag.Errorf("error updating kafka client quota %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Kafka client quota %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterUpdate, c.isAcceptanceTestMode, c.isLiveProductionTestMode)
 
 	updatedKafkaClientQuotaJson, err := json.Marshal(updatedKafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error updating kafka client quota %q: error marshaling %#v to json: %s", d.Id(), updatedKafkaClientQuota, createDescriptiveError(err))
+		return diag.Errorf("error updating Kafka client quota %q: error marshaling %#v to json: %s", d.Id(), updatedKafkaClientQuota, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating kafka client quota %q: %s", d.Id(), updatedKafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka client quota %q: %s", d.Id(), updatedKafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	return kafkaClientQuotaRead(ctx, d, meta)
 }
 
 func kafkaClientQuotaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 	c := meta.(*Client)
 	req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.DeleteKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting kafka client quota %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting Kafka client quota %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	return nil
 }
 
 func kafkaClientQuotaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Importing Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if diagnostics := kafkaClientQuotaRead(ctx, d, meta); len(diagnostics) > 0 {
-		return nil, fmt.Errorf("error importing kafka client quota %q: %s", d.Id(), diagnostics[0].Summary)
+		return nil, fmt.Errorf("error importing Kafka client quota %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 func clusterSchema() *schema.Schema {
