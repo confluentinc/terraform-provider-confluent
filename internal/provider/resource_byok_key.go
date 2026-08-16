@@ -36,7 +36,9 @@ const (
 	kindGcpKey   = "GcpKey"
 )
 
-// acceptedKeyVariants defines the list of valid key block types
+// acceptedKeyVariants defines the list of valid, user-settable key
+// block types. Variants the API forbids creating/updating/deleting are Computed-only and
+// excluded here — see OneOfVariant.ReadOnly.
 var acceptedKeyVariants = []string{paramAws, paramAzure, paramGcp}
 
 func byokKeyResource() *schema.Resource {
@@ -146,7 +148,9 @@ func byokKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	createByokKeyRequest := byokv1.NewByokV1Key()
 
 	// Set regular attributes
-	// Detect which key variant is specified
+	// Detect which key variant is specified. Variants the API forbids
+	// creating (OneOfVariant.ReadOnly) are Computed-only and never reach here — a user
+	// can't set them in HCL, so there's nothing to dispatch on.
 	_, isAwsKey := d.GetOk(paramAws)
 	_, isAzureKey := d.GetOk(paramAzure)
 	_, isGcpKey := d.GetOk(paramGcp)
@@ -172,50 +176,50 @@ func byokKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		keyOneOf := byokv1.ByokV1GcpKeyAsByokV1KeyKeyOneOf(byokv1.NewByokV1GcpKey(keyId, kindGcpKey))
 		createByokKeyRequest.SetKey(keyOneOf)
 	default:
-		return diag.Errorf("error creating byok key: expected one of %s, %s, %s params", paramAws, paramAzure, paramGcp)
+		return diag.Errorf("error creating BYOK key: expected one of %s, %s, %s params", paramAws, paramAzure, paramGcp)
 	}
 
 	createByokKeyRequestJson, err := json.Marshal(createByokKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating byok key: error marshaling %#v to json: %s", createByokKeyRequest, createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK key: error marshaling %#v to json: %s", createByokKeyRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Creating new byok key: %s", createByokKeyRequestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Creating new BYOK key: %s", createByokKeyRequestJson))
 
 	createdByokKey, resp, err := executeByokKeyCreate(ctx, c, *createByokKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating byok key %q: %s", keyIdentifier, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating BYOK key %q: %s", keyIdentifier, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdByokKey.GetId())
 
 	createdByokKeyJson, err := json.Marshal(createdByokKey)
 	if err != nil {
-		return diag.Errorf("error creating byok key %q: error marshaling %#v to json: %s", d.Id(), createdByokKey, createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK key %q: error marshaling %#v to json: %s", d.Id(), createdByokKey, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating byok key %q: %s", d.Id(), createdByokKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating BYOK key %q: %s", d.Id(), createdByokKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	return byokKeyRead(ctx, d, meta)
 }
 
 func byokKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	c := meta.(*Client)
 
 	req := c.byokV1Client.KeysByokV1Api.DeleteByokV1Key(c.byokV1ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error deleting byok key %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting BYOK key %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	return nil
 }
 
 func byokKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Reading BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 	if _, err := readByokKeyAndSetAttributes(ctx, d, meta); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading byok key %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading BYOK key %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 	return nil
 }
@@ -233,26 +237,31 @@ func readByokKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	c := meta.(*Client)
 	byokKey, resp, err := executeByokKeyRead(ctx, c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading byok key %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading BYOK key %q: %s", d.Id(), readErr), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing byok key %q in TF state because byok key could not be found on the server", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+			tflog.Warn(ctx, fmt.Sprintf("Removing BYOK key %q in TF state because BYOK key could not be found on the server", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error reading byok key %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading BYOK key %q: %s", d.Id(), readErr)
 	}
 
 	byokKeyJson, err := json.Marshal(byokKey)
 	if err != nil {
-		return nil, fmt.Errorf("error reading byok key %q: error marshaling %#v to json: %s", byokKey.GetId(), byokKey, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading BYOK key %q: error marshaling %#v to json: %s", byokKey.GetId(), byokKey, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched byok key %q: %s", d.Id(), byokKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched BYOK key %q: %s", d.Id(), byokKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	if _, err := setByokKeyAttributes(d, byokKey); err != nil {
-		return nil, fmt.Errorf("error setting byok key attributes %q: %s", d.Id(), createDescriptiveError(err, resp))
+		// No resp: a d.Set failure is not an API error, and resp.Body is already consumed.
+		return nil, fmt.Errorf("error setting BYOK key attributes %q: %s", d.Id(), createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -291,13 +300,13 @@ func setByokKeyAttributes(d *schema.ResourceData, byokKey byokv1.ByokV1Key) (*sc
 }
 
 func byokKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Importing BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if _, err := readByokKeyAndSetAttributes(ctx, d, meta); err != nil {
-		return nil, fmt.Errorf("error importing byok key %q: %s", d.Id(), err)
+		return nil, fmt.Errorf("error importing BYOK key %q: %s", d.Id(), err)
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing byok key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing BYOK key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
