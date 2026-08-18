@@ -757,6 +757,150 @@ func TestAccDataSourceEndpointNextEmptyString(t *testing.T) {
 	})
 }
 
+func TestAccDataSourceEndpointEmptyEnvironmentId(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// No stub is registered: environment.id = "" must fail before any HTTP request is made
+	// (extractStringValueFromBlock uses GetOk, which can't distinguish "unset" from "set to
+	// the zero value", so an explicit empty string collapses to the same "" as if the
+	// Required block were missing entirely). A request hitting this unstubbed URL would fail
+	// with a different, unstubbed-request error rather than matching ExpectError below.
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckDataSourceEndpointEmptyEnvironmentId(mockServerUrl, endpointResourceLabel),
+				ExpectError: regexp.MustCompile("environment ID is required in filter"),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceEndpointNextMalformedURL(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// Only one stub is registered: "next" is a non-empty URL missing a page_token query
+	// param, so extractPageToken must fail loudly rather than the loop silently treating it
+	// as the last page or looping on an unstubbed request.
+	readEndpointsResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints_next_malformed.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
+		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEndpointsPageSize))).
+		InScenario(endpointDataSourceScenarioName).
+		WillReturn(
+			string(readEndpointsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckDataSourceEndpointKafka(mockServerUrl, endpointResourceLabel),
+				ExpectError: regexp.MustCompile("could not parse the value"),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceEndpointPaginationWithFilter(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// Both stubs require the "cloud" filter, confirming loadEndpoints carries optional
+	// filters through every page of the loop, not just the first request.
+	readEndpointsPageOneResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints_page_1.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
+		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
+		WithQueryParam("cloud", wiremock.EqualTo(testEndpointCloud)).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEndpointsPageSize))).
+		InScenario(endpointDataSourceScenarioName).
+		WillReturn(
+			string(readEndpointsPageOneResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readEndpointsPageTwoResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints_page_2.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
+		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
+		WithQueryParam("cloud", wiremock.EqualTo(testEndpointCloud)).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEndpointsPageSize))).
+		WithQueryParam("page_token", wiremock.EqualTo(testEndpointPageToken)).
+		InScenario(endpointDataSourceScenarioName).
+		WillReturn(
+			string(readEndpointsPageTwoResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	fullEndpointDataSourceLabel := fmt.Sprintf("data.confluent_endpoint.%s", endpointResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceEndpointCloudOnly(mockServerUrl, endpointResourceLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEndpointExists(fullEndpointDataSourceLabel),
+					resource.TestCheckResourceAttr(fullEndpointDataSourceLabel, "endpoints.#", "2"),
+					resource.TestCheckResourceAttr(fullEndpointDataSourceLabel, "endpoints.0.id", "ep-page1"),
+					resource.TestCheckResourceAttr(fullEndpointDataSourceLabel, "endpoints.1.id", "ep-page2"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckDataSourceEndpointKafka(mockServerUrl, label string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
@@ -910,6 +1054,22 @@ func testAccCheckDataSourceEndpointAllFiltersCombined(mockServerUrl, label strin
 		}
 	}
 	`, mockServerUrl, label, testEndpointEnvironmentId, testEndpointServiceKafka, testEndpointCloud, testEndpointRegion, testEndpointResourceId)
+}
+
+func testAccCheckDataSourceEndpointEmptyEnvironmentId(mockServerUrl, label string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	data "confluent_endpoint" "%s" {
+		filter {
+			environment {
+				id = ""
+			}
+			service = "%s"
+		}
+	}
+	`, mockServerUrl, label, testEndpointServiceKafka)
 }
 
 func testAccCheckEndpointExists(resourceName string) resource.TestCheckFunc {
