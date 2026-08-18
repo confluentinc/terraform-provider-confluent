@@ -33,12 +33,6 @@ import (
 	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
-// Timeout constants for async operations
-const (
-	flinkV2APICreateTimeout = 1 * time.Hour
-	flinkV2APIDeleteTimeout = 1 * time.Hour
-)
-
 func computePoolResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: computePoolCreate,
@@ -99,8 +93,8 @@ func computePoolResource() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(flinkV2APICreateTimeout),
-			Delete: schema.DefaultTimeout(flinkV2APIDeleteTimeout),
+			Create: schema.DefaultTimeout(fcpmAPICreateTimeout),
+			Delete: schema.DefaultTimeout(fcpmAPIDeleteTimeout),
 		},
 	}
 }
@@ -358,7 +352,7 @@ func waitForComputePoolToBeDeleted(ctx context.Context, c *Client, environmentId
 		Pending:      []string{"DELETING"},
 		Target:       []string{"DELETED"},
 		Refresh:      computePoolDeleteStatus(ctx, c, environmentId, computePoolId),
-		Timeout:      flinkV2APIDeleteTimeout,
+		Timeout:      fcpmAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
