@@ -43,6 +43,17 @@ func endpointDataSource() *schema.Resource {
 				Description: "Endpoint filters.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						paramEnvironment: environmentDataSourceSchema(),
+						paramService: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Filter the results by exact match for service.",
+						},
+						paramEndpointResource: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Filter the results by exact match for resource.",
+						},
 						paramCloud: {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -53,21 +64,10 @@ func endpointDataSource() *schema.Resource {
 							Optional:    true,
 							Description: "Filter the results by exact match for region.",
 						},
-						paramService: {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Filter the results by exact match for service.",
-						},
 						paramIsPrivate: {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Description: "Filter the results by whether the endpoint is private (true) or public (false). If not specified, returns both private and public endpoints.",
-						},
-						paramEnvironment: environmentDataSourceSchema(),
-						paramEndpointResource: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Filter the results by exact match for resource.",
 						},
 					},
 				},
@@ -87,6 +87,16 @@ func endpointsSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The ID of the Endpoint.",
+				},
+				paramApiVersion: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "API Version defines the schema version of this representation of a resource.",
+				},
+				paramKind: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Kind defines the object this REST resource represents.",
 				},
 				paramCloud: {
 					Type:        schema.TypeString,
@@ -167,16 +177,6 @@ func endpointsSchema() *schema.Schema {
 					Computed:    true,
 					Description: "The access_point to which this belongs.",
 				},
-				paramApiVersion: {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "API Version defines the schema version of this representation of a resource.",
-				},
-				paramKind: {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Kind defines the object this REST resource represents.",
-				},
 			},
 		},
 		Description: "List of endpoints matching the filter criteria.",
@@ -184,25 +184,26 @@ func endpointsSchema() *schema.Schema {
 }
 
 func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	environmentId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramEnvironment), paramId)
+	if environmentId == "" {
+		return diag.Errorf("error reading endpoints: environment ID is required in filter")
+	}
+
+	service := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramService)).(string)
+	resource := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramEndpointResource)).(string)
 	cloud := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramCloud)).(string)
 	region := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramRegion)).(string)
-	service := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramService)).(string)
 	var isPrivate *bool
 	// GetOkExists distinguishes an unset boolean filter from an explicit false.
 	if v, exists := d.GetOkExists(fmt.Sprintf("%s.0.%s", paramFilter, paramIsPrivate)); exists {
 		val := v.(bool)
 		isPrivate = &val
 	}
-	environmentId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramEnvironment), paramId)
-	if environmentId == "" {
-		return diag.Errorf("error reading endpoints: environment ID is required in filter")
-	}
-	resource := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramEndpointResource)).(string)
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading endpoints with filters: cloud=%v region=%v service=%v is_private=%v environment=%v resource=%v", cloud, region, service, isPrivate, environmentId, resource))
 
 	c := meta.(*Client)
-	endpoints, err := loadEndpoints(c.endpointV1ApiContext(ctx), c, cloud, region, service, isPrivate, environmentId, resource)
+	endpoints, err := loadEndpoints(c.endpointV1ApiContext(ctx), c, environmentId, service, resource, cloud, region, isPrivate)
 	if err != nil {
 		return diag.Errorf("error reading endpoints: %s", createDescriptiveError(err))
 	}
@@ -211,6 +212,8 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	for i, endpoint := range endpoints {
 		endpointData := map[string]interface{}{
 			paramId:             endpoint.GetId(),
+			paramApiVersion:     endpoint.GetApiVersion(),
+			paramKind:           endpoint.GetKind(),
 			paramCloud:          endpoint.GetCloud(),
 			paramRegion:         endpoint.GetRegion(),
 			paramService:        endpoint.GetService(),
@@ -218,8 +221,6 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 			paramConnectionType: endpoint.GetConnectionType(),
 			paramEndpoint:       endpoint.GetEndpoint(),
 			paramEndpointType:   endpoint.GetEndpointType(),
-			paramApiVersion:     endpoint.GetApiVersion(),
-			paramKind:           endpoint.GetKind(),
 		}
 		if endpoint.HasEnvironment() {
 			environment := endpoint.GetEnvironment()
@@ -275,13 +276,13 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 
 // loadEndpoints collects every endpoint matching the filters, following
 // the List endpoint's pagination to the last page.
-func loadEndpoints(ctx context.Context, c *Client, cloud string, region string, service string, isPrivate *bool, environmentId string, resource string) ([]endpointv1.EndpointV1Endpoint, error) {
+func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool) ([]endpointv1.EndpointV1Endpoint, error) {
 	endpoints := make([]endpointv1.EndpointV1Endpoint, 0)
 
 	allEndpointsAreCollected := false
 	pageToken := ""
 	for !allEndpointsAreCollected {
-		endpointsPageList, resp, err := executeListEndpoints(ctx, c, cloud, region, service, isPrivate, environmentId, resource, pageToken)
+		endpointsPageList, resp, err := executeListEndpoints(ctx, c, environmentId, service, resource, cloud, region, isPrivate, pageToken)
 		if err != nil {
 			return nil, fmt.Errorf("error reading endpoints: %s", createDescriptiveError(err, resp))
 		}
@@ -306,8 +307,11 @@ func loadEndpoints(ctx context.Context, c *Client, cloud string, region string, 
 	return endpoints, nil
 }
 
-func executeListEndpoints(ctx context.Context, c *Client, cloud string, region string, service string, isPrivate *bool, environmentId string, resource string, pageToken string) (endpointv1.EndpointV1EndpointList, *http.Response, error) {
-	request := c.endpointV1Client.EndpointsEndpointV1Api.ListEndpointV1Endpoints(ctx).Service(service).Environment(environmentId).PageSize(listEndpointsPageSize)
+func executeListEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool, pageToken string) (endpointv1.EndpointV1EndpointList, *http.Response, error) {
+	request := c.endpointV1Client.EndpointsEndpointV1Api.ListEndpointV1Endpoints(ctx).Environment(environmentId).Service(service).PageSize(listEndpointsPageSize)
+	if resource != "" {
+		request = request.Resource(resource)
+	}
 	if cloud != "" {
 		request = request.Cloud(cloud)
 	}
@@ -316,9 +320,6 @@ func executeListEndpoints(ctx context.Context, c *Client, cloud string, region s
 	}
 	if isPrivate != nil {
 		request = request.IsPrivate(*isPrivate)
-	}
-	if resource != "" {
-		request = request.Resource(resource)
 	}
 	if pageToken != "" {
 		request = request.PageToken(pageToken)
