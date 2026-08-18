@@ -1,0 +1,22 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-flink-123",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "FLINK",
+      "is_private": false,
+      "connection_type": "PUBLIC",
+      "endpoint": "https://flink.us-west-2.aws.confluent.cloud",
+      "endpoint_type": "LANGUAGE_SERVICE",
+      "environment": {
+        "id": "env-abc123"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {}
+}

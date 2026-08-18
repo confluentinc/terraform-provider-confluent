@@ -1,0 +1,25 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-page2",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "KAFKA",
+      "is_private": false,
+      "connection_type": "PRIVATE_LINK",
+      "endpoint": "pkc-page2.us-west-2.aws.confluent.cloud:9092",
+      "endpoint_type": "BOOTSTRAP",
+      "environment": {
+        "id": "env-abc123"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/endpoint/v1/endpoints",
+    "total_size": 2
+  }
+}
