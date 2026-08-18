@@ -1,0 +1,22 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-pub123",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "KAFKA",
+      "is_private": false,
+      "connection_type": "PUBLIC",
+      "endpoint": "pkc-abc123.us-west-2.aws.confluent.cloud:9092",
+      "endpoint_type": "BOOTSTRAP",
+      "environment": {
+        "id": "env-abc123"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {}
+}
