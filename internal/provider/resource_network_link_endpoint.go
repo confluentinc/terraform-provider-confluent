@@ -133,16 +133,20 @@ func networkLinkEndpointRead(ctx context.Context, d *schema.ResourceData, meta i
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	networkLinkEndpoint, resp, err := executeNetworkLinkEndpointRead(c.networkingV1ApiContext(ctx), c, environmentId, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading network link endpoint %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: d.Id()})
-
+		// Classify before describing: on a 403 isNonKafkaRestApiResourceNotFound reads resp.Body to
+		// tell an invalid API key from a real not-found, and createDescriptiveError drains it.
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		// One call only: createDescriptiveError drains resp.Body, so a second call loses it.
+		readErr := createDescriptiveError(err, resp)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading network link endpoint %q: %s", d.Id(), readErr), map[string]interface{}{networkLinkEndpointLoggingKey: d.Id()})
+
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing network link endpoint %q in TF state because network link endpoint could not be found on the server", d.Id()), map[string]interface{}{networkLinkEndpointLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(readErr)
 	}
 
 	networkLinkEndpointJson, err := json.Marshal(networkLinkEndpoint)

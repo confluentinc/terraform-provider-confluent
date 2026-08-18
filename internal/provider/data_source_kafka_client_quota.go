@@ -33,7 +33,7 @@ func kafkaClientQuotaDataSource() *schema.Resource {
 			paramId: {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of the kafka client quota.",
+				Description: "The ID of the Kafka client quota.",
 			},
 
 			paramEnvironment: {
@@ -48,7 +48,7 @@ func kafkaClientQuotaDataSource() *schema.Resource {
 					},
 				},
 			},
-			paramCluster: {
+			paramKafkaCluster: {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
@@ -100,18 +100,18 @@ func kafkaClientQuotaDataSource() *schema.Resource {
 
 func kafkaClientQuotaDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	kafkaClientQuotaId := d.Get(paramId).(string)
-	tflog.Debug(ctx, fmt.Sprintf("Reading kafka client quota %q=%q", paramId, kafkaClientQuotaId), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka client quota %q=%q", paramId, kafkaClientQuotaId), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 
 	c := meta.(*Client)
 	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.kafkaQuotasV1ApiContext(ctx), c, kafkaClientQuotaId)
 	if err != nil {
-		return diag.Errorf("error reading kafka client quota %q: %s", kafkaClientQuotaId, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Kafka client quota %q: %s", kafkaClientQuotaId, createDescriptiveError(err, resp))
 	}
 	kafkaClientQuotaJson, err := json.Marshal(kafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error reading kafka client quota %q: error marshaling %#v to json: %s", kafkaClientQuotaId, kafkaClientQuota, createDescriptiveError(err))
+		return diag.Errorf("error reading Kafka client quota %q: error marshaling %#v to json: %s", kafkaClientQuotaId, kafkaClientQuota, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched kafka client quota %q: %s", kafkaClientQuotaId, kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka client quota %q: %s", kafkaClientQuotaId, kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 
 	if _, err := setKafkaClientQuotaAttributes(d, kafkaClientQuota); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
