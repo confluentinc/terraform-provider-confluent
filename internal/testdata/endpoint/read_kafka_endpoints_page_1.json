@@ -1,0 +1,26 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-page1",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "KAFKA",
+      "is_private": true,
+      "connection_type": "PRIVATE_LINK",
+      "endpoint": "https://lkc-page1-ap12345.us-west-2.aws.accesspoint.glb.confluent.cloud:443",
+      "endpoint_type": "REST",
+      "environment": {
+        "id": "env-abc123"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/endpoint/v1/endpoints",
+    "next": "https://api.confluent.cloud/endpoint/v1/endpoints?page_token=eyJpZCI6ImVwLXBhZ2UxIn0&environment=env-abc123&service=KAFKA",
+    "total_size": 2
+  }
+}
