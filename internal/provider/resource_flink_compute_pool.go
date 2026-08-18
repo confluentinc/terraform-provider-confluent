@@ -53,7 +53,7 @@ func computePoolResource() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateFunc:     validation.StringInSlice([]string{"AWS", "GCP", "AZURE"}, false),
+				ValidateFunc:     validation.StringInSlice(acceptedCloudProviders, false),
 				DiffSuppressFunc: suppressSameValueIgnoringCase,
 				Description:      "The cloud service provider that runs the compute pool.",
 			},
