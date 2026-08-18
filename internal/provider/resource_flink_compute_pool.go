@@ -113,9 +113,7 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	spec.SetRegion(d.Get(paramRegion).(string))
 
 	// Set optional attributes
-	if _, ok := d.GetOk(paramDefaultPool); ok {
-		spec.SetDefaultPool(d.Get(paramDefaultPool).(bool))
-	}
+	spec.SetDefaultPool(d.Get(paramDefaultPool).(bool))
 	spec.SetMaxCfu(int32(d.Get(paramMaxCfu).(int)))
 
 	createComputePoolRequest := &flinkv2.FcpmV2ComputePool{Spec: spec}
