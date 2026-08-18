@@ -1,0 +1,37 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-noenv",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "KAFKA",
+      "is_private": false,
+      "connection_type": "PUBLIC",
+      "endpoint": "pkc-noenv.us-west-2.aws.confluent.cloud:9092",
+      "endpoint_type": "BOOTSTRAP"
+    },
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-nokind",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "KAFKA",
+      "is_private": true,
+      "connection_type": "PRIVATE_LINK",
+      "endpoint": "https://lkc-def456-ap12345.us-west-2.aws.accesspoint.glb.confluent.cloud:443",
+      "endpoint_type": "REST",
+      "environment": {
+        "id": "env-abc123"
+      },
+      "resource": {
+        "id": "lkc-def456"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {}
+}
