@@ -73,7 +73,7 @@ func computePoolResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Indicate whether the Flink compute pool is a default compute pool or not.",
 				Optional:    true,
-				Computed:    true,
+				Default:     false,
 			},
 			paramEnvironment: environmentSchema(),
 			paramApiVersion: {
