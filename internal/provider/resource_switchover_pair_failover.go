@@ -74,7 +74,13 @@ func switchoverPairFailoverResource() *schema.Resource {
 				Computed:    true,
 				Description: "The lifecycle phase of the switchover pair after the failover was triggered (transitions to `SWITCHING`).",
 			},
-			paramEnvironment: environmentSchema(),
+			paramEnvironmentCrn: {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The CRN of the environment that owns the switchover pair.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -83,7 +89,7 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*Client)
 
 	switchoverPairId := d.Get(paramSwitchoverPairId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	activeMember := d.Get(paramActiveMember).(string)
 	failoverType := d.Get(paramFailoverType).(string)
 
@@ -91,9 +97,11 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error triggering switchover pair failover: %q is required when %q is %q or %q", paramActiveMember, paramFailoverType, "CLEAN", "UNCLEAN")
 	}
 
+	// The :failover body carries the environment as a CRN (ORC-9794), unlike other operations which
+	// take it as a bare query parameter.
 	failoverSpec := switchoverv1.SwitchoverV1SwitchoverPairFailoverRequestSpec{
-		Environment:  environmentId,
-		FailoverType: switchoverv1.PtrString(failoverType),
+		EnvironmentCrn: environmentCrn,
+		FailoverType:   failoverType,
 	}
 	if activeMember != "" {
 		failoverSpec.ActiveMember = switchoverv1.PtrString(activeMember)
@@ -125,7 +133,7 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 func switchoverPairFailoverRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	switchoverPairId := d.Get(paramSwitchoverPairId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramEnvironmentCrn).(string))
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover pair failover %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: switchoverPairId})
 
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.GetSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), switchoverPairId).Environment(environmentId)
