@@ -46,11 +46,11 @@ func switchoverEndpointResource() *schema.Resource {
 				Description:  "A human-readable name for the switchover endpoint.",
 				ValidateFunc: validation.StringLenBetween(1, 256),
 			},
-			paramSwitchoverPairId: {
+			paramParentResourceCrn: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The ID of the switchover pair this endpoint is bound to.",
+				Description:  "The CRN of the switchover pair this endpoint is bound to. The CRN carries the pair's environment.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramTarget: {
@@ -81,6 +81,21 @@ func switchoverEndpointResource() *schema.Resource {
 							Computed:    true,
 							Description: "The resolved hostname for this endpoint. Set by the Switchover service.",
 						},
+						paramCloud: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The cloud provider this endpoint resolves to. Set by the Switchover service.",
+						},
+						paramRegion: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The cloud region this endpoint resolves to. Set by the Switchover service.",
+						},
+						paramConnectionType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The connection type this endpoint resolves to. Set by the Switchover service.",
+						},
 						paramEndpointFilter: {
 							Type:        schema.TypeList,
 							Required:    true,
@@ -97,17 +112,17 @@ func switchoverEndpointResource() *schema.Resource {
 										Description:  "Whether the endpoint is private or public.",
 										ValidateFunc: validation.StringInSlice([]string{"private", "public"}, false),
 									},
-									paramNetworkId: {
+									paramNetworkCrn: {
 										Type:        schema.TypeString,
 										Optional:    true,
 										ForceNew:    true,
-										Description: "The network ID, when applicable.",
+										Description: "The CRN of the network, for network-based private endpoints.",
 									},
-									paramAccessPoint: {
+									paramAccessPointCrn: {
 										Type:        schema.TypeString,
 										Optional:    true,
 										ForceNew:    true,
-										Description: "The network access point ID, for access-point (PNI) endpoints.",
+										Description: "The CRN of the network access point, for access-point (PNI) endpoints.",
 									},
 								},
 							},
@@ -120,7 +135,6 @@ func switchoverEndpointResource() *schema.Resource {
 				Computed:    true,
 				Description: "The lifecycle phase of the switchover endpoint.",
 			},
-			paramEnvironment: environmentSchema(),
 		},
 	}
 }
@@ -129,15 +143,15 @@ func switchoverEndpointCreate(ctx context.Context, d *schema.ResourceData, meta 
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	switchoverPairId := d.Get(paramSwitchoverPairId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	parentResourceCrn := d.Get(paramParentResourceCrn).(string)
 	endpoints := buildSwitchoverEndpoints(d)
 
+	// The endpoint's environment travels inside parent_resource_crn (the pair CRN); the create body
+	// does not take a separate environment field.
 	spec := &switchoverv1.SwitchoverV1SwitchoverEndpointSpec{
-		DisplayName:      switchoverv1.PtrString(displayName),
-		Environment:      switchoverv1.PtrString(environmentId),
-		SwitchoverPairId: switchoverv1.PtrString(switchoverPairId),
-		Endpoints:        &endpoints,
+		DisplayName:       switchoverv1.PtrString(displayName),
+		ParentResourceCrn: switchoverv1.PtrString(parentResourceCrn),
+		Endpoints:         &endpoints,
 	}
 	if target := d.Get(paramTarget).(string); target != "" {
 		spec.Target = switchoverv1.PtrString(target)
@@ -163,10 +177,10 @@ func switchoverEndpointCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func switchoverEndpointRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	parentResourceCrn := d.Get(paramParentResourceCrn).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 
-	if _, err := readSwitchoverEndpointAndSetAttributes(ctx, d, meta, environmentId, d.Id()); err != nil {
+	if _, err := readSwitchoverEndpointAndSetAttributes(ctx, d, meta, parentResourceCrn, d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading switchover endpoint %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 	return nil
@@ -178,7 +192,7 @@ func switchoverEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	c := meta.(*Client)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramParentResourceCrn).(string))
 
 	updateRequest := switchoverv1.SwitchoverV1SwitchoverEndpointUpdateRequest{
 		Spec: switchoverv1.SwitchoverV1SwitchoverEndpointUpdateRequestSpec{
@@ -197,7 +211,7 @@ func switchoverEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 func switchoverEndpointDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramParentResourceCrn).(string))
 	tflog.Debug(ctx, fmt.Sprintf("Deleting switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 
 	req := c.switchoverV1Client.SwitchoverEndpointsSwitchoverV1Api.DeleteSwitchoverV1SwitchoverEndpoint(c.switchoverV1ApiContext(ctx), d.Id()).Environment(environmentId)
@@ -212,26 +226,32 @@ func switchoverEndpointDelete(ctx context.Context, d *schema.ResourceData, meta 
 func switchoverEndpointImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 
-	parts := strings.Split(d.Id(), "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing switchover endpoint: invalid format: expected '<env ID>/<switchover endpoint ID>'")
+	// The pair is supplied as a full CRN (which itself contains slashes), so split on the final "/"
+	// that separates it from the endpoint ID: "<parent resource CRN>/<switchover endpoint ID>".
+	idx := strings.LastIndex(d.Id(), "/")
+	if idx <= 0 || idx == len(d.Id())-1 {
+		return nil, fmt.Errorf("error importing switchover endpoint: invalid format: expected '<parent resource CRN>/<switchover endpoint ID>'")
 	}
-	environmentId := parts[0]
-	switchoverEndpointId := parts[1]
+	parentResourceCrn := d.Id()[:idx]
+	switchoverEndpointId := d.Id()[idx+1:]
 	d.SetId(switchoverEndpointId)
+	if err := d.Set(paramParentResourceCrn, parentResourceCrn); err != nil {
+		return nil, err
+	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readSwitchoverEndpointAndSetAttributes(ctx, d, meta, environmentId, switchoverEndpointId); err != nil {
+	if _, err := readSwitchoverEndpointAndSetAttributes(ctx, d, meta, parentResourceCrn, switchoverEndpointId); err != nil {
 		return nil, fmt.Errorf("error importing switchover endpoint %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
-func readSwitchoverEndpointAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, id string) ([]*schema.ResourceData, error) {
+func readSwitchoverEndpointAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, parentResourceCrn, id string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
+	environmentId := extractEnvironmentIdFromCrn(parentResourceCrn)
 	req := c.switchoverV1Client.SwitchoverEndpointsSwitchoverV1Api.GetSwitchoverV1SwitchoverEndpoint(c.switchoverV1ApiContext(ctx), id).Environment(environmentId)
 	endpoint, resp, err := req.Execute()
 	if err != nil {
@@ -244,7 +264,7 @@ func readSwitchoverEndpointAndSetAttributes(ctx context.Context, d *schema.Resou
 		return nil, err
 	}
 
-	if _, err := setSwitchoverEndpointAttributes(d, endpoint, environmentId); err != nil {
+	if _, err := setSwitchoverEndpointAttributes(d, endpoint, parentResourceCrn); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -252,12 +272,17 @@ func readSwitchoverEndpointAndSetAttributes(ctx context.Context, d *schema.Resou
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSwitchoverEndpointAttributes(d *schema.ResourceData, endpoint switchoverv1.SwitchoverV1SwitchoverEndpoint, environmentId string) (*schema.ResourceData, error) {
+func setSwitchoverEndpointAttributes(d *schema.ResourceData, endpoint switchoverv1.SwitchoverV1SwitchoverEndpoint, parentResourceCrn string) (*schema.ResourceData, error) {
 	spec := endpoint.GetSpec()
 	if err := d.Set(paramDisplayName, spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramSwitchoverPairId, spec.GetSwitchoverPairId()); err != nil {
+	// Prefer the parent CRN returned by the API; fall back to the one we were called with
+	// (e.g. on import, when the response does not echo it back).
+	if returned := spec.GetParentResourceCrn(); returned != "" {
+		parentResourceCrn = returned
+	}
+	if err := d.Set(paramParentResourceCrn, parentResourceCrn); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramTarget, spec.GetTarget()); err != nil {
@@ -268,9 +293,6 @@ func setSwitchoverEndpointAttributes(d *schema.ResourceData, endpoint switchover
 	}
 	status := endpoint.GetStatus()
 	if err := d.Set(paramPhase, status.GetPhase()); err != nil {
-		return nil, err
-	}
-	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, environmentId, d); err != nil {
 		return nil, err
 	}
 
@@ -287,11 +309,11 @@ func buildSwitchoverEndpoints(d *schema.ResourceData) []switchoverv1.SwitchoverV
 		if rawFilters, ok := block[paramEndpointFilter].([]interface{}); ok && len(rawFilters) == 1 {
 			filterBlock := rawFilters[0].(map[string]interface{})
 			filter.Type = filterBlock[paramType].(string)
-			if networkId, ok := filterBlock[paramNetworkId].(string); ok && networkId != "" {
-				filter.NetworkId = switchoverv1.PtrString(networkId)
+			if networkCrn, ok := filterBlock[paramNetworkCrn].(string); ok && networkCrn != "" {
+				filter.NetworkCrn = switchoverv1.PtrString(networkCrn)
 			}
-			if accessPoint, ok := filterBlock[paramAccessPoint].(string); ok && accessPoint != "" {
-				filter.AccessPoint = switchoverv1.PtrString(accessPoint)
+			if accessPointCrn, ok := filterBlock[paramAccessPointCrn].(string); ok && accessPointCrn != "" {
+				filter.AccessPointCrn = switchoverv1.PtrString(accessPointCrn)
 			}
 		}
 		endpoints[i] = switchoverv1.SwitchoverV1EndpointConfig{
@@ -307,12 +329,15 @@ func flattenSwitchoverEndpoints(endpoints []switchoverv1.SwitchoverV1EndpointCon
 	for i, endpoint := range endpoints {
 		filter := endpoint.GetEndpointFilter()
 		result[i] = map[string]interface{}{
-			paramName:     endpoint.GetName(),
-			paramHostname: endpoint.GetHostname(),
+			paramName:           endpoint.GetName(),
+			paramHostname:       endpoint.GetHostname(),
+			paramCloud:          endpoint.GetCloud(),
+			paramRegion:         endpoint.GetRegion(),
+			paramConnectionType: endpoint.GetConnectionType(),
 			paramEndpointFilter: []interface{}{map[string]interface{}{
-				paramType:        filter.GetType(),
-				paramNetworkId:   filter.GetNetworkId(),
-				paramAccessPoint: filter.GetAccessPoint(),
+				paramType:           filter.GetType(),
+				paramNetworkCrn:     filter.GetNetworkCrn(),
+				paramAccessPointCrn: filter.GetAccessPointCrn(),
 			}},
 		}
 	}
