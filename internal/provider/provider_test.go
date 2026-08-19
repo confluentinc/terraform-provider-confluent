@@ -58,6 +58,61 @@ func TestProvider_InternalValidate(t *testing.T) {
 	}
 }
 
+func TestBuildUserAgent(t *testing.T) {
+	// p.UserAgent appends the TF_APPEND_USER_AGENT env var if set, which would leak into the
+	// assertions below, so make sure it is unset for this test.
+	t.Setenv("TF_APPEND_USER_AGENT", "")
+
+	p := New(testVersion, "")()
+
+	base := buildUserAgent(p, testVersion, "", "")
+	if !strings.Contains(base, terraformProviderUserAgent) {
+		t.Fatalf("expected base user agent to contain %q, got %q", terraformProviderUserAgent, base)
+	}
+
+	tests := []struct {
+		name                string
+		additionalUserAgent string
+		appendUserAgent     string
+		wantPrefix          string
+		wantSuffix          string
+	}{
+		{
+			name:            "append_user_agent is added as the last token",
+			appendUserAgent: "confluent_cloud_export",
+			wantSuffix:      "confluent_cloud_export",
+		},
+		{
+			name:            "append_user_agent is trimmed",
+			appendUserAgent: "  confluent_cloud_export  ",
+			wantSuffix:      "confluent_cloud_export",
+		},
+		{
+			name:            "blank append_user_agent leaves the user agent unchanged",
+			appendUserAgent: "   ",
+			wantSuffix:      base,
+		},
+		{
+			name:                "additional user agent is prepended",
+			additionalUserAgent: "confluent-cli/1.2.3",
+			appendUserAgent:     "confluent_cloud_export",
+			wantPrefix:          "confluent-cli/1.2.3",
+			wantSuffix:          "confluent_cloud_export",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := buildUserAgent(p, testVersion, tc.additionalUserAgent, tc.appendUserAgent)
+			if tc.wantPrefix != "" && !strings.HasPrefix(got, tc.wantPrefix) {
+				t.Errorf("expected user agent %q to start with %q", got, tc.wantPrefix)
+			}
+			if tc.wantSuffix != "" && !strings.HasSuffix(got, tc.wantSuffix) {
+				t.Errorf("expected user agent %q to end with %q", got, tc.wantSuffix)
+			}
+		})
+	}
+}
+
 func testAccPreCheck(t *testing.T) {
 	ccApiKey := getEnv("CONFLUENT_CLOUD_API_KEY", "")
 	ccApiSecret := getEnv("CONFLUENT_CLOUD_API_SECRET", "")
