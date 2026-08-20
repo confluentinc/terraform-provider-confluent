@@ -1,6 +1,7 @@
 {
   "compatibilityLevel": "BACKWARD_TRANSITIVE",
   "compatibilityGroup": "abc.cg.version",
+  "compatibilityPolicy": "LENIENT",
   "normalize": true,
   "alias": ""
 }
