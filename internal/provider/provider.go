@@ -303,10 +303,10 @@ func New(version, userAgent string) func() *schema.Provider {
 					ValidateFunc: validation.IntAtLeast(4),
 					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
 				},
-				"append_user_agent": {
+				"user_agent_suffix": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Attributes Terraform runs to their source.",
+					Description: "Value appended to the User-Agent header, used to attribute Terraform runs to their source (e.g., a config exported from Confluent Cloud Console).",
 				},
 				"oauth": providerOAuthSchema(),
 			},
@@ -512,15 +512,15 @@ func gatewayDataSourceSchema() *schema.Schema {
 	}
 }
 
-// p.UserAgent already appends the TF_APPEND_USER_AGENT env var, so append_user_agent deliberately
+// p.UserAgent already appends the TF_APPEND_USER_AGENT env var, so user_agent_suffix deliberately
 // has no env default — that would append the same marker twice.
-func buildUserAgent(p *schema.Provider, providerVersion, additionalUserAgent, appendUserAgent string) string {
+func buildUserAgent(p *schema.Provider, providerVersion, additionalUserAgent, userAgentSuffix string) string {
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 	if additionalUserAgent != "" {
 		userAgent = fmt.Sprintf("%s %s", additionalUserAgent, userAgent)
 	}
-	if appendUserAgent = strings.TrimSpace(appendUserAgent); appendUserAgent != "" {
-		userAgent = fmt.Sprintf("%s %s", userAgent, appendUserAgent)
+	if userAgentSuffix = strings.TrimSpace(userAgentSuffix); userAgentSuffix != "" {
+		userAgent = fmt.Sprintf("%s %s", userAgent, userAgentSuffix)
 	}
 	return userAgent
 }
@@ -549,9 +549,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiKey := d.Get("tableflow_api_key").(string)
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
-	appendUserAgent := d.Get("append_user_agent").(string)
+	userAgentSuffix := d.Get("user_agent_suffix").(string)
 
-	userAgent := buildUserAgent(p, providerVersion, additionalUserAgent, appendUserAgent)
+	userAgent := buildUserAgent(p, providerVersion, additionalUserAgent, userAgentSuffix)
 
 	acceptanceTestMode := false
 	if os.Getenv("TF_ACC") == "1" {

@@ -73,36 +73,36 @@ func TestBuildUserAgent(t *testing.T) {
 	tests := []struct {
 		name                string
 		additionalUserAgent string
-		appendUserAgent     string
+		userAgentSuffix     string
 		wantPrefix          string
 		wantSuffix          string
 	}{
 		{
-			name:            "append_user_agent is added as the last token",
-			appendUserAgent: "confluent_cloud_export",
+			name:            "user_agent_suffix is added as the last token",
+			userAgentSuffix: "confluent_cloud_export",
 			wantSuffix:      "confluent_cloud_export",
 		},
 		{
-			name:            "append_user_agent is trimmed",
-			appendUserAgent: "  confluent_cloud_export  ",
+			name:            "user_agent_suffix is trimmed",
+			userAgentSuffix: "  confluent_cloud_export  ",
 			wantSuffix:      "confluent_cloud_export",
 		},
 		{
-			name:            "blank append_user_agent leaves the user agent unchanged",
-			appendUserAgent: "   ",
+			name:            "blank user_agent_suffix leaves the user agent unchanged",
+			userAgentSuffix: "   ",
 			wantSuffix:      base,
 		},
 		{
 			name:                "additional user agent is prepended",
 			additionalUserAgent: "confluent-cli/1.2.3",
-			appendUserAgent:     "confluent_cloud_export",
+			userAgentSuffix:     "confluent_cloud_export",
 			wantPrefix:          "confluent-cli/1.2.3",
 			wantSuffix:          "confluent_cloud_export",
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := buildUserAgent(p, testVersion, tc.additionalUserAgent, tc.appendUserAgent)
+			got := buildUserAgent(p, testVersion, tc.additionalUserAgent, tc.userAgentSuffix)
 			if tc.wantPrefix != "" && !strings.HasPrefix(got, tc.wantPrefix) {
 				t.Errorf("expected user agent %q to start with %q", got, tc.wantPrefix)
 			}
