@@ -656,14 +656,14 @@
       },
       "cluster_id": "lkc-190073",
       "name": "confluent.value.association",
-      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Update test.\\nChecks if it works.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]},{\\\"name\\\":\\\"field2\\\",\\\"type\\\":[\\\"null\\\",\\\"int\\\"],\\\"default\\\":null}]}\",\"schemaType\":\"AVRO\"}",
+      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Update test.\\\\nChecks if it works.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]},{\\\"name\\\":\\\"field2\\\",\\\"type\\\":[\\\"null\\\",\\\"int\\\"],\\\"default\\\":null}]}\",\"schemaType\":\"AVRO\"}",
       "is_read_only": false,
       "is_sensitive": false,
       "source": "DYNAMIC_TOPIC_CONFIG",
       "synonyms": [
         {
           "name": "confluent.value.association",
-          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Update test.\\nChecks if it works.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]},{\\\"name\\\":\\\"field2\\\",\\\"type\\\":[\\\"null\\\",\\\"int\\\"],\\\"default\\\":null}]}\",\"schemaType\":\"AVRO\"}",
+          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Update test.\\\\nChecks if it works.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]},{\\\"name\\\":\\\"field2\\\",\\\"type\\\":[\\\"null\\\",\\\"int\\\"],\\\"default\\\":null}]}\",\"schemaType\":\"AVRO\"}",
           "source": "DYNAMIC_TOPIC_CONFIG"
         }
       ],

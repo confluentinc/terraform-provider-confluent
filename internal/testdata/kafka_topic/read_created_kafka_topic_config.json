@@ -646,14 +646,14 @@
       },
       "cluster_id": "lkc-190073",
       "name": "confluent.value.association",
-      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
+      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
       "is_read_only": false,
       "is_sensitive": false,
       "source": "DYNAMIC_TOPIC_CONFIG",
       "synonyms": [
         {
           "name": "confluent.value.association",
-          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
+          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
           "source": "DYNAMIC_TOPIC_CONFIG"
         }
       ],
