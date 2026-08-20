@@ -21,12 +21,21 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 )
+
+// escapeForHCL escapes a raw string value so it can be embedded inside an HCL double-quoted string literal.
+// This lets the confluent.*.association configs carry JSON values (containing `"` and `\`) in the test HCL.
+func escapeForHCL(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	return s
+}
 
 var fullTopicResourceLabel = fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)
 var createKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics", clusterId)
@@ -205,11 +214,13 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerInitialUrl),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -217,7 +228,7 @@ func TestAccTopic(t *testing.T) {
 				),
 			},
 			{
-				// Step 2: update configs (add segment.bytes, max.compaction.lag.ms; update sixthConfig) and delete retention.ms
+				// Step 2: update configs (add segment.bytes, max.compaction.lag.ms; update sixthConfig + both association configs) and delete retention.ms
 				Config: testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockTopicTestServerUpdatedUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
@@ -228,13 +239,15 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUpdatedUrl),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "4"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "6"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", thirdConfigName), thirdConfigAddedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fourthConfigName), fourthConfigAddedValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigUpdatedValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigUpdatedValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -451,9 +464,12 @@ func TestAccTopicPartition(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -471,9 +487,12 @@ func TestAccTopicPartition(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCountUpdated)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -491,9 +510,12 @@ func TestAccTopicPartition(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCountUpdated2)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -554,6 +576,8 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
         "%s" = "%s"
         "%s" = "%s"
         "%s" = "%s"
+        "%s" = "%s"
+        "%s" = "%s"
       }
 
       credentials {
@@ -561,7 +585,7 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
         secret = "%s"
       }
     }
-    `, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName, sixthConfigValue, kafkaApiKey, kafkaApiSecret)
+    `, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName, sixthConfigValue, seventhConfigName, escapeForHCL(seventhConfigValue), eighthConfigName, escapeForHCL(eighthConfigValue), kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string) string {
@@ -583,6 +607,8 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
         "%s" = "%s"
         "%s" = "%s"
         "%s" = "%s"
+        "%s" = "%s"
+        "%s" = "%s"
       }
 
       credentials {
@@ -590,7 +616,7 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
         secret = "%s"
       }
     }
-    `, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue, kafkaApiKey, kafkaApiSecret)
+    `, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue, seventhConfigName, escapeForHCL(seventhConfigUpdatedValue), eighthConfigName, escapeForHCL(eighthConfigUpdatedValue), kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckTopicPartition(confluentCloudBaseUrl, mockServerUrl string, partitionCount int) string {
@@ -611,6 +637,8 @@ func testAccCheckTopicPartition(confluentCloudBaseUrl, mockServerUrl string, par
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
+		"%s" = "%s"
+		"%s" = "%s"
 	  }
 
 	  credentials {
@@ -618,7 +646,7 @@ func testAccCheckTopicPartition(confluentCloudBaseUrl, mockServerUrl string, par
 		secret = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName, sixthConfigValue, kafkaApiKey, kafkaApiSecret)
+	`, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName, sixthConfigValue, seventhConfigName, escapeForHCL(seventhConfigValue), eighthConfigName, escapeForHCL(eighthConfigValue), kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckTopicExists(n string) resource.TestCheckFunc {
