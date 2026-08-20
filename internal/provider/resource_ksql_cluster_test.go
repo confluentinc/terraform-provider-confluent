@@ -83,7 +83,7 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      ksqlResourceConfig(mockServerUrl, ksqlCsuTest1, ksqlUseDetailedProcessingLogTest1),
-				ExpectError: regexp.MustCompile("error creating ksqlDB Cluster"),
+				ExpectError: regexp.MustCompile("error creating ksql cluster"),
 			},
 		},
 	})
@@ -124,22 +124,14 @@ func TestAccImportKsqlCluster(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
-		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
-		WillReturn(
-			string(readCreatedClusterResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	_ = createDefaultDeleteStub(wiremockClient)
+	_ = createKsqlDeleteStubs(wiremockClient)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -204,7 +196,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 			http.StatusNotImplemented, //blocks retry
 		))
 
-	_ = createDefaultDeleteStub(wiremockClient)
+	_ = createKsqlDeleteStubs(wiremockClient)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -212,7 +204,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      ksqlResourceConfig(mockServerUrl, ksqlCsuTest1, ksqlUseDetailedProcessingLogTest1),
-				ExpectError: regexp.MustCompile("error waiting for ksqlDB Cluster"),
+				ExpectError: regexp.MustCompile("error waiting for ksql cluster"),
 			},
 		},
 	})
@@ -385,15 +377,27 @@ func testAccCheckKsqlClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-// simple delete stub for when no scenario or change of state is needed
-func createDefaultDeleteStub(client *wiremock.Client) error {
+// createKsqlDeleteStubs stubs the DELETE (transitioning the scenario to the deleted state)
+// and the subsequent GET that the generated delete-wait poll issues. The ksqlDB API returns
+// http.StatusForbidden (not http.StatusNotFound) for a cluster that no longer exists, which
+// isNonKafkaRestApiResourceNotFound treats as gone, so the poll terminates.
+func createKsqlDeleteStubs(client *wiremock.Client) error {
 	err := client.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
+		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
+		WillSetStateTo(scenarioStateKsqlHasBeenDeleted).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 	if err != nil {
 		return err
 	}
-	return nil
+
+	readDeletedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/403_forbidden.json")
+	return client.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+		InScenario(ksqlScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateKsqlHasBeenDeleted).
+		WillReturn(string(readDeletedClusterResponse), contentTypeJSONHeader, http.StatusForbidden))
 }
 
 func ksqlResourceConfig(mockServerUrl, csu, useDetailedProcessingLog string) string {
