@@ -112,14 +112,20 @@ func ksqlClusterCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	// Set required attributes
 	credentialIdentityRef := ksqlv2.NewObjectReferenceWithDefaults()
 	credentialIdentityRef.SetId(extractStringValueFromBlock(d, paramCredentialIdentity, paramId))
+	credentialIdentityRef.SetRelated("_")
+	credentialIdentityRef.SetResourceName("_")
 	spec.SetCredentialIdentity(*credentialIdentityRef)
 	spec.SetCsu(int32(d.Get(paramCsu).(int)))
 	spec.SetDisplayName(d.Get(paramDisplayName).(string))
 	environmentRef := ksqlv2.NewObjectReferenceWithDefaults()
 	environmentRef.SetId(extractStringValueFromBlock(d, paramEnvironment, paramId))
+	environmentRef.SetRelated("_")
+	environmentRef.SetResourceName("_")
 	spec.SetEnvironment(*environmentRef)
 	kafkaClusterRef := ksqlv2.NewObjectReferenceWithDefaults()
 	kafkaClusterRef.SetId(extractStringValueFromBlock(d, paramKafkaCluster, paramId))
+	kafkaClusterRef.SetRelated("_")
+	kafkaClusterRef.SetResourceName("_")
 	spec.SetKafkaCluster(*kafkaClusterRef)
 
 	// Set optional attributes
