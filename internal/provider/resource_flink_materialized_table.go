@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"math"
 	"net/http"
 	"regexp"
 	"strings"
@@ -306,7 +307,9 @@ func constraintsSchema() *schema.Schema {
 }
 
 // flinkStartModeKinds lists the start mode strategies supported by the API's
-// sql.v1.MaterializedTableStartMode schema.
+// sql.v1.MaterializedTableStartMode schema. The API models this as an
+// x-extensible-enum, so this list must be extended whenever the API adds a new
+// kind (otherwise plan-time validation would reject the new value).
 var flinkStartModeKinds = []string{
 	"FROM_BEGINNING",
 	"FROM_NOW",
@@ -323,7 +326,8 @@ var flinkStartModeTimestampKinds = map[string]bool{
 }
 
 // flinkIntervalTimeUnits lists the units supported by the API's
-// sql.v1.IntervalExpression schema.
+// sql.v1.IntervalExpression schema. The API models this as an x-extensible-enum,
+// so this list must be extended whenever the API adds a new unit.
 var flinkIntervalTimeUnits = []string{
 	"SECONDS",
 	"MINUTES",
@@ -337,9 +341,13 @@ var flinkIntervalTimeUnits = []string{
 
 func startModeSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:        schema.TypeList,
-		MaxItems:    1,
-		Optional:    true,
+		Type:     schema.TypeList,
+		MaxItems: 1,
+		Optional: true,
+		// Computed so that when the configuration omits start_mode, a value the
+		// server may echo back on read does not surface as a perpetual diff. This
+		// mirrors distribution/table_options/session_options in this resource.
+		Computed:    true,
 		Description: "Controls where the Materialized Table begins reading source data on creation and on each evolution. When omitted, Confluent Cloud uses its default (`RESUME_OR_FROM_BEGINNING`).",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -352,6 +360,7 @@ func startModeSchema() *schema.Schema {
 				paramStartModeTimestamp: {
 					Type:             schema.TypeString,
 					Optional:         true,
+					Computed:         true,
 					Description:      "Absolute point in time to start processing from, as an RFC 3339 timestamp that includes a time offset (for example, `2026-04-01T00:00:00Z`). Required when `kind` is `FROM_TIMESTAMP` or `RESUME_OR_FROM_TIMESTAMP`; ignored otherwise.",
 					ValidateFunc:     validation.IsRFC3339Time,
 					DiffSuppressFunc: suppressFlinkTimestampDiff,
@@ -360,6 +369,7 @@ func startModeSchema() *schema.Schema {
 					Type:        schema.TypeList,
 					MaxItems:    1,
 					Optional:    true,
+					Computed:    true,
 					Description: "Lookback interval applied to the `FROM_NOW` semantics. Only meaningful when `kind` is `FROM_NOW` or `RESUME_OR_FROM_NOW`.",
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
@@ -367,7 +377,7 @@ func startModeSchema() *schema.Schema {
 								Type:         schema.TypeInt,
 								Required:     true,
 								Description:  "Numeric value of the time interval.",
-								ValidateFunc: validation.IntAtLeast(1),
+								ValidateFunc: validation.IntBetween(1, math.MaxInt32),
 							},
 							paramIntervalTimeUnit: {
 								Type:         schema.TypeString,
@@ -951,8 +961,10 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		if err != nil {
 			return diag.Errorf("error updating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 		}
-		// A nil start_mode (block removed from config) is sent as an unset field,
-		// which reverts the Materialized Table to the server default start mode.
+		// When start_mode is changed to a new value, send it. (Because the
+		// attribute is Computed, simply removing the block from the configuration
+		// is not treated as a change; to revert to the server default, change the
+		// kind explicitly.)
 		table.Spec.StartMode = startMode
 	}
 

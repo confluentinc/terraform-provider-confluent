@@ -181,7 +181,7 @@ The following arguments are supported:
     - `kind` - (Required String) The kind of distribution. Required when the `distribution` block is specified. The only currently supported value is `HASH`.
     - `keys` - (Optional Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Optional Integer) The number of buckets the table is distributed by.
-- `start_mode` - (Optional Configuration Block, max 1 item) Controls where the Materialized Table begins reading source data on creation and on each evolution. When omitted, Confluent Cloud uses its default (`RESUME_OR_FROM_BEGINNING`). Supports the following:
+- `start_mode` - (Optional Configuration Block, max 1 item) Controls where the Materialized Table begins reading source data on creation and on each evolution. When omitted, Confluent Cloud uses its default (`RESUME_OR_FROM_BEGINNING`) and may populate the effective value in state. Supports the following:
     - `kind` - (Required String) The start mode strategy. One of `FROM_BEGINNING`, `FROM_NOW`, `FROM_TIMESTAMP`, `RESUME_OR_FROM_BEGINNING`, `RESUME_OR_FROM_NOW`, or `RESUME_OR_FROM_TIMESTAMP`.
     - `timestamp` - (Optional String) Absolute point in time to start processing from, as an RFC 3339 timestamp that includes a time offset (for example, `2026-04-01T00:00:00Z`). Required when `kind` is `FROM_TIMESTAMP` or `RESUME_OR_FROM_TIMESTAMP`; ignored otherwise.
     - `time_interval` - (Optional Configuration Block, max 1 item) Lookback interval applied to the `FROM_NOW` semantics. Only meaningful when `kind` is `FROM_NOW` or `RESUME_OR_FROM_NOW`. Supports the following:
