@@ -603,6 +603,124 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
 
+// TestAccFlinkMaterializedTableServerDerivedStartMode locks in the backward-compatibility
+// fix for start_mode. The config omits `start_mode` entirely, but the server echoes a
+// default (`RESUME_OR_FROM_BEGINNING`) on read. Because `start_mode` is Optional+Computed,
+// the echoed value must land in state without the second PlanOnly step showing a diff.
+// Before marking start_mode Computed, that second step would report a perpetual removal diff.
+func TestAccFlinkMaterializedTableServerDerivedStartMode(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Server-Derived Start Mode"
+	const displayName = "table_start_mode_default"
+	readPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, displayName)
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				// The config omits `start_mode` entirely; the server response supplies a default.
+				Config: testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, displayName),
+					// The server-derived start mode must land in state even though the config omitted it.
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.0.kind", "RESUME_OR_FROM_BEGINNING"),
+				),
+			},
+			{
+				// Re-planning the same config (still omitting `start_mode`) must be a no-op.
+				// Without start_mode being Optional+Computed, this produces a perpetual diff and fails.
+				Config:             testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableServerDerivedStartModeConfig(mockServerUrl, resourceLabel, displayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  # NOTE: no start_mode block on purpose - Confluent Cloud echoes back a default start mode.
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
 // TestAccFlinkMaterializedTableManagedOptionsSuperset locks in the fix for
 // table_options/session_options drift. The config manages only a SUBSET of the
 // options while the API read returns the FULL effective option set. The provider must persist only the user-managed keys
