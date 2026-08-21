@@ -155,6 +155,12 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col123"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp123"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_NOW"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", ""),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.interval", "2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.time_unit", "HOURS"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -196,6 +202,10 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col1234"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp1234"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_TIMESTAMP"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", "2026-04-01T00:00:00Z"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "0"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "true"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -291,6 +301,13 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	  }
       stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  start_mode {
+	    kind = "FROM_NOW"
+	    time_interval {
+	      interval  = 2
+	      time_unit = "HOURS"
+	    }
+	  }
 	  watermark {
 	    column     = "col123"
 	    expression = "exp123"
@@ -358,6 +375,10 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	  }
       stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
+	  start_mode {
+	    kind      = "FROM_TIMESTAMP"
+	    timestamp = "2026-04-01T00:00:00Z"
+	  }
 	  watermark {
 	    column     = "col1234"
 	    expression = "exp1234"
