@@ -470,6 +470,7 @@ func TestAccFlinkStatementCredentialUpdate(t *testing.T) {
 	statePending := "Statement pending"
 	stateCreated := "Statement created"
 	stateStopped := "Statement stopped"
+	stateResumed := "Statement resumed"
 	stateDeleting := "Statement deleting"
 	stateDeleted := "Statement deleted"
 
@@ -507,6 +508,17 @@ func TestAccFlinkStatementCredentialUpdate(t *testing.T) {
 		InScenario(scenarioName).
 		WhenScenarioStateIs(stateStopped).
 		WillReturn(string(stoppedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	// Step 4: Resume with rotated credentials (triggers resume PUT)
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateStopped).
+		WillSetStateTo(stateResumed).
+		WillReturn(string(runningResponse), contentTypeJSONHeader, http.StatusOK))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateResumed).
+		WillReturn(string(runningResponse), contentTypeJSONHeader, http.StatusOK))
 
 	// Cleanup
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -560,6 +572,15 @@ func TestAccFlinkStatementCredentialUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", rotatedApiKey),
 					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", rotatedApiSecret),
 					resource.TestCheckResourceAttr(fullResourceLabel, "stopped", "true"),
+				),
+			},
+			{
+				Config: testAccCheckFlinkStatementWithCredentials("", mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", kafkaApiSecret),
+					resource.TestCheckResourceAttr(fullResourceLabel, "stopped", "false"),
 				),
 			},
 		},

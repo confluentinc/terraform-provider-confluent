@@ -332,7 +332,7 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 
 func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Only the `stopped`, `principal.id` and 'compute_pool.id` fields can be updated for Flink statement resume
-	if d.HasChangesExcept(paramStopped, paramPrincipal, paramComputePool) {
+	if d.HasChangesExcept(paramStopped, paramPrincipal, paramComputePool, paramCredentials, paramRestEndpoint, paramOrganization, paramEnvironment) {
 		return diag.Errorf(`error resuming Flink Statement %q: only %q, %q, and %q attributes can be updated for Flink Statement`, d.Id(), paramStopped, paramPrincipal, paramComputePool)
 	}
 
