@@ -62,18 +62,22 @@ func switchoverPairResource() *schema.Resource {
 							Description:  "A logical name for this member (e.g. \"west\" or \"east\"), unique within the pair.",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
-						paramMemberId: {
+						paramMemberCrn: {
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							Description:  "The ID of the cluster this member represents (e.g. an `lkc-` Kafka cluster ID).",
+							Description:  "The CRN of the cluster this member represents. The CRN carries the member's own environment, so the two members may live in different environments.",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
-						paramEnvId: {
+						paramCloud: {
 							Type:        schema.TypeString,
-							Optional:    true,
-							ForceNew:    true,
-							Description: "The environment ID of the member's cluster. Defaults to the switchover pair's environment when omitted.",
+							Computed:    true,
+							Description: "The cloud provider of the member's cluster. Set by the Switchover service.",
+						},
+						paramRegion: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The cloud region of the member's cluster. Set by the Switchover service.",
 						},
 					},
 				},
@@ -85,17 +89,28 @@ func switchoverPairResource() *schema.Resource {
 				Description:  "The name of the member that starts as active; must match one of the `members[].name` values. Use a failover operation to change the active member after creation.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramFirstActive: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The name of the member that was active when the pair was first created. Set by the Switchover service.",
+			},
 			paramFailoverType: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The failover semantics most recently applied to this pair. Defaults to `CLEAN` until a failover has been triggered.",
+				Description: "The failover semantics most recently applied to this pair (`PLANNED`, `UNPLANNED`, or `RESTORE`). Empty until a failover has been triggered.",
 			},
 			paramPhase: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The lifecycle phase of the switchover pair.",
 			},
-			paramEnvironment: environmentSchema(),
+			paramEnvironmentCrn: {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The CRN of the environment that owns this switchover pair.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -105,15 +120,15 @@ func switchoverPairCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	displayName := d.Get(paramDisplayName).(string)
 	activeMember := d.Get(paramActiveMember).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	members := buildSwitchoverPairMembers(d)
 
 	createRequest := switchoverv1.SwitchoverV1SwitchoverPair{
 		Spec: &switchoverv1.SwitchoverV1SwitchoverPairSpec{
-			DisplayName:  switchoverv1.PtrString(displayName),
-			Environment:  switchoverv1.PtrString(environmentId),
-			Members:      &members,
-			ActiveMember: switchoverv1.PtrString(activeMember),
+			DisplayName:    switchoverv1.PtrString(displayName),
+			EnvironmentCrn: switchoverv1.PtrString(environmentCrn),
+			Members:        &members,
+			ActiveMember:   switchoverv1.PtrString(activeMember),
 		},
 	}
 
@@ -135,10 +150,10 @@ func switchoverPairCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func switchoverPairRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 
-	if _, err := readSwitchoverPairAndSetAttributes(ctx, d, meta, environmentId, d.Id()); err != nil {
+	if _, err := readSwitchoverPairAndSetAttributes(ctx, d, meta, environmentCrn, d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading switchover pair %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 	return nil
@@ -150,7 +165,7 @@ func switchoverPairUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	c := meta.(*Client)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramEnvironmentCrn).(string))
 
 	updateRequest := switchoverv1.SwitchoverV1SwitchoverPairUpdateRequest{
 		Spec: switchoverv1.SwitchoverV1SwitchoverPairUpdateRequestSpec{
@@ -169,7 +184,7 @@ func switchoverPairUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 func switchoverPairDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramEnvironmentCrn).(string))
 	tflog.Debug(ctx, fmt.Sprintf("Deleting switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.DeleteSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), d.Id()).Environment(environmentId)
@@ -184,26 +199,32 @@ func switchoverPairDelete(ctx context.Context, d *schema.ResourceData, meta inte
 func switchoverPairImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 
-	parts := strings.Split(d.Id(), "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing switchover pair: invalid format: expected '<env ID>/<switchover pair ID>'")
+	// The environment is supplied as a full CRN (which itself contains slashes), so split on the
+	// final "/" that separates it from the pair ID: "<environment CRN>/<switchover pair ID>".
+	idx := strings.LastIndex(d.Id(), "/")
+	if idx <= 0 || idx == len(d.Id())-1 {
+		return nil, fmt.Errorf("error importing switchover pair: invalid format: expected '<environment CRN>/<switchover pair ID>'")
 	}
-	environmentId := parts[0]
-	switchoverPairId := parts[1]
+	environmentCrn := d.Id()[:idx]
+	switchoverPairId := d.Id()[idx+1:]
 	d.SetId(switchoverPairId)
+	if err := d.Set(paramEnvironmentCrn, environmentCrn); err != nil {
+		return nil, err
+	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readSwitchoverPairAndSetAttributes(ctx, d, meta, environmentId, switchoverPairId); err != nil {
+	if _, err := readSwitchoverPairAndSetAttributes(ctx, d, meta, environmentCrn, switchoverPairId); err != nil {
 		return nil, fmt.Errorf("error importing switchover pair %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
-func readSwitchoverPairAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, id string) ([]*schema.ResourceData, error) {
+func readSwitchoverPairAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentCrn, id string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
+	environmentId := extractEnvironmentIdFromCrn(environmentCrn)
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.GetSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), id).Environment(environmentId)
 	pair, resp, err := req.Execute()
 	if err != nil {
@@ -216,7 +237,7 @@ func readSwitchoverPairAndSetAttributes(ctx context.Context, d *schema.ResourceD
 		return nil, err
 	}
 
-	if _, err := setSwitchoverPairAttributes(d, pair, environmentId); err != nil {
+	if _, err := setSwitchoverPairAttributes(d, pair, environmentCrn); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -224,12 +245,15 @@ func readSwitchoverPairAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSwitchoverPairAttributes(d *schema.ResourceData, pair switchoverv1.SwitchoverV1SwitchoverPair, environmentId string) (*schema.ResourceData, error) {
+func setSwitchoverPairAttributes(d *schema.ResourceData, pair switchoverv1.SwitchoverV1SwitchoverPair, environmentCrn string) (*schema.ResourceData, error) {
 	spec := pair.GetSpec()
 	if err := d.Set(paramDisplayName, spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramActiveMember, spec.GetActiveMember()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramFirstActive, spec.GetFirstActive()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramFailoverType, spec.GetFailoverType()); err != nil {
@@ -242,7 +266,12 @@ func setSwitchoverPairAttributes(d *schema.ResourceData, pair switchoverv1.Switc
 	if err := d.Set(paramPhase, status.GetPhase()); err != nil {
 		return nil, err
 	}
-	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, environmentId, d); err != nil {
+	// Prefer the environment CRN returned by the API; fall back to the one we were called with
+	// (e.g. on import, when the response does not echo it back).
+	if returned := spec.GetEnvironmentCrn(); returned != "" {
+		environmentCrn = returned
+	}
+	if err := d.Set(paramEnvironmentCrn, environmentCrn); err != nil {
 		return nil, err
 	}
 
@@ -255,14 +284,10 @@ func buildSwitchoverPairMembers(d *schema.ResourceData) []switchoverv1.Switchove
 	members := make([]switchoverv1.SwitchoverV1SwitchoverPairMember, len(rawMembers))
 	for i, raw := range rawMembers {
 		block := raw.(map[string]interface{})
-		member := switchoverv1.SwitchoverV1SwitchoverPairMember{
-			Name:     block[paramName].(string),
-			MemberId: block[paramMemberId].(string),
+		members[i] = switchoverv1.SwitchoverV1SwitchoverPairMember{
+			Name:      block[paramName].(string),
+			MemberCrn: block[paramMemberCrn].(string),
 		}
-		if envId, ok := block[paramEnvId].(string); ok && envId != "" {
-			member.EnvId = switchoverv1.PtrString(envId)
-		}
-		members[i] = member
 	}
 	return members
 }
@@ -270,11 +295,27 @@ func buildSwitchoverPairMembers(d *schema.ResourceData) []switchoverv1.Switchove
 func flattenSwitchoverPairMembers(members []switchoverv1.SwitchoverV1SwitchoverPairMember) []interface{} {
 	result := make([]interface{}, len(members))
 	for i, member := range members {
+		location := member.GetLocation()
 		result[i] = map[string]interface{}{
-			paramName:     member.GetName(),
-			paramMemberId: member.GetMemberId(),
-			paramEnvId:    member.GetEnvId(),
+			paramName:      member.GetName(),
+			paramMemberCrn: member.GetMemberCrn(),
+			paramCloud:     location.GetCloud(),
+			paramRegion:    location.GetRegion(),
 		}
 	}
 	return result
+}
+
+// extractEnvironmentIdFromCrn pulls the bare environment ID (e.g. "env-abc123") out of a Confluent
+// resource CRN such as "crn://confluent.cloud/organization=.../environment=env-abc123/...". The
+// Switchover API takes references as full CRNs in request bodies, but still scopes read/update/
+// delete by a bare `?environment=` query parameter, so it is recovered from the CRN the user
+// supplied. Returns "" when the CRN carries no environment segment.
+func extractEnvironmentIdFromCrn(crn string) string {
+	for _, segment := range strings.Split(crn, "/") {
+		if strings.HasPrefix(segment, "environment=") {
+			return strings.TrimPrefix(segment, "environment=")
+		}
+	}
+	return ""
 }

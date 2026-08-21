@@ -37,10 +37,10 @@ func switchoverEndpointDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "A human-readable name for the switchover endpoint.",
 			},
-			paramSwitchoverPairId: {
+			paramParentResourceCrn: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The ID of the switchover pair this endpoint is bound to.",
+				Description: "The CRN of the switchover pair this endpoint is bound to.",
 			},
 			paramTarget: {
 				Type:        schema.TypeString,
@@ -61,6 +61,18 @@ func switchoverEndpointDataSource() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						paramCloud: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramRegion: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramConnectionType: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						paramEndpointFilter: {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -70,11 +82,11 @@ func switchoverEndpointDataSource() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									paramNetworkId: {
+									paramNetworkCrn: {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									paramAccessPoint: {
+									paramAccessPointCrn: {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -89,7 +101,11 @@ func switchoverEndpointDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The lifecycle phase of the switchover endpoint.",
 			},
-			paramEnvironment: environmentDataSourceSchema(),
+			paramEnvironmentCrn: {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The CRN of the environment that owns this switchover endpoint.",
+			},
 		},
 	}
 }
@@ -97,7 +113,7 @@ func switchoverEndpointDataSource() *schema.Resource {
 func switchoverEndpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	switchoverEndpointId := d.Get(paramId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramEnvironmentCrn).(string))
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover endpoint data source %q", switchoverEndpointId), map[string]interface{}{switchoverEndpointLoggingKey: switchoverEndpointId})
 
 	req := c.switchoverV1Client.SwitchoverEndpointsSwitchoverV1Api.GetSwitchoverV1SwitchoverEndpoint(c.switchoverV1ApiContext(ctx), switchoverEndpointId).Environment(environmentId)
@@ -106,7 +122,7 @@ func switchoverEndpointDataSourceRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error reading switchover endpoint data source %q: %s", switchoverEndpointId, createDescriptiveError(err, resp))
 	}
 
-	if _, err := setSwitchoverEndpointAttributes(d, endpoint, environmentId); err != nil {
+	if _, err := setSwitchoverEndpointAttributes(d, endpoint, ""); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 

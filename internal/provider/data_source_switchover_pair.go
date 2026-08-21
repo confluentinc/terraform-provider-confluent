@@ -47,11 +47,15 @@ func switchoverPairDataSource() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						paramMemberId: {
+						paramMemberCrn: {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						paramEnvId: {
+						paramCloud: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramRegion: {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -63,6 +67,11 @@ func switchoverPairDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The name of the member that is currently active.",
 			},
+			paramFirstActive: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The name of the member that was active when the pair was first created.",
+			},
 			paramFailoverType: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -73,7 +82,11 @@ func switchoverPairDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The lifecycle phase of the switchover pair.",
 			},
-			paramEnvironment: environmentDataSourceSchema(),
+			paramEnvironmentCrn: {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The CRN of the environment that owns this switchover pair.",
+			},
 		},
 	}
 }
@@ -81,7 +94,8 @@ func switchoverPairDataSource() *schema.Resource {
 func switchoverPairDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	switchoverPairId := d.Get(paramId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentCrn := d.Get(paramEnvironmentCrn).(string)
+	environmentId := extractEnvironmentIdFromCrn(environmentCrn)
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover pair data source %q", switchoverPairId), map[string]interface{}{switchoverPairLoggingKey: switchoverPairId})
 
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.GetSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), switchoverPairId).Environment(environmentId)
@@ -90,7 +104,7 @@ func switchoverPairDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error reading switchover pair data source %q: %s", switchoverPairId, createDescriptiveError(err, resp))
 	}
 
-	if _, err := setSwitchoverPairAttributes(d, pair, environmentId); err != nil {
+	if _, err := setSwitchoverPairAttributes(d, pair, environmentCrn); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
