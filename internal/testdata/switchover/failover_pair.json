@@ -31,9 +31,9 @@
     ],
     "active_member": "east",
     "first_active": "west",
-    "failover_type": "CLEAN"
+    "failover_type": "PLANNED"
   },
   "status": {
-    "phase": "SWITCHING"
+    "phase": "UPDATING"
   }
 }

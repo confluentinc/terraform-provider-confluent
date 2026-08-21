@@ -60,8 +60,8 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the switchover pair, for example, `sw-abc123`.
 - `first_active` - (Required String) The name of the member that was active when the pair was first created.
-- `failover_type` - (Required String) The failover semantics most recently applied to this pair. Defaults to `CLEAN` until a failover has been triggered.
-- `phase` - (Required String) The lifecycle phase of the switchover pair, for example, `PROVISIONING`, `READY`, `SWITCHING`, `SWITCHED`, `FAILED`, or `DEPROVISIONING`.
+- `failover_type` - (Required String) The failover semantics most recently applied to this pair (`PLANNED`, `UNPLANNED`, or `RESTORE`). Empty until a failover has been triggered.
+- `phase` - (Required String) The lifecycle phase of the switchover pair, for example, `PROVISIONING`, `READY_TO_FAILOVER`, `UPDATING`, `READY_TO_RESTORE`, `FAILED`, or `DEPROVISIONING`.
 - `members` (Required Configuration Block) In addition to the arguments above, each member exports the following:
   - `cloud` - (Required String) The cloud provider of the member's cluster.
   - `region` - (Required String) The cloud region of the member's cluster.

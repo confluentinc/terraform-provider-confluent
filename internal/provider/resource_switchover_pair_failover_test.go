@@ -68,9 +68,9 @@ func TestAccSwitchoverPairFailover(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "switchover_pair_id", "sw-abc123"),
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "active_member", "east"),
-					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "failover_type", "CLEAN"),
+					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "failover_type", "PLANNED"),
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "environment_crn", switchoverPairEnvironmentCrn),
-					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "phase", "SWITCHING"),
+					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "phase", "UPDATING"),
 				),
 			},
 		},
@@ -86,7 +86,7 @@ func testAccCheckSwitchoverPairFailoverConfig(mockServerUrl string) string {
 	resource "confluent_switchover_pair_failover" "main" {
 		switchover_pair_id = "sw-abc123"
 		active_member      = "east"
-		failover_type      = "CLEAN"
+		failover_type      = "PLANNED"
 		environment_crn    = "%s"
 	}
 	`, mockServerUrl, switchoverPairEnvironmentCrn)

@@ -29,7 +29,7 @@ provider "confluent" {
 resource "confluent_switchover_pair_failover" "example" {
   switchover_pair_id = "sw-abc123"
   active_member      = "east"
-  failover_type      = "CLEAN"
+  failover_type      = "PLANNED"
   environment_crn    = "crn://confluent.cloud/organization=org-abc/environment=env-abc123"
 }
 ```
@@ -40,12 +40,12 @@ resource "confluent_switchover_pair_failover" "example" {
 The following arguments are supported:
 
 - `switchover_pair_id` - (Required String) The ID of the switchover pair to trigger a failover on, for example, `sw-abc123`.
-- `active_member` - (Optional String) The name of the member to promote to active. Required when `failover_type` is `CLEAN` or `UNCLEAN`.
-- `failover_type` - (Optional String) The failover semantics to apply: `CLEAN` (graceful, after replication lag reaches zero), `UNCLEAN` (immediate), or `RESTORE` (re-establish the cluster link after an unclean failover). Defaults to `CLEAN`.
+- `active_member` - (Optional String) The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`.
+- `failover_type` - (Optional String) The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover). Defaults to `PLANNED`.
 - `environment_crn` - (Required String) The CRN of the environment that owns the switchover pair, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123`.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `phase` - (Required String) The lifecycle phase of the switchover pair after the failover was triggered (transitions to `SWITCHING`).
+- `phase` - (Required String) The lifecycle phase of the switchover pair after the failover was triggered (transitions to `UPDATING`).

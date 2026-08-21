@@ -97,7 +97,7 @@ func switchoverPairResource() *schema.Resource {
 			paramFailoverType: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The failover semantics most recently applied to this pair. Defaults to `CLEAN` until a failover has been triggered.",
+				Description: "The failover semantics most recently applied to this pair (`PLANNED`, `UNPLANNED`, or `RESTORE`). Empty until a failover has been triggered.",
 			},
 			paramPhase: {
 				Type:        schema.TypeString,
