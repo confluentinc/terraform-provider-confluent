@@ -74,6 +74,7 @@ func flinkMaterializedTableResource() *schema.Resource {
 			paramCredentials: credentialsSchema(),
 			paramColumns:     columnsSchema(),
 			paramConstraints: constraintsSchema(),
+			paramStartMode:   startModeSchema(),
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(materializedTableAPICreateTimeout),
@@ -304,6 +305,84 @@ func constraintsSchema() *schema.Schema {
 	}
 }
 
+// flinkStartModeKinds lists the start mode strategies supported by the API's
+// sql.v1.MaterializedTableStartMode schema.
+var flinkStartModeKinds = []string{
+	"FROM_BEGINNING",
+	"FROM_NOW",
+	"FROM_TIMESTAMP",
+	"RESUME_OR_FROM_BEGINNING",
+	"RESUME_OR_FROM_NOW",
+	"RESUME_OR_FROM_TIMESTAMP",
+}
+
+// flinkStartModeTimestampKinds are the kinds that require a timestamp.
+var flinkStartModeTimestampKinds = map[string]bool{
+	"FROM_TIMESTAMP":           true,
+	"RESUME_OR_FROM_TIMESTAMP": true,
+}
+
+// flinkIntervalTimeUnits lists the units supported by the API's
+// sql.v1.IntervalExpression schema.
+var flinkIntervalTimeUnits = []string{
+	"SECONDS",
+	"MINUTES",
+	"HOURS",
+	"DAYS",
+	"WEEKS",
+	"MONTHS",
+	"QUARTERS",
+	"YEARS",
+}
+
+func startModeSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Optional:    true,
+		Description: "Controls where the Materialized Table begins reading source data on creation and on each evolution. When omitted, Confluent Cloud uses its default (`RESUME_OR_FROM_BEGINNING`).",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStartModeKind: {
+					Type:         schema.TypeString,
+					Required:     true,
+					Description:  "The start mode strategy, one of `FROM_BEGINNING`, `FROM_NOW`, `FROM_TIMESTAMP`, `RESUME_OR_FROM_BEGINNING`, `RESUME_OR_FROM_NOW`, or `RESUME_OR_FROM_TIMESTAMP`.",
+					ValidateFunc: validation.StringInSlice(flinkStartModeKinds, false),
+				},
+				paramStartModeTimestamp: {
+					Type:             schema.TypeString,
+					Optional:         true,
+					Description:      "Absolute point in time to start processing from, as an RFC 3339 timestamp that includes a time offset (for example, `2026-04-01T00:00:00Z`). Required when `kind` is `FROM_TIMESTAMP` or `RESUME_OR_FROM_TIMESTAMP`; ignored otherwise.",
+					ValidateFunc:     validation.IsRFC3339Time,
+					DiffSuppressFunc: suppressFlinkTimestampDiff,
+				},
+				paramStartModeTimeInterval: {
+					Type:        schema.TypeList,
+					MaxItems:    1,
+					Optional:    true,
+					Description: "Lookback interval applied to the `FROM_NOW` semantics. Only meaningful when `kind` is `FROM_NOW` or `RESUME_OR_FROM_NOW`.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramIntervalValue: {
+								Type:         schema.TypeInt,
+								Required:     true,
+								Description:  "Numeric value of the time interval.",
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+							paramIntervalTimeUnit: {
+								Type:         schema.TypeString,
+								Required:     true,
+								Description:  "Unit of time for the interval, one of `SECONDS`, `MINUTES`, `HOURS`, `DAYS`, `WEEKS`, `MONTHS`, `QUARTERS`, or `YEARS`.",
+								ValidateFunc: validation.StringInSlice(flinkIntervalTimeUnits, false),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
@@ -374,6 +453,14 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	constraints := expandMaterializedTableConstraints(d, paramConstraints)
 	if len(constraints) > 0 {
 		table.Spec.SetConstraints(constraints)
+	}
+
+	startMode, err := expandMaterializedTableStartMode(d)
+	if err != nil {
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
+	}
+	if startMode != nil {
+		table.Spec.SetStartMode(*startMode)
 	}
 
 	createMaterializedTableRequestJson, err := json.Marshal(table)
@@ -661,6 +748,10 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		_ = d.Set(paramConstraints, constraintsList)
 	}
 
+	if err := d.Set(paramStartMode, flattenMaterializedTableStartMode(materializedTable.Spec.StartMode)); err != nil {
+		return nil, err
+	}
+
 	d.SetId(createFlinkMaterializedTableId(materializedTable.GetEnvironmentId(), materializedTable.Spec.GetKafkaClusterId(), materializedTable.GetName()))
 	return d, nil
 }
@@ -772,8 +863,8 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramCredentials) {
-		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramCredentials)
+	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramStartMode, paramCredentials) {
+		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramStartMode, paramCredentials)
 	}
 
 	// `credentials` is only used to authenticate to the Flink REST API and isn't part of the
@@ -853,6 +944,16 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	if d.HasChange(paramTableOptions) {
 		table.Spec.SetTableOptions(convertToStringStringMap(d.Get(paramTableOptions).(map[string]interface{})))
+	}
+
+	if d.HasChange(paramStartMode) {
+		startMode, err := expandMaterializedTableStartMode(d)
+		if err != nil {
+			return diag.Errorf("error updating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		// A nil start_mode (block removed from config) is sent as an unset field,
+		// which reverts the Materialized Table to the server default start mode.
+		table.Spec.StartMode = startMode
 	}
 
 	updateMaterializedTableRequestJson, err := json.Marshal(table)
@@ -1138,4 +1239,101 @@ func normalizeFlinkQuery(query string) string {
 	query = strings.ReplaceAll(query, "`", "")
 	query = regexp.MustCompile(`\s+`).ReplaceAllString(query, " ")
 	return strings.TrimSpace(query)
+}
+
+// suppressFlinkTimestampDiff treats two RFC 3339 timestamps that refer to the same
+// instant as equal (e.g. `2026-04-01T02:00:00+02:00` and `2026-04-01T00:00:00Z`),
+// so a server that normalizes the offset to UTC does not produce a perpetual diff.
+func suppressFlinkTimestampDiff(k, old, new string, d *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+	oldTime, oldErr := time.Parse(time.RFC3339, old)
+	newTime, newErr := time.Parse(time.RFC3339, new)
+	if oldErr != nil || newErr != nil {
+		return false
+	}
+	return oldTime.Equal(newTime)
+}
+
+// expandMaterializedTableStartMode builds the API start_mode object from the
+// configured start_mode block. It returns nil when the block is absent (the
+// field is then omitted, and the server applies its default start mode).
+func expandMaterializedTableStartMode(d *schema.ResourceData) (*flinkgatewayv1.SqlV1MaterializedTableStartMode, error) {
+	raw, ok := d.GetOk(paramStartMode)
+	if !ok || raw == nil {
+		return nil, nil
+	}
+	list := raw.([]interface{})
+	if len(list) == 0 || list[0] == nil {
+		return nil, nil
+	}
+	m := list[0].(map[string]interface{})
+
+	startMode := &flinkgatewayv1.SqlV1MaterializedTableStartMode{}
+	kind, _ := m[paramStartModeKind].(string)
+	if kind != "" {
+		startMode.SetKind(kind)
+	}
+
+	timestamp, _ := m[paramStartModeTimestamp].(string)
+	if timestamp != "" {
+		parsed, err := time.Parse(time.RFC3339, timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("invalid %q %q: must be an RFC 3339 timestamp: %s", paramStartModeTimestamp, timestamp, err)
+		}
+		startMode.SetTimestamp(parsed)
+	}
+
+	if timeInterval := expandFlinkIntervalExpression(m[paramStartModeTimeInterval]); timeInterval != nil {
+		startMode.SetTimeInterval(*timeInterval)
+	}
+
+	// The API requires a timestamp for the two timestamp-based kinds; validate
+	// client-side so users get a clear error before the request is sent.
+	if flinkStartModeTimestampKinds[kind] && timestamp == "" {
+		return nil, fmt.Errorf("%q is required in the %q block when %q is %q", paramStartModeTimestamp, paramStartMode, paramStartModeKind, kind)
+	}
+
+	return startMode, nil
+}
+
+func expandFlinkIntervalExpression(raw interface{}) *flinkgatewayv1.SqlV1IntervalExpression {
+	list, ok := raw.([]interface{})
+	if !ok || len(list) == 0 || list[0] == nil {
+		return nil
+	}
+	m := list[0].(map[string]interface{})
+	interval := &flinkgatewayv1.SqlV1IntervalExpression{}
+	if value, ok := m[paramIntervalValue].(int); ok && value != 0 {
+		interval.SetInterval(int32(value))
+	}
+	if unit, ok := m[paramIntervalTimeUnit].(string); ok && unit != "" {
+		interval.SetTimeUnit(unit)
+	}
+	return interval
+}
+
+// flattenMaterializedTableStartMode renders the API start_mode object back into
+// the nested-block shape used by the schema. It returns an empty list when the
+// server does not echo a start_mode, so a table created without one shows no diff.
+func flattenMaterializedTableStartMode(startMode *flinkgatewayv1.SqlV1MaterializedTableStartMode) []interface{} {
+	if startMode == nil {
+		return []interface{}{}
+	}
+	block := map[string]interface{}{
+		paramStartModeKind: startMode.GetKind(),
+	}
+	if startMode.Timestamp != nil {
+		block[paramStartModeTimestamp] = startMode.GetTimestamp().Format(time.RFC3339)
+	}
+	if startMode.TimeInterval != nil {
+		block[paramStartModeTimeInterval] = []interface{}{
+			map[string]interface{}{
+				paramIntervalValue:    int(startMode.TimeInterval.GetInterval()),
+				paramIntervalTimeUnit: startMode.TimeInterval.GetTimeUnit(),
+			},
+		}
+	}
+	return []interface{}{block}
 }
