@@ -176,6 +176,26 @@ func TestFlattenMaterializedTableStartMode(t *testing.T) {
 		}
 	})
 
+	t.Run("kind only omits timestamp and time_interval", func(t *testing.T) {
+		sm := &flinkgatewayv1.SqlV1MaterializedTableStartMode{}
+		sm.SetKind("FROM_BEGINNING")
+
+		got := flattenMaterializedTableStartMode(sm)
+		if len(got) != 1 {
+			t.Fatalf("expected one block, got %#v", got)
+		}
+		block := got[0].(map[string]interface{})
+		if block[paramStartModeKind] != "FROM_BEGINNING" {
+			t.Errorf("kind = %v, want FROM_BEGINNING", block[paramStartModeKind])
+		}
+		if _, ok := block[paramStartModeTimestamp]; ok {
+			t.Errorf("timestamp should be absent when unset, got %v", block[paramStartModeTimestamp])
+		}
+		if _, ok := block[paramStartModeTimeInterval]; ok {
+			t.Errorf("time_interval should be absent when unset, got %v", block[paramStartModeTimeInterval])
+		}
+	})
+
 	t.Run("kind with timestamp", func(t *testing.T) {
 		sm := &flinkgatewayv1.SqlV1MaterializedTableStartMode{}
 		sm.SetKind("FROM_TIMESTAMP")
