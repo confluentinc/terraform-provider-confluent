@@ -435,6 +435,157 @@ func testAccCheckMaterializedTableExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+func TestAccFlinkMaterializedTableCredentialUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	scenarioName := "confluent_flink_materialized_table Credential Rotation"
+	stateCreated := "Table created"
+	stateDeleted := "Table deleted"
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table.json")
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+
+	// Step 1: Create
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(stateCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	// Step 2: Credential-only update — no-op PUT, server state unchanged
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	// Cleanup
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WillSetStateTo(stateDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "cred_rotation_test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	rotatedApiKey := "rotated_test_key"
+	rotatedApiSecret := "rotated_test_secret"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMaterializedTableWithCredentials(mockTestServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				Config: testAccCheckMaterializedTableWithCredentials(mockTestServerUrl, resourceLabel, rotatedApiKey, rotatedApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", rotatedApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", rotatedApiSecret),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableWithCredentials(mockServerUrl, resourceLabel, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  watermark {
+	    column     = "col123"
+	    expression = "exp123"
+	  }
+	  distribution {
+	    bucket_count = 10
+	    kind = "HASH"
+	    keys = [
+	      "keys",
+	      "passwords",
+	    ]
+	  }
+	  table_options = {
+	    "changelog_mode" = "upsert"
+	  }
+	  session_options = {
+	    "sql_local_time_zone" = "UTC"
+	  }
+	constraints {
+      name = "pk_orders"
+      type = "PRIMARY_KEY"
+      columns = ["user_id","product_id"]
+      enforced = false
+      }
+	columns {
+		columns_physical {
+			column_physical_name = "user_id"
+	        column_physical_kind = "Physical"
+	  		column_physical_comment = "string"
+			column_physical_type = "type1"
+		}
+	}
+}
+	`, mockServerUrl, resourceLabel, apiKey, apiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkMaterializedTableDisplayName, flinkMaterializedTableDatabase)
+}
+
 func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error {
 	testClient := testAccProvider.Meta().(*Client)
 	c := testClient.flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
