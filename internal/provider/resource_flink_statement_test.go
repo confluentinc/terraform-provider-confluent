@@ -450,6 +450,164 @@ func testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockServerUrl stri
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
+func TestAccFlinkStatementCredentialUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	scenarioName := "confluent_flink_statement Credential Rotation"
+	statePending := "Statement pending"
+	stateCreated := "Statement created"
+	stateStopped := "Statement stopped"
+	stateDeleting := "Statement deleting"
+	stateDeleted := "Statement deleted"
+
+	createResponse, _ := ioutil.ReadFile("../testdata/flink_statement/create_flink_statement.json")
+	pendingResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_pending_flink_statement.json")
+	runningResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_running_flink_statement.json")
+	stoppedResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
+	deletedResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_deleted_flink_statement.json")
+
+	// Step 1: Create
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(statePending).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(statePending).
+		WillSetStateTo(stateCreated).
+		WillReturn(string(pendingResponse), contentTypeJSONHeader, http.StatusOK))
+
+	// Steps 1+2: Read in created/running state (credential-only update only reads, no PUT)
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateCreated).
+		WillReturn(string(runningResponse), contentTypeJSONHeader, http.StatusOK))
+
+	// Step 3: Credentials + stopped change (triggers stop PUT)
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateStopped).
+		WillReturn(string(stoppedResponse), contentTypeJSONHeader, http.StatusOK))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateStopped).
+		WillReturn(string(stoppedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	// Cleanup
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WillSetStateTo(stateDeleting).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateDeleting).
+		WillSetStateTo(stateDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(stateDeleted).
+		WillReturn(string(deletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	rotatedApiKey := "rotated_test_key"
+	rotatedApiSecret := "rotated_test_secret"
+
+	resourceLabel := "cred_rotation_test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_statement.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckFlinkStatementDestroy(s, mockServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckFlinkStatementWithCredentials("", mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				Config: testAccCheckFlinkStatementWithCredentials("", mockServerUrl, resourceLabel, rotatedApiKey, rotatedApiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", rotatedApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", rotatedApiSecret),
+					resource.TestCheckResourceAttr(fullResourceLabel, "statement", flinkStatementTest),
+				),
+			},
+			{
+				Config: testAccCheckFlinkStatementWithCredentials("", mockServerUrl, resourceLabel, rotatedApiKey, rotatedApiSecret, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.key", rotatedApiKey),
+					resource.TestCheckResourceAttr(fullResourceLabel, "credentials.0.secret", rotatedApiSecret),
+					resource.TestCheckResourceAttr(fullResourceLabel, "stopped", "true"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckFlinkStatementWithCredentials(confluentCloudBaseUrl, mockServerUrl, resourceLabel, apiKey, apiSecret string, stopped bool) string {
+	stoppedStr := "false"
+	if stopped {
+		stoppedStr = "true"
+	}
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+    }
+	resource "confluent_flink_statement" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+
+	  statement_name = "%s"
+	  statement = "%s"
+	  stopped = %s
+
+	  properties = {
+		"%s" = "%s"
+	  }
+	}
+	`, confluentCloudBaseUrl, resourceLabel, apiKey, apiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+		flinkStatementNameTest, flinkStatementTest, stoppedStr, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
+}
+
 func testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
