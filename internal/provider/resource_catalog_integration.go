@@ -419,8 +419,8 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity) {
-		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramCustomDatabase, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret, paramCustomNamespace, paramWorkspaceEndpoint, paramCatalogName, paramCustomSchema)
+	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramCredentials) {
+		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, and %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramCredentials)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)

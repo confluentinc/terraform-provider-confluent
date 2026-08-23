@@ -560,8 +560,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramMode, paramLogTarget)
+	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials)
 	}
 
 	c := meta.(*Client)
