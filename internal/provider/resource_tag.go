@@ -259,6 +259,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
+	tagRequest.SetEntityTypes(defaultEntityTypes)
 
 	request := catalogRestClient.apiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
 	request = request.TagDef([]datacatalogv1.TagDef{tagRequest})

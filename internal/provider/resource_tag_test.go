@@ -106,15 +106,18 @@ func TestAccTag(t *testing.T) {
 		))
 
 	updateTagResponse, _ := ioutil.ReadFile("../testdata/tag/update_tag.json")
-	_ = updatedClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
+	updateTagStub := wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
 		WillSetStateTo(scenarioStateTagHasBeenUpdated).
+		// entityTypes must be sent on update, otherwise the backend clears it on the tag definition.
+		WithBodyPattern(wiremock.Contains(`"entityTypes":["cf_entity"]`)).
 		WillReturn(
 			string(updateTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)
+	_ = updatedClient.StubFor(updateTagStub)
 
 	readUpdatedTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_updated_tag.json")
 	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
@@ -194,6 +197,7 @@ func TestAccTag(t *testing.T) {
 	})
 
 	checkStubCount(t, initialClient, createTagStub, fmt.Sprintf("POST %s", createTagUrlPath), expectedCountOne)
+	checkStubCount(t, updatedClient, updateTagStub, fmt.Sprintf("PUT %s", createTagUrlPath), expectedCountOne)
 	checkStubCount(t, updatedClient, deleteTagStub, fmt.Sprintf("DELETE %s", readCreatedTagUrlPath), expectedCountOne)
 }
 
