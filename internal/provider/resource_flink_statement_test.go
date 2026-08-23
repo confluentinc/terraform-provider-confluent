@@ -226,6 +226,35 @@ func TestAccFlinkStatement2(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone (e.g. via a variable fed by a secrets
+				// manager) must update in place rather than erroring out of flinkStatementUpdate().
+				Config: testAccCheckFlinkStatementCredentialsRotated(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id", flinkPrincipalIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "rest_endpoint", mockFlinkStatementTestServerUrl),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates in place,
+				// and to keep the remaining steps (and the IMPORT_FLINK_API_KEY/SECRET-based import step) in sync.
+				Config: testAccCheckFlinkStatement(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
 				Config: testAccCheckFlinkStatementWithoutComputePool(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
@@ -374,6 +403,43 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
 	  }
 	}
 	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
+}
+
+func testAccCheckFlinkStatementCredentialsRotated(confluentCloudBaseUrl, mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+    }
+	resource "confluent_flink_statement" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+
+	  statement_name = "%s"
+	  statement = "%s"
+
+	  properties = {
+		"%s" = "%s"
+	  }
+	}
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKeyRotated, kafkaApiSecretRotated, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }

@@ -772,8 +772,8 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions) {
-		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions)
+	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramCredentials) {
+		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramCredentials)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)

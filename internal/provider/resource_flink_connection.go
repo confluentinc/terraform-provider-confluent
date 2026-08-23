@@ -202,7 +202,7 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramApiKey, paramAwsAccessKey, paramAwsSecretKey, paramAwsSessionToken, paramServiceKey, paramUsername, paramPassword) {
+	if d.HasChangesExcept(paramApiKey, paramAwsAccessKey, paramAwsSecretKey, paramAwsSessionToken, paramServiceKey, paramUsername, paramPassword, paramCredentials) {
 		return diag.Errorf("error updating Flink connection %q: only auth token attributes can be updated for Flink Connection", d.Id())
 	}
 
