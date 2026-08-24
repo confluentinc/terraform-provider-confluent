@@ -264,9 +264,10 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// Only the `stopped` field can be updated for Flink statement stop
-	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive) {
-		return diag.Errorf(`error stopping Flink Statement %q: only %q or %q attribute can be updated for Flink Statement`, d.Id(), paramStopped, paramPropertiesSensitive)
+	// Only the `stopped` field (plus `properties_sensitive`/`credentials`, which aren't part of the
+	// remote statement spec) can be updated for Flink statement stop
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive, paramCredentials) {
+		return diag.Errorf(`error stopping Flink Statement %q: only %q, %q or %q attribute can be updated for Flink Statement`, d.Id(), paramStopped, paramPropertiesSensitive, paramCredentials)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
@@ -331,9 +332,10 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// Only the `stopped`, `principal.id` and 'compute_pool.id` fields can be updated for Flink statement resume
-	if d.HasChangesExcept(paramStopped, paramPrincipal, paramComputePool) {
-		return diag.Errorf(`error resuming Flink Statement %q: only %q, %q, and %q attributes can be updated for Flink Statement`, d.Id(), paramStopped, paramPrincipal, paramComputePool)
+	// Only the `stopped`, `principal.id` and 'compute_pool.id` fields (plus `credentials`, which isn't
+	// part of the remote statement spec) can be updated for Flink statement resume
+	if d.HasChangesExcept(paramStopped, paramPrincipal, paramComputePool, paramCredentials) {
+		return diag.Errorf(`error resuming Flink Statement %q: only %q, %q, %q, and %q attributes can be updated for Flink Statement`, d.Id(), paramStopped, paramPrincipal, paramComputePool, paramCredentials)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
