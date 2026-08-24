@@ -287,6 +287,8 @@ func TestAccFlinkStatement2(t *testing.T) {
 				),
 			},
 			{
+				// Combines the stop transition (stopped: false -> true) with a simultaneous credentials
+				// rotation in the same apply, to cover flinkStatementStop()'s own HasChangesExcept guard.
 				Config: testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
@@ -312,12 +314,16 @@ func TestAccFlinkStatement2(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret", kafkaApiSecret),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "rest_endpoint", mockFlinkStatementTestServerUrl),
 				),
 			},
 			{
+				// testAccCheckFlinkStatementResumed uses the original (non-rotated) credentials, so this
+				// step also combines the resume transition (stopped: true -> false, plus principal/compute_pool
+				// changes) with a credentials rotation back to the original values, covering
+				// flinkStatementResume()'s own HasChangesExcept guard.
 				Config: testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
@@ -478,6 +484,8 @@ func testAccCheckFlinkStatementWithoutComputePool(confluentCloudBaseUrl, mockSer
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
+// Also rotates credentials in the same config as the stop transition, to cover the case where
+// flinkStatementStop()'s own HasChangesExcept guard must additionally allow `credentials`.
 func testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
@@ -511,7 +519,7 @@ func testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockServerUrl stri
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKeyRotated, kafkaApiSecretRotated, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
