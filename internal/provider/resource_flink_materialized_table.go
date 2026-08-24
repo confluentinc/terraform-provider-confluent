@@ -776,6 +776,12 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions, paramCredentials)
 	}
 
+	// `credentials` is only used to authenticate to the Flink REST API and isn't part of the
+	// remote table spec, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return materializedTableRead(ctx, d, meta)
+	}
+
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))

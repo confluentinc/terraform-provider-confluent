@@ -423,6 +423,12 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, and %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramCredentials)
 	}
 
+	// `credentials` is only used to authenticate to the Tableflow REST API and isn't part of the
+	// remote catalog integration spec, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return catalogIntegrationRead(ctx, d, meta)
+	}
+
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
