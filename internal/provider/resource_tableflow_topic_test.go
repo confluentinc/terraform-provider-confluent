@@ -140,6 +140,27 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone must update in place rather
+				// than sending an unnecessary UpdateTableflowV1TableflowTopic request to the backend.
+				Config: testAccCheckResourceTableflowTopicByobAwsCredentialsRotated(mockServerUrl, 100000000),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates
+				// in place, and to keep the remaining steps in sync.
+				Config: testAccCheckResourceTableflowTopicByobAws(mockServerUrl, 100000000),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "credentials.0.key", "test_key"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "credentials.0.secret", "test_secret"),
+				),
+			},
+			{
 				Config: testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl, 200000000),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
@@ -602,6 +623,37 @@ func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention i
 		}
 	}
 	`, mockServerUrl, retention)
+}
+
+func testAccCheckResourceTableflowTopicByobAwsCredentialsRotated(mockServerUrl string, retention int) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_tableflow_topic" "main" {
+		display_name = "topic_1"
+		retention_ms = %d
+		metadata_column_naming_scheme = "DEFAULT"
+		error_handling {
+			mode = "SUSPEND"
+		}
+		environment {
+			id = "env-abc123"
+		}
+		kafka_cluster {
+			id = "lkc-00000"
+		}
+		byob_aws {
+			bucket_name = "bucket_1"
+			provider_integration_id = "cspi-stgce89r7"
+		}
+		credentials {
+			key = "%s"
+			secret = "%s"
+		}
+	}
+	`, mockServerUrl, retention, kafkaApiKeyRotated, kafkaApiSecretRotated)
 }
 
 func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, retention int) string {
