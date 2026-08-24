@@ -33,21 +33,11 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
-            # 2. The main script
+            # 2. The main script. No `set -e` and no trap that calls `exit`: calling `exit` from a
+            # job command tears down Semaphore's shell before the epilogue runs, which silently
+            # skips the test-results publish below (the whole reason it lives in `epilogue.always`).
+            # Fail the job with a final non-zero test instead, mirroring smoke-tests.yml.
             - |
-              set -e
-
-              trap '
-                RC=$?
-                if [ $RC -ne 0 ]; then
-                  echo "Live tests failed, sending Slack notification..."
-
-                  curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
-                fi
-                exit $RC
-              ' EXIT
-
-              # Your original test logic runs here
               case "$TF_LIVE_TEST_GROUPS" in
                 "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
                 "all"|"") TF_LIVE_TEST_GROUPS="" ;;
@@ -55,15 +45,26 @@ blocks:
               esac
 
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
-              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
+              rc=0
+              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} || rc=$?
 
               # RTCE live tests run separately because they require their own env flags
-              # (e.g. TF_ACC_REGION pinned to a region where RTCE is enabled in prod).
-              # Skip if the caller asked for a specific group that isn't "core" or "all".
-              case "$TF_LIVE_TEST_GROUPS" in
-                ""|*core*) make live-test-rtce ;;
-                *) echo "Skipping live-test-rtce (group filter excludes RTCE)" ;;
-              esac
+              # (e.g. TF_ACC_REGION pinned to a region where RTCE is enabled in prod). Only run when
+              # live-test passed, matching the old set -e behavior; skip if the group filter excludes core.
+              if [ $rc -eq 0 ]; then
+                case "$TF_LIVE_TEST_GROUPS" in
+                  ""|*core*) make live-test-rtce || rc=$? ;;
+                  *) echo "Skipping live-test-rtce (group filter excludes RTCE)" ;;
+                esac
+              fi
+
+              if [ $rc -ne 0 ]; then
+                echo "Live tests failed, sending Slack notification..."
+                curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
+              fi
+
+              # Fail the job without calling `exit`, so the epilogue's test-results publish still runs.
+              [ $rc -eq 0 ]
       epilogue:
         always:
           commands:
