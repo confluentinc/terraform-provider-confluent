@@ -234,8 +234,14 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 }
 
 func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if d.HasChangesExcept(paramDescription, paramRestEndpoint) {
-		return diag.Errorf("error updating Tag %q: only %q and %q attributes can be updated for Tag", d.Id(), paramDescription, paramRestEndpoint)
+	if d.HasChangesExcept(paramDescription, paramRestEndpoint, paramCredentials) {
+		return diag.Errorf("error updating Tag %q: only %q, %q and %q attributes can be updated for Tag", d.Id(), paramDescription, paramRestEndpoint, paramCredentials)
+	}
+
+	// `credentials` is only used to authenticate to the Catalog REST API and isn't part of the
+	// remote tag definition, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return tagRead(ctx, d, meta)
 	}
 
 	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
@@ -259,6 +265,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
+	tagRequest.SetEntityTypes(defaultEntityTypes)
 
 	request := catalogRestClient.apiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
 	request = request.TagDef([]datacatalogv1.TagDef{tagRequest})
