@@ -188,6 +188,32 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone must update in place rather
+				// than sending an unnecessary UpdateSqlv1MaterializedTable request to the backend.
+				Config: testAccCheckMaterializedTableConfigCredentialsRotated(mockTestServerUrl, flinkMaterializedTableResourceLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDisplayName, flinkMaterializedTableDisplayName),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId), flinkComputePoolIdTest),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramPrincipal, paramId), flinkPrincipalIdTest),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates
+				// in place, and to keep the remaining steps in sync.
+				Config: testAccCheckMaterializedTableConfig(mockTestServerUrl, flinkMaterializedTableResourceLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
 				Config: testAccCheckMaterializedTableConfigUpdated(mockTestServerUrl, flinkMaterializedTableResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
@@ -325,6 +351,73 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	}
 }
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkMaterializedTableDisplayName, flinkMaterializedTableDatabase)
+}
+
+func testAccCheckMaterializedTableConfigCredentialsRotated(mockServerUrl, resourceLabel string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  watermark {
+	    column     = "col123"
+	    expression = "exp123"
+	  }
+	  distribution {
+	    bucket_count = 10
+	    kind = "HASH"
+	    keys = [
+	      "keys",
+	      "passwords",
+	    ]
+	  }
+	  table_options = {
+	    "changelog_mode" = "upsert"
+	  }
+	  session_options = {
+	    "sql_local_time_zone" = "UTC"
+	  }
+	constraints {
+      name = "pk_orders"
+      type = "PRIMARY_KEY"
+      columns = ["user_id","product_id"]
+      enforced = false
+      }
+	columns {
+		columns_physical {
+			column_physical_name = "user_id"
+	        column_physical_kind = "Physical"
+	  		column_physical_comment = "string"
+			column_physical_type = "type1"
+		}
+	}
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKeyRotated, kafkaApiSecretRotated, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkMaterializedTableDisplayName, flinkMaterializedTableDatabase)
 }
 
