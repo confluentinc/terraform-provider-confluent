@@ -147,6 +147,27 @@ func TestAccFlinkConnection(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone must update in place rather
+				// than sending an unnecessary UpdateSqlv1Connection request to the backend.
+				Config: testAccCheckConnectionConfigCredentialsRotated(mockTestServerUrl, flinkConnectionResourceLabel, flinkAPIKey),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionExists(fullConnectionResourceLabel),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramApiKey, flinkAPIKey),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates
+				// in place, and to keep the remaining steps in sync.
+				Config: testAccCheckConnectionConfig(mockTestServerUrl, flinkConnectionResourceLabel, flinkAPIKey),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionExists(fullConnectionResourceLabel),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
 				Config: testAccCheckConnectionConfig(mockTestServerUrl, flinkConnectionResourceLabel, flinkAPIKeyUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionExists(fullConnectionResourceLabel),
@@ -210,6 +231,39 @@ func testAccCheckConnectionConfig(mockServerUrl, resourceLabel, apikey string) s
  	  api_key 		= "%s"
 	}
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkConnectionDisplayName, flinkConnectionType, flinkEndpoint, apikey)
+}
+
+func testAccCheckConnectionConfigCredentialsRotated(mockServerUrl, resourceLabel, apikey string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_connection" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  type          = "%s"
+	  endpoint      = "%s"
+ 	  api_key 		= "%s"
+	}
+	`, mockServerUrl, resourceLabel, kafkaApiKeyRotated, kafkaApiSecretRotated, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkConnectionDisplayName, flinkConnectionType, flinkEndpoint, apikey)
 }
 
