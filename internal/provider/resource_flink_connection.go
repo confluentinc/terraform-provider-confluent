@@ -206,6 +206,12 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error updating Flink connection %q: only auth token attributes can be updated for Flink Connection", d.Id())
 	}
 
+	// `credentials` is only used to authenticate to the Flink REST API and isn't part of the
+	// remote connection spec, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return connectionRead(ctx, d, meta)
+	}
+
 	flinkRestClient, errClient := getFlinkClient(d, meta)
 	if errClient != nil {
 		return errClient

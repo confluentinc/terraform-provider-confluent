@@ -238,6 +238,12 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 		return diag.Errorf("error updating Tag %q: only %q, %q and %q attributes can be updated for Tag", d.Id(), paramDescription, paramRestEndpoint, paramCredentials)
 	}
 
+	// `credentials` is only used to authenticate to the Catalog REST API and isn't part of the
+	// remote tag definition, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return tagRead(ctx, d, meta)
+	}
+
 	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Tag: %s", createDescriptiveError(err))

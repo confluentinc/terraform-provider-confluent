@@ -564,6 +564,12 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials)
 	}
 
+	// `credentials` is only used to authenticate to the Tableflow REST API and isn't part of the
+	// remote topic spec, so a credentials-only change has nothing to send to the backend.
+	if !d.HasChangesExcept(paramCredentials) {
+		return tableflowTopicRead(ctx, d, meta)
+	}
+
 	c := meta.(*Client)
 
 	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
