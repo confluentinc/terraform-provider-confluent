@@ -44,6 +44,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.0
 	github.com/samber/lo v1.20.0
+	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/walkerus/go-wiremock v1.2.0
 )
@@ -63,7 +64,6 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // indirect
