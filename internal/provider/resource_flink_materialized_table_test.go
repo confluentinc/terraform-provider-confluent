@@ -922,3 +922,70 @@ func testAccCheckMaterializedTableUnmanagedOptionsConfig(mockServerUrl, resource
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
+
+// TestFlinkSqlTypeToString covers INC-12957: the Flink Gateway API represents
+// parameterized column types (e.g. VARCHAR, DECIMAL) as a JSON object rather than a
+// plain string, which used to be set directly on the string-typed column_*_type
+// schema attributes and panicked inside the SDK's ResourceData.Set.
+func TestFlinkSqlTypeToString(t *testing.T) {
+	tests := []struct {
+		name     string
+		rawType  interface{}
+		expected string
+	}{
+		{
+			name:     "plain string type",
+			rawType:  "INT",
+			expected: "INT",
+		},
+		{
+			name:     "nil type",
+			rawType:  nil,
+			expected: "",
+		},
+		{
+			name:     "the exact payload from the INC-12957 panic",
+			rawType:  map[string]interface{}{"type": "VARCHAR", "length": 2147483647.0, "nullable": false},
+			expected: "VARCHAR(2147483647) NOT NULL",
+		},
+		{
+			name:     "nullable parameterized type omits the NOT NULL suffix",
+			rawType:  map[string]interface{}{"type": "VARCHAR", "length": 200.0, "nullable": true},
+			expected: "VARCHAR(200)",
+		},
+		{
+			name:     "precision and scale",
+			rawType:  map[string]interface{}{"type": "DECIMAL", "precision": 10.0, "scale": 2.0, "nullable": true},
+			expected: "DECIMAL(10, 2)",
+		},
+		{
+			name:     "precision only",
+			rawType:  map[string]interface{}{"type": "TIMESTAMP", "precision": 3.0, "nullable": true},
+			expected: "TIMESTAMP(3)",
+		},
+		{
+			name:     "no parameters",
+			rawType:  map[string]interface{}{"type": "INT", "nullable": true},
+			expected: "INT",
+		},
+		{
+			name:     "no parameters, not null",
+			rawType:  map[string]interface{}{"type": "BOOLEAN", "nullable": false},
+			expected: "BOOLEAN NOT NULL",
+		},
+		{
+			name:     "missing type key falls back to empty string instead of panicking",
+			rawType:  map[string]interface{}{"length": 200.0, "nullable": true},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := flinkSqlTypeToString(tt.rawType)
+			if actual != tt.expected {
+				t.Errorf("flinkSqlTypeToString(%#v) = %q, expected %q", tt.rawType, actual, tt.expected)
+			}
+		})
+	}
+}
