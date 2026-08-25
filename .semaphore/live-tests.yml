@@ -51,20 +51,20 @@ blocks:
               # RTCE live tests run separately because they require their own env flags
               # (e.g. TF_ACC_REGION pinned to a region where RTCE is enabled in prod). Only run when
               # live-test passed, matching the old set -e behavior; skip if the group filter excludes core.
-              if [ $rc -eq 0 ]; then
+              if [ "$rc" -eq 0 ]; then
                 case "$TF_LIVE_TEST_GROUPS" in
                   ""|*core*) make live-test-rtce || rc=$? ;;
                   *) echo "Skipping live-test-rtce (group filter excludes RTCE)" ;;
                 esac
               fi
 
-              if [ $rc -ne 0 ]; then
+              if [ "$rc" -ne 0 ]; then
                 echo "Live tests failed, sending Slack notification..."
                 curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
               fi
 
               # Fail the job without calling `exit`, so the epilogue's test-results publish still runs.
-              [ $rc -eq 0 ]
+              [ "$rc" -eq 0 ]
       epilogue:
         always:
           commands:
