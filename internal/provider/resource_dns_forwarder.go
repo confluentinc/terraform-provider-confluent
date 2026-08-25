@@ -143,7 +143,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	_, isForwardViaIp := d.GetOk(paramForwardViaIp)
 	_, isForwardViaGcpDnsZones := d.GetOk(paramForwardViaGcpDnsZones)
 
-	var configIdentifier string
+	configIdentifier := d.Get(paramDisplayName).(string)
 
 	switch {
 	case isForwardViaIp:
@@ -196,17 +196,14 @@ func dnsForwarderRead(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func dnsForwarderUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDomains) {
-		return diag.Errorf("error updating DNS forwarder %q: only %q, %q can be updated", d.Id(), paramDisplayName, paramDomains)
+	if d.HasChangesExcept(paramDisplayName) {
+		return diag.Errorf("error updating DNS forwarder %q: only %q can be updated", d.Id(), paramDisplayName)
 	}
 
 	updateDnsForwarderRequest := networkingdnsforwarderv1.NewNetworkingV1DnsForwarderUpdate()
 	specUpdate := networkingdnsforwarderv1.NewNetworkingV1DnsForwarderSpecUpdate()
 	if d.HasChange(paramDisplayName) {
 		specUpdate.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
-	if d.HasChange(paramDomains) {
-		specUpdate.SetDomains(convertToStringSlice(d.Get(paramDomains).(*schema.Set).List()))
 	}
 
 	// Environment is required in the update request body for resource identification
@@ -324,13 +321,13 @@ func setDnsForwarderAttributes(d *schema.ResourceData, dnsForwarder networkingdn
 		if err := d.Set(paramForwardViaIp, []interface{}{map[string]interface{}{
 			paramForwardViaIpDnsServerIps: oneOfConfig.NetworkingV1ForwardViaIp.GetDnsServerIps(),
 		}}); err != nil {
-			return nil, err
+			return nil, createDescriptiveError(err)
 		}
 	case oneOfConfig.NetworkingV1ForwardViaGcpDnsZones != nil:
 		if err := d.Set(paramForwardViaGcpDnsZones, []interface{}{map[string]interface{}{
 			paramForwardViaGcpDnsZonesDomainMappings: flattenDomainMappings(oneOfConfig.NetworkingV1ForwardViaGcpDnsZones.GetDomainMappings()),
 		}}); err != nil {
-			return nil, err
+			return nil, createDescriptiveError(err)
 		}
 	}
 
