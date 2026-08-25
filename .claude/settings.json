@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.tfvars)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/*.tfvars)"
+    ]
+  }
+}
