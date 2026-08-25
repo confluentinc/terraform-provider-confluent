@@ -127,6 +127,27 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone must update in place rather
+				// than sending an unnecessary UpdateTableflowV1CatalogIntegration request to the backend.
+				Config: testAccCheckResourceCatalogIntegrationAwsGlueCredentialsRotated(mockServerUrl, "catalog_integration_1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "credentials.0.key", kafkaApiKeyRotated),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "credentials.0.secret", kafkaApiSecretRotated),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates
+				// in place, and to keep the remaining steps in sync.
+				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "credentials.0.key", "test_key"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "credentials.0.secret", "test_secret"),
+				),
+			},
+			{
 				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
@@ -412,6 +433,32 @@ func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name s
 		}
 	}
 	`, mockServerUrl, display_name)
+}
+
+func testAccCheckResourceCatalogIntegrationAwsGlueCredentialsRotated(mockServerUrl, display_name string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_catalog_integration" "main" {
+		display_name = "%s"
+		environment {
+			id = "env-abc123"
+		}
+		kafka_cluster {
+			id = "lkc-00000"
+		}
+		aws_glue {
+			provider_integration_id = "cspi-stgce89r7"
+			custom_database = "my-custom-database"
+		}
+		credentials {
+			key = "%s"
+			secret = "%s"
+		}
+	}
+	`, mockServerUrl, display_name, kafkaApiKeyRotated, kafkaApiSecretRotated)
 }
 
 func testAccCheckResourceCatalogIntegrationSnowflake(mockServerUrl, displayName, endpoint, clientId, clientSecret, warehouse, allowedScope string) string {

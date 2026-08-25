@@ -106,15 +106,18 @@ func TestAccTag(t *testing.T) {
 		))
 
 	updateTagResponse, _ := ioutil.ReadFile("../testdata/tag/update_tag.json")
-	_ = updatedClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
+	updateTagStub := wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
 		WillSetStateTo(scenarioStateTagHasBeenUpdated).
+		// entityTypes must be sent on update, otherwise the backend clears it on the tag definition.
+		WithBodyPattern(wiremock.Contains(`"entityTypes":["cf_entity"]`)).
 		WillReturn(
 			string(updateTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)
+	_ = updatedClient.StubFor(updateTagStub)
 
 	readUpdatedTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_updated_tag.json")
 	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
@@ -172,6 +175,31 @@ func TestAccTag(t *testing.T) {
 				),
 			},
 			{
+				// Rotating credentials.key / credentials.secret alone must update in place rather
+				// than sending an unnecessary UpdateTagDefs request to the backend.
+				Config: tagResourceCredentialsRotatedConfig(mockServerInitialUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
+					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerInitialUrl),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryUpdatedKey),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistryUpdatedSecret),
+					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
+					resource.TestCheckResourceAttr(tagLabel, "description", "test1Description"),
+					resource.TestCheckResourceAttr(tagLabel, "version", "1"),
+				),
+			},
+			{
+				// Rotate back to the original credentials to confirm the reverse direction also updates
+				// in place, and to keep the remaining steps in sync.
+				Config: tagResourceConfig(mockServerInitialUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistrySecret),
+				),
+			},
+			{
 				Config: tagResourceUpdatedConfig(mockServerUpdatedUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
@@ -194,6 +222,7 @@ func TestAccTag(t *testing.T) {
 	})
 
 	checkStubCount(t, initialClient, createTagStub, fmt.Sprintf("POST %s", createTagUrlPath), expectedCountOne)
+	checkStubCount(t, updatedClient, updateTagStub, fmt.Sprintf("PUT %s", createTagUrlPath), expectedCountOne)
 	checkStubCount(t, updatedClient, deleteTagStub, fmt.Sprintf("DELETE %s", readCreatedTagUrlPath), expectedCountOne)
 }
 
@@ -217,6 +246,28 @@ func tagResourceConfig(mockServerUrl string) string {
       }
    }
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
+}
+
+func tagResourceCredentialsRotatedConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	}
+ 	resource "confluent_tag" "mytag" {
+      name        = "test1"
+      description = "test1Description"
+
+      schema_registry_cluster {
+        id = "%s"
+      }
+
+      rest_endpoint = "%s"
+
+      credentials {
+        key    = "%s"
+        secret = "%s"
+      }
+   }
+ 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret)
 }
 
 func tagResourceUpdatedConfig(mockServerUrl string) string {
