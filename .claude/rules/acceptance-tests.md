@@ -37,6 +37,14 @@ scratch and consistent across siblings — mirror it rather than inventing one.
 - For a `ForceNew` attribute, a test step that changes it should show the resource being recreated.
 - For a state upgrader, cover the migration path from the prior `SchemaVersion`.
 
+## Generated tests are additive
+
+A `cli-terraform-generator` regeneration often ships **existence-only generated tests** (asserting
+attributes are set) alongside the **hand-written exact-value tests** it keeps. Don't flag the
+generated test as too shallow on its own — first confirm the exact-value coverage still lives
+somewhere (usually a retained `TestAcc...` hand-written test). The gap to catch is when a
+regeneration drops the hand-written exact-value test and leaves only the existence-only one.
+
 ## Running
 
 ```bash
