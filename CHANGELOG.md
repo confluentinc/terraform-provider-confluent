@@ -1,3 +1,10 @@
+## 2.84.0 (August 21st, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.83.0...v2.84.0)
+
+**New features:**
+* Added a new `confluent_client_request_policy` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_client_request_policy) to support [Client Request Policies](https://docs.confluent.io/cloud/current/).
+
 ## 2.83.0 (August 12th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.82.0...v2.83.0)

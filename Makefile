@@ -221,6 +221,10 @@ live-test-data-catalog:
 live-test-tableflow:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="tableflow"
 
+.PHONY: live-test-crp
+live-test-crp:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="crp"
+
 .PHONY: live-test-drift
 live-test-drift:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="drift"
