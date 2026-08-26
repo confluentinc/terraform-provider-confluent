@@ -67,3 +67,6 @@ promotions:
     pipeline_file: goreleaser.yml
   - name: Run Live Integration Tests
     pipeline_file: live-tests.yml
+  # Manual (no auto_promote): AI review runs on demand when a PR is review-ready, not per push.
+  - name: R2 Code Review
+    pipeline_file: r2-code-review.yml
