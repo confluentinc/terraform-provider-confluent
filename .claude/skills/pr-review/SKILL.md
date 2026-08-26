@@ -61,7 +61,6 @@ Goals:
 **For local changes (self-review):**
 
 ```bash
-# This repo's default branch is `master`, not `main`.
 git diff master --name-only
 git diff master --stat
 git diff master
