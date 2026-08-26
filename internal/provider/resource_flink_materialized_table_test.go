@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -921,4 +922,74 @@ func testAccCheckMaterializedTableUnmanagedOptionsConfig(mockServerUrl, resource
 }
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
+// TestFlinkColumnTypeToString covers INC-12957: the Flink Gateway API returns a
+// column's type as a structured DataType object rather than a plain string, which used
+// to be assigned directly to the string-typed column_*_type schema attributes and
+// panicked inside the SDK's ResourceData.Set.
+//
+// The raw JSON strings below are the exact payloads captured from a live create against
+// examples.marketplace.orders (the query the failing live tests use). Decoding them into
+// interface{} with encoding/json mirrors precisely what the generated SDK does before the
+// value reaches flinkColumnTypeToString: JSON objects become map[string]interface{} and
+// JSON numbers become float64.
+func TestFlinkColumnTypeToString(t *testing.T) {
+	decode := func(raw string) interface{} {
+		var v interface{}
+		if err := json.Unmarshal([]byte(raw), &v); err != nil {
+			t.Fatalf("failed to decode test input %q: %s", raw, err)
+		}
+		return v
+	}
+
+	tests := []struct {
+		name     string
+		rawType  interface{}
+		expected string
+	}{
+		{
+			name:     "nil type",
+			rawType:  nil,
+			expected: "",
+		},
+		{
+			name:     "a plain string type passes through unchanged",
+			rawType:  "INT",
+			expected: "INT",
+		},
+		{
+			// The exact payload from the INC-12957 panic (the order_id column).
+			name:     "parameterized VARCHAR object from the live repro",
+			rawType:  decode(`{"type":"VARCHAR","length":2147483647,"nullable":false}`),
+			expected: `{"length":2147483647,"nullable":false,"type":"VARCHAR"}`,
+		},
+		{
+			// Simple, unparameterized types come back as objects too, not as bare strings.
+			name:     "unparameterized INTEGER object from the live repro",
+			rawType:  decode(`{"type":"INTEGER","nullable":false}`),
+			expected: `{"nullable":false,"type":"INTEGER"}`,
+		},
+		{
+			// Drift guard: the same type with keys in a different server-supplied order must
+			// serialize to an identical string, so a refresh never shows a spurious diff.
+			name:     "keys in a different server order still serialize identically",
+			rawType:  decode(`{"nullable":false,"length":2147483647,"type":"VARCHAR"}`),
+			expected: `{"length":2147483647,"nullable":false,"type":"VARCHAR"}`,
+		},
+		{
+			// Nested types are preserved losslessly rather than dropped or truncated.
+			name:     "nested ARRAY element type is preserved",
+			rawType:  decode(`{"type":"ARRAY","element_type":{"type":"VARCHAR","length":100,"nullable":true},"nullable":true}`),
+			expected: `{"element_type":{"length":100,"nullable":true,"type":"VARCHAR"},"nullable":true,"type":"ARRAY"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := flinkColumnTypeToString(tt.rawType); got != tt.expected {
+				t.Errorf("flinkColumnTypeToString(%#v) = %q, want %q", tt.rawType, got, tt.expected)
+			}
+		})
+	}
 }

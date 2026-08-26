@@ -495,6 +495,40 @@ func setServerManagedOptionsMap(d *schema.ResourceData, key string, serverOption
 	return d.Set(key, managedOptions)
 }
 
+// flinkColumnTypeToString normalizes a column's SQL type, as returned by the Flink
+// Gateway API, into the plain string that the string-typed column_*_type schema
+// attributes require.
+//
+// The Gateway returns the type either as a plain SQL string (e.g. "INT") or, in
+// practice for every column we've observed, as a structured DataType object
+// (e.g. {"type":"VARCHAR","length":2147483647,"nullable":false}). The generated SDK
+// models the field as interface{} to accommodate both shapes, so assigning it directly
+// to a string-typed schema field panics inside the SDK's ResourceData.Set as soon as
+// the object shape appears (INC-12957).
+//
+// When the value is already a string we pass it through unchanged. Otherwise we
+// preserve the server's representation losslessly by JSON-encoding it, rather than
+// dropping information or guessing at SQL syntax for nested types (ARRAY/MAP/ROW, etc.).
+// encoding/json sorts object keys deterministically, so the stored value stays stable
+// across reads even if the server varies key ordering — this keeps Terraform from
+// reporting spurious drift on refresh.
+func flinkColumnTypeToString(rawType interface{}) string {
+	if rawType == nil {
+		return ""
+	}
+	if s, ok := rawType.(string); ok {
+		return s
+	}
+	encoded, err := json.Marshal(rawType)
+	if err != nil {
+		// json.Marshal only fails on unencodable values (channels, funcs), which the
+		// SDK's decoded JSON can never contain; fall back to Go's default rendering so
+		// we still never panic and never store an empty type.
+		return fmt.Sprintf("%v", rawType)
+	}
+	return string(encoded)
+}
+
 func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
@@ -588,7 +622,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnComputed] = []map[string]interface{}{
 					{
 						paramComputedName:       computedCol.Name,
-						paramComputedType:       computedCol.Type,
+						paramComputedType:       flinkColumnTypeToString(computedCol.Type),
 						paramComputedComment:    computedCol.Comment,
 						paramComputedKind:       computedCol.Kind,
 						paramComputedExpression: computedCol.Expression,
@@ -604,7 +638,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnPhysical] = []map[string]interface{}{
 					{
 						paramPhysicalName:    physicalCol.Name,
-						paramPhysicalType:    physicalCol.Type,
+						paramPhysicalType:    flinkColumnTypeToString(physicalCol.Type),
 						paramPhysicalComment: physicalCol.Comment,
 						paramPhysicalKind:    physicalCol.Kind,
 					},
@@ -623,7 +657,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnMetadata] = []map[string]interface{}{
 					{
 						paramMetadataName:    metadataCol.Name,
-						paramMetadataType:    metadataCol.Type,
+						paramMetadataType:    flinkColumnTypeToString(metadataCol.Type),
 						paramMetadataComment: metadataCol.Comment,
 						paramMetadataKind:    metadataCol.Kind,
 						paramMetadataKey:     metadataCol.MetadataKey,
