@@ -49,6 +49,27 @@ blocks:
             # --trim-output-to keeps the LAST N characters; the 1000 default drops the assertion.
             - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing --trim-output-to 20000
 
+  - name: R2 Code Review
+    # Runs after build/test rather than in parallel, so a review only posts on a green build.
+    dependencies:
+      - "Build & Test & Release"
+    run:
+      # PRs only. The change_in guard is R2's documented form; inert here (no /.deployed-versions/
+      # dir) but kept for cross-repo/template consistency. Non-PR runs skip the block.
+      when: "pull_request =~ '.+' and change_in('/', {exclude: ['/.deployed-versions/']})"
+    task:
+      jobs:
+        - name: "R2 Code Review"
+          # Bound above r2's own --timeout=15m: `|| true` masks a non-zero exit but not a hard
+          # execution_time_limit kill, and the block would otherwise inherit the 2h pipeline default.
+          execution_time_limit:
+            minutes: 20
+          commands:
+            # `checkout` is inherited from global_job_config's prologue.
+            # `|| true`: an AI-review failure is unrelated to the code under review and must not
+            # block CI (report R2 issues to #r2).
+            - r2 code-review --verbose --timeout=15m || true
+
 after_pipeline:
   task:
     jobs:
