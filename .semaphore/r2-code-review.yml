@@ -1,0 +1,26 @@
+version: v1.0
+name: R2 Code Review
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+# Match the sibling promotion pipelines (live-tests, smoke-tests): a manual run isn't auto-cancelled.
+auto_cancel:
+  running:
+    when: "false"
+
+blocks:
+  - name: R2 Code Review
+    task:
+      jobs:
+        - name: "R2 Code Review"
+          # Bound above r2's own --timeout=15m: `|| true` masks a non-zero exit but not a hard
+          # execution_time_limit kill, which would otherwise fail the promotion.
+          execution_time_limit:
+            minutes: 20
+          commands:
+            # Triggered manually from a review-ready PR, so no pull_request gate is needed here.
+            - checkout
+            # `|| true`: an AI-review failure is unrelated to the code under review and must not
+            # fail the promotion (report R2 issues to #r2).
+            - r2 code-review --verbose --timeout=15m || true
