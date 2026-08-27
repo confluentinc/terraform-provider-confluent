@@ -160,8 +160,8 @@ func TestFlattenMaterializedTableStartMode(t *testing.T) {
 		if block[paramStartModeKind] != "FROM_NOW" {
 			t.Errorf("kind = %v, want FROM_NOW", block[paramStartModeKind])
 		}
-		if _, ok := block[paramStartModeTimestamp]; ok {
-			t.Errorf("timestamp should be absent when unset, got %v", block[paramStartModeTimestamp])
+		if block[paramStartModeTimestamp] != "" {
+			t.Errorf("timestamp should be empty when unset, got %v", block[paramStartModeTimestamp])
 		}
 		ti := block[paramStartModeTimeInterval].([]interface{})
 		if len(ti) != 1 {
@@ -176,7 +176,12 @@ func TestFlattenMaterializedTableStartMode(t *testing.T) {
 		}
 	})
 
-	t.Run("kind only omits timestamp and time_interval", func(t *testing.T) {
+	// Regression guard for the kind-switch stale-sibling leak: a kind that carries
+	// no timestamp/time_interval must flatten them to explicit empty values, not
+	// omit the keys. Omitting a Computed nested-list key makes the SDK retain the
+	// prior state value, which leaks e.g. a FROM_NOW time_interval into a later
+	// FROM_BEGINNING state until the next refresh.
+	t.Run("kind only clears timestamp and time_interval", func(t *testing.T) {
 		sm := &flinkgatewayv1.SqlV1MaterializedTableStartMode{}
 		sm.SetKind("FROM_BEGINNING")
 
@@ -188,11 +193,15 @@ func TestFlattenMaterializedTableStartMode(t *testing.T) {
 		if block[paramStartModeKind] != "FROM_BEGINNING" {
 			t.Errorf("kind = %v, want FROM_BEGINNING", block[paramStartModeKind])
 		}
-		if _, ok := block[paramStartModeTimestamp]; ok {
-			t.Errorf("timestamp should be absent when unset, got %v", block[paramStartModeTimestamp])
+		if block[paramStartModeTimestamp] != "" {
+			t.Errorf("timestamp should be empty when unset, got %v", block[paramStartModeTimestamp])
 		}
-		if _, ok := block[paramStartModeTimeInterval]; ok {
-			t.Errorf("time_interval should be absent when unset, got %v", block[paramStartModeTimeInterval])
+		ti, ok := block[paramStartModeTimeInterval].([]interface{})
+		if !ok {
+			t.Fatalf("time_interval should be an empty list, got %#v", block[paramStartModeTimeInterval])
+		}
+		if len(ti) != 0 {
+			t.Errorf("time_interval should be empty when unset, got %#v", ti)
 		}
 	})
 
@@ -206,8 +215,12 @@ func TestFlattenMaterializedTableStartMode(t *testing.T) {
 		if block[paramStartModeTimestamp] != "2026-04-01T00:00:00Z" {
 			t.Errorf("timestamp = %v, want 2026-04-01T00:00:00Z", block[paramStartModeTimestamp])
 		}
-		if _, ok := block[paramStartModeTimeInterval]; ok {
-			t.Errorf("time_interval should be absent when unset, got %v", block[paramStartModeTimeInterval])
+		ti, ok := block[paramStartModeTimeInterval].([]interface{})
+		if !ok {
+			t.Fatalf("time_interval should be an empty list, got %#v", block[paramStartModeTimeInterval])
+		}
+		if len(ti) != 0 {
+			t.Errorf("time_interval should be empty when unset, got %#v", ti)
 		}
 	})
 }

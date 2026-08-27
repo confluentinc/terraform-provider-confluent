@@ -1333,8 +1333,16 @@ func flattenMaterializedTableStartMode(startMode *flinkgatewayv1.SqlV1Materializ
 	if startMode == nil {
 		return []interface{}{}
 	}
+	// Emit empty values for the absent siblings explicitly. timestamp and
+	// time_interval are Computed, and omitting a Computed nested-list key from the
+	// d.Set map makes the SDK retain its prior state value. That leaks a stale
+	// sibling across a kind switch (e.g. FROM_NOW -> FROM_BEGINNING keeps the old
+	// time_interval) until the next refresh reconciles it. Setting them explicitly
+	// keeps state authoritative on the same apply.
 	block := map[string]interface{}{
-		paramStartModeKind: startMode.GetKind(),
+		paramStartModeKind:         startMode.GetKind(),
+		paramStartModeTimestamp:    "",
+		paramStartModeTimeInterval: []interface{}{},
 	}
 	if startMode.Timestamp != nil {
 		block[paramStartModeTimestamp] = startMode.GetTimestamp().Format(time.RFC3339)
