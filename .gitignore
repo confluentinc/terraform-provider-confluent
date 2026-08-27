@@ -26,6 +26,9 @@ vendor/
 # Bin dir
 bin/
 
+# Temp output of `make telemetry-attrs-check` (regenerate-and-diff)
+telemetry_attrs_allowlist.generated.json
+
 # Goland IDE
 .idea/
 
