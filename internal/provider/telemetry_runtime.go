@@ -93,9 +93,12 @@ func telemetryOptOut(endpoint string) bool {
 }
 
 // telemetryAuthFunc builds the per-request auth decorator from the provider's
-// top-level Cloud identity, preferring a bearer token (OAuth/STS) over the Cloud
-// API key. It returns nil when no top-level identity is configured; TFCA-B7
-// turns that case into a disabled runtime.
+// top-level Cloud identity ONLY — the Cloud API key/secret or the OAuth/STS
+// bearer token — preferring a bearer token when present. It deliberately never
+// reads resource-scoped credentials (Kafka/Schema Registry/Flink/Tableflow API
+// keys): analytics is attributed to the org-level identity, not a data-plane
+// key. It returns nil when no top-level identity is configured, which
+// publishTelemetryRuntime treats as a disabled runtime (TFCA-B7).
 func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) func(context.Context) context.Context {
 	switch {
 	case sts != nil && sts.AccessToken != "":
@@ -113,10 +116,14 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 // when enabled, and publishes the runtime for the CRUD goroutines. Called once,
 // at the end of provider configuration.
 func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) {
-	disabled := telemetryOptOut(endpoint)
+	// Auth scoping (TFCA-B7): reporting uses only the top-level Cloud identity. If
+	// none is configured (for example a provider set up with only resource-scoped
+	// Kafka credentials), authFunc is nil and reporting is a no-op — not an error.
+	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
+	disabled := telemetryOptOut(endpoint) || authFunc == nil
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
-		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts))
+		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
 		rt.reporter = telemetry.NewTransport(poster, ctx)
 	}
 	publishedTelemetry.Store(rt)
