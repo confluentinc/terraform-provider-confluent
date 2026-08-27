@@ -52,11 +52,16 @@ func TestTelemetryDisabledInTestMode(t *testing.T) {
 	}
 }
 
-// TestAccTelemetryDisabledDuringAcceptanceTests is the acceptance-level assertion
-// for TFCA-B8: during a testacc run (TF_ACC=1), a full resource lifecycle emits
-// zero telemetry calls, verified with checkStubCount against a stubbed
-// terraform-usage endpoint.
+// TestAccTelemetryDisabledDuringAcceptanceTests is an end-to-end "no telemetry
+// escapes during a testacc run" guard: a full resource lifecycle under TF_ACC
+// emits zero telemetry calls, verified with checkStubCount against a stubbed
+// terraform-usage endpoint (with a non-zero create-stub count proving the
+// lifecycle really ran). It does NOT isolate the test-mode gate specifically —
+// an acceptance run structurally uses a non-default (mock) endpoint, which also
+// disables reporting — so the gate is isolated by the unit test
+// TestTelemetryDisabledInTestMode; this test guards the composed outcome.
 func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
+	restorePublishedTelemetry(t)
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -114,8 +119,8 @@ func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// display_name must match the value in the create/read fixtures, else
-			// the post-apply plan is non-empty and the step fails.
-			Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, "test_env_display_name", "ESSENTIALS"),
+				// the post-apply plan is non-empty and the step fails.
+				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, "test_env_display_name", "ESSENTIALS"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 				),
