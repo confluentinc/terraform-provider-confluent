@@ -31,7 +31,7 @@ func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 
 	// Default endpoint (would otherwise enable), but no cloud key and no OAuth/STS
 	// token — mirroring a Kafka-only provider configuration.
-	publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "", "", nil, nil)
+	publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "", "", nil, nil, false)
 
 	rt := publishedTelemetry.Load()
 	if rt == nil {
@@ -55,7 +55,7 @@ func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
 
-	publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil)
+	publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 	rt := publishedTelemetry.Load()
 	if rt == nil || rt.config.Disabled || rt.reporter == nil {
 		t.Fatalf("expected an enabled runtime with a top-level identity, got %+v", rt)

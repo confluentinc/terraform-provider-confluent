@@ -115,12 +115,15 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 // publishTelemetryRuntime computes the opt-out decision, builds the transport
 // when enabled, and publishes the runtime for the CRUD goroutines. Called once,
 // at the end of provider configuration.
-func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) {
+func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
 	// Auth scoping (TFCA-B7): reporting uses only the top-level Cloud identity. If
 	// none is configured (for example a provider set up with only resource-scoped
 	// Kafka credentials), authFunc is nil and reporting is a no-op — not an error.
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
-	disabled := telemetryOptOut(endpoint) || authFunc == nil
+	// Test-mode gating (TFCA-B8): never report during acceptance or live-production
+	// test runs, so an unexpected outbound call can't make those suites slow or
+	// flaky (cf. hashicorp/terraform-plugin-sdk#640).
+	disabled := testMode || telemetryOptOut(endpoint) || authFunc == nil
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
