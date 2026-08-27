@@ -50,6 +50,14 @@ func extractAwsRegionFromKafkaRestEndpoint(endpoint string) (string, error) {
 func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	t.Parallel()
 
+	// TODO(INC-12957): remove once confluentinc/terraform-provider-confluent#1178 or
+	// #1180 merges. The Flink Gateway now returns columns[].type as a structured object
+	// instead of a plain string; setMaterializedTableAttributes hands that straight to
+	// d.Set on a string-typed field, which panics under TF_ACC=1. All live tests share
+	// one test binary (make live-test runs with -parallel 10), so that panic takes down
+	// every other in-flight live test, not just this one.
+	t.Skip("Skipping due to INC-12957 (confluent_flink_materialized_table column type panic); re-enable once confluentinc/terraform-provider-confluent#1178 or #1180 merges")
+
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
 	}
