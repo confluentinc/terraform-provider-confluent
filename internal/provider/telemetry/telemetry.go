@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package telemetry holds the client-side analytics data model and the
-// process-scoped primitives used to correlate provider operations.
+// Package telemetry holds the client-side analytics data model, the
+// process-scoped primitives used to correlate provider operations, and the
+// bounded-worker transport that delivers events.
 //
-// It is intentionally self-contained: it owns only the payload struct
-// (Usage), the process run identifier and sequence counter (run.go), the
-// captured configuration snapshot (Config), and timing capture (Timer). The
-// central CRUD/import wrapping that populates a Usage, the opt-out wiring that
-// sets Config.Disabled, and the network transport that reports a Usage all
-// live outside this package and consume it. It does no network or filesystem
-// I/O, reads no environment variables, and does not reference the provider's
-// Client struct.
+// The data model (Usage), the process run identifier and sequence counter
+// (run.go), the captured configuration snapshot (Config), and timing capture
+// (Timer) are I/O-free: they do no network or filesystem access, read no
+// environment variables, and do not reference the provider's Client struct. The
+// central CRUD/import wrapping that populates a Usage and the opt-out wiring
+// that sets Config.Disabled live outside this package and consume it. The
+// bounded-worker transport (transport.go) is the one component here that
+// performs network I/O, delivering a Usage via the generated terraform-usage/v1
+// client.
 package telemetry
 
 import "time"
