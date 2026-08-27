@@ -16,8 +16,11 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"runtime"
+	"runtime/debug"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -35,13 +38,14 @@ import (
 // isolation:
 //   - The payload/timing/run-ID model it populates lives in the telemetry
 //     package (TFCA-B1).
-//   - Reporting here goes to a no-op sink. The bounded-worker network transport
-//     (TFCA-B5) supplies the real reporter, and the opt-out wiring (TFCA-B6)
-//     decides when reporting is enabled. Until then this wrapper does no I/O and
-//     cannot fail, slow, or otherwise change the behavior of an operation.
-//   - Panic recovery is deliberately NOT added here (TFCA-B4). If a wrapped
-//     function panics, the panic propagates exactly as it does today and no
-//     Usage is reported for that call.
+//   - Reporting here goes to a no-op sink until the wiring lands. The
+//     bounded-worker network transport (TFCA-B5) supplies the real reporter, and
+//     the opt-out wiring (TFCA-B6) decides when reporting is enabled.
+//   - Panic recovery (TFCA-B4) lives here: a panic in a wrapped CRUD or import
+//     call is recovered, converted to an error result, and reported as a crash
+//     event rather than crashing the provider process. The report path is
+//     guarded separately so a panic while building or enqueuing the payload is
+//     also contained.
 
 // telemetryReporter receives a fully-populated Usage for one resource
 // operation. Report must not block the calling CRUD/import goroutine for long:
@@ -168,25 +172,31 @@ func wrapResourceForTelemetry(resourceType string, r *schema.Resource, cfg telem
 // CRUD function returns — nothing here may defer to a background goroutine that
 // touches d.
 func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Schema, op telemetry.Operation, inner func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics, cfg telemetryWrapConfig) func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 
-		diags := inner(ctx, d, meta)
+		// Recover a panic from the wrapped CRUD call (TFCA-B4). This is the only
+		// panic recovery in the provider: without it a panic in any resource
+		// crashes the whole provider process. On panic we convert to error
+		// diagnostics and still report a crash event, rather than propagating.
+		rec, stack := runGuarded(func() { diags = inner(ctx, d, meta) })
+		if rec != nil {
+			diags = panicDiagnostics(resourceType, op, rec)
+		}
 
-		cfg.report(telemetry.Usage{
-			RunID:             telemetry.RunID(),
-			Sequence:          seq,
-			StartedAt:         timer.StartTime(),
-			DurationMs:        timer.Elapsed().Milliseconds(),
-			OS:                runtime.GOOS,
-			Arch:              runtime.GOARCH,
-			ProviderVersion:   cfg.providerVersion,
-			TerraformVersion:  cfg.tfVersion(),
-			ResourceType:      resourceType,
-			Operation:         op,
-			ChangedAttributes: changedAttributeNames(d, resourceSchema, op),
-			Error:             diags.HasError(),
+		// Build and report the Usage under its own recover, separate from the one
+		// above: the one above only guards the CRUD call, so a panic while
+		// reflecting over ResourceData or formatting the payload here would
+		// otherwise escape uncaught and crash the very process this feature
+		// protects. The transport enqueue is non-blocking, so this returns
+		// promptly even if the backend is hung.
+		reportSafely(cfg, func() telemetry.Usage {
+			changed := []string{}
+			if rec == nil {
+				changed = changedAttributeNames(d, resourceSchema, op)
+			}
+			return cfg.buildUsage(resourceType, op, seq, timer, changed, rec != nil || diags.HasError(), stack)
 		})
 		return diags
 	}
@@ -196,30 +206,123 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 // signature (it returns the imported resource data and an error, not
 // diagnostics), so it is wrapped separately from the CRUD entry points. Import
 // carries no attribute-level diff, so ChangedAttributes is always the empty
-// (non-nil) slice.
+// (non-nil) slice. Panics are recovered on the same terms as the CRUD path.
 func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schema, inner schema.StateContextFunc, cfg telemetryWrapConfig) func(context.Context, *schema.ResourceData, interface{}) ([]*schema.ResourceData, error) {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) (imported []*schema.ResourceData, err error) {
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 
-		imported, err := inner(ctx, d, meta)
+		rec, stack := runGuarded(func() { imported, err = inner(ctx, d, meta) })
+		if rec != nil {
+			imported = nil
+			err = panicError(resourceType, telemetry.OperationImport, rec)
+		}
 
-		cfg.report(telemetry.Usage{
-			RunID:             telemetry.RunID(),
-			Sequence:          seq,
-			StartedAt:         timer.StartTime(),
-			DurationMs:        timer.Elapsed().Milliseconds(),
-			OS:                runtime.GOOS,
-			Arch:              runtime.GOARCH,
-			ProviderVersion:   cfg.providerVersion,
-			TerraformVersion:  cfg.tfVersion(),
-			ResourceType:      resourceType,
-			Operation:         telemetry.OperationImport,
-			ChangedAttributes: []string{},
-			Error:             err != nil,
+		reportSafely(cfg, func() telemetry.Usage {
+			return cfg.buildUsage(resourceType, telemetry.OperationImport, seq, timer, []string{}, rec != nil || err != nil, stack)
 		})
 		return imported, err
 	}
+}
+
+// buildUsage assembles a Usage from the process-scoped config and the
+// per-operation inputs. stack is non-empty only on the panic path, so a normal
+// operation omits stack_frames.
+func (c telemetryWrapConfig) buildUsage(resourceType string, op telemetry.Operation, seq int64, timer telemetry.Timer, changed []string, errored bool, stack []string) telemetry.Usage {
+	return telemetry.Usage{
+		RunID:             telemetry.RunID(),
+		Sequence:          seq,
+		StartedAt:         timer.StartTime(),
+		DurationMs:        timer.Elapsed().Milliseconds(),
+		OS:                runtime.GOOS,
+		Arch:              runtime.GOARCH,
+		ProviderVersion:   c.providerVersion,
+		TerraformVersion:  c.tfVersion(),
+		ResourceType:      resourceType,
+		Operation:         op,
+		ChangedAttributes: changed,
+		Error:             errored,
+		StackFrames:       stack,
+	}
+}
+
+// runGuarded runs fn, recovering any panic. It returns the recovered value (nil
+// if fn returned normally) and, on panic, a trimmed stack trace captured at the
+// point of recovery.
+func runGuarded(fn func()) (rec interface{}, stack []string) {
+	defer func() {
+		if r := recover(); r != nil {
+			rec = r
+			stack = trimmedStackFrames()
+		}
+	}()
+	fn()
+	return
+}
+
+// reportSafely builds and reports a Usage, recovering (and swallowing) any panic
+// from the build or the enqueue. Telemetry must never crash the process it is
+// observing, so a failure here is dropped, not propagated.
+func reportSafely(cfg telemetryWrapConfig, build func() telemetry.Usage) {
+	defer func() { _ = recover() }()
+	cfg.report(build())
+}
+
+// panicDiagnostics converts a recovered panic into error diagnostics returned in
+// place of the wrapped CRUD call's result.
+func panicDiagnostics(resourceType string, op telemetry.Operation, rec interface{}) diag.Diagnostics {
+	return diag.Diagnostics{{
+		Severity: diag.Error,
+		Summary:  fmt.Sprintf("the Confluent provider recovered from a panic during %s of %s", strings.ToLower(string(op)), resourceType),
+		Detail:   fmt.Sprintf("%v", rec),
+	}}
+}
+
+// panicError is the import-path equivalent of panicDiagnostics.
+func panicError(resourceType string, op telemetry.Operation, rec interface{}) error {
+	return fmt.Errorf("the Confluent provider recovered from a panic during %s of %s: %v", strings.ToLower(string(op)), resourceType, rec)
+}
+
+// maxStackFrames caps how many frames a crash payload carries, so a deep stack
+// can't bloat a report.
+const maxStackFrames = 50
+
+// trimmedStackFrames captures the current goroutine's stack and reduces it to
+// file:line frames with local absolute paths stripped, mirroring the CLI's
+// panic-report redaction. It keeps only lines that reference a .go source
+// location and shortens each to its last two path segments, so no user's
+// absolute filesystem path (e.g. /Users/<name>/...) reaches the wire.
+func trimmedStackFrames() []string {
+	lines := strings.Split(string(debug.Stack()), "\n")
+	frames := make([]string, 0, len(lines))
+	for _, line := range lines {
+		loc := strings.TrimSpace(line)
+		if !strings.Contains(loc, ".go:") {
+			continue
+		}
+		// A stack location line looks like "/abs/path/pkg/file.go:123 +0x1f".
+		// Drop the trailing " +0x.." program-counter offset specifically, rather
+		// than cutting at the first space, so a build path containing a space
+		// (e.g. "/Users/Jane Doe/...") is not truncated mid-path.
+		if off := strings.LastIndex(loc, " +0x"); off >= 0 {
+			loc = loc[:off]
+		}
+		frames = append(frames, shortenSourcePath(loc))
+		if len(frames) >= maxStackFrames {
+			break
+		}
+	}
+	return frames
+}
+
+// shortenSourcePath reduces "/abs/path/pkg/file.go:123" to "pkg/file.go:123",
+// removing absolute local paths while keeping enough to locate the frame.
+func shortenSourcePath(loc string) string {
+	segs := strings.Split(loc, "/")
+	if len(segs) > 2 {
+		segs = segs[len(segs)-2:]
+	}
+	return strings.Join(segs, "/")
 }
 
 // changedAttributeNames returns the schema-declared, top-level attribute names
