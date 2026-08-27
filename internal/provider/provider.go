@@ -443,13 +443,13 @@ func New(version, userAgent string) func() *schema.Provider {
 		// Wrap every managed resource's CRUD and import entry points with
 		// client-analytics telemetry (TFCA-B3). This runs once, after
 		// ResourcesMap is fully constructed and before the provider is served.
-		// Reports currently go to a no-op sink; the network transport (TFCA-B5)
-		// and opt-out wiring (TFCA-B6) replace it downstream, so today this is
-		// behaviorally transparent. terraformVersion is read lazily because
-		// Terraform Core sets provider.TerraformVersion during ConfigureProvider,
-		// after this point but before any CRUD/import call runs.
+		// The reporter is the late-binding publishedTelemetryReporter: it forwards
+		// to whatever provider configuration publishes (TFCA-B6), and drops until
+		// then or when reporting is disabled. terraformVersion is read lazily
+		// because Terraform Core sets provider.TerraformVersion during
+		// ConfigureProvider, after this point but before any CRUD/import call runs.
 		wrapResourcesMapForTelemetry(provider.ResourcesMap, telemetryWrapConfig{
-			reporter:         noopTelemetryReporter{},
+			reporter:         publishedTelemetryReporter{},
 			providerVersion:  version,
 			terraformVersion: func() string { return provider.TerraformVersion },
 		})
@@ -804,6 +804,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isLiveProductionTestMode:     liveProductionTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
+
+	// Publish the client-analytics runtime for this process (TFCA-B6): decide
+	// opt-out from the env var and endpoint, and, when enabled, stand up the
+	// bounded-worker transport that the resource wrappers report through. Written
+	// once here, before the concurrent CRUD/import goroutines run.
+	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken)
 
 	return &client, nil
 }
