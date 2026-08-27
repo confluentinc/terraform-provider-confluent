@@ -37,7 +37,7 @@ func TestTelemetryOptOut(t *testing.T) {
 		want     bool
 	}{
 		{"default endpoint, no env", defaultCloudEndpoint, nil, false},
-		{"empty endpoint, no env", "", nil, false},
+		{"empty endpoint disables (only prod endpoint enables)", "", nil, true},
 		{"non-default endpoint disables", "https://api.confluent-gov.cloud", nil, true},
 		{"env var disables on default endpoint", defaultCloudEndpoint, strptr("1"), true},
 		{"env var disables even with true-ish value", defaultCloudEndpoint, strptr("false"), true}, // any non-empty value opts out

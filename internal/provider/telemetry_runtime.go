@@ -79,8 +79,14 @@ func telemetryOptOut(endpoint string) bool {
 	if os.Getenv(disableProviderAnalyticsEnvVar) != "" {
 		return true
 	}
-	// A non-default endpoint (gov/FedRAMP) disables reporting, not overridable.
-	if endpoint != "" && endpoint != defaultCloudEndpoint {
+	// Report only when talking to the real production Confluent Cloud endpoint.
+	// Any other endpoint disables reporting: gov/FedRAMP hosts (the population the
+	// gate protects, not overridable in v1) and — importantly — an empty endpoint.
+	// A real provider always resolves the schema default (defaultCloudEndpoint);
+	// an empty endpoint only occurs in tests that point resource-level REST calls
+	// at a mock while leaving the top-level endpoint unset, and those must not emit
+	// telemetry to production.
+	if endpoint != defaultCloudEndpoint {
 		return true
 	}
 	return false
