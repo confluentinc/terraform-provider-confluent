@@ -155,6 +155,12 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col123"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp123"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_NOW"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", ""),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.interval", "2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.time_unit", "HOURS"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -222,6 +228,10 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col1234"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp1234"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_TIMESTAMP"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", "2026-04-01T00:00:00Z"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "0"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "true"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -317,6 +327,13 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	  }
       stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  start_mode {
+	    kind = "FROM_NOW"
+	    time_interval {
+	      interval  = 2
+	      time_unit = "HOURS"
+	    }
+	  }
 	  watermark {
 	    column     = "col123"
 	    expression = "exp123"
@@ -451,6 +468,10 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	  }
       stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
+	  start_mode {
+	    kind      = "FROM_TIMESTAMP"
+	    timestamp = "2026-04-01T00:00:00Z"
+	  }
 	  watermark {
 	    column     = "col1234"
 	    expression = "exp1234"
@@ -670,6 +691,124 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
       stopped = false
 	  query = "SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id;"
 	  # NOTE: no distribution block on purpose - Confluent Cloud derives it from the query's primary key.
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
+// TestAccFlinkMaterializedTableServerDerivedStartMode locks in the backward-compatibility
+// fix for start_mode. The config omits `start_mode` entirely, but the server echoes a
+// default (`RESUME_OR_FROM_BEGINNING`) on read. Because `start_mode` is Optional+Computed,
+// the echoed value must land in state without the second PlanOnly step showing a diff.
+// Before marking start_mode Computed, that second step would report a perpetual removal diff.
+func TestAccFlinkMaterializedTableServerDerivedStartMode(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Server-Derived Start Mode"
+	const displayName = "table_start_mode_default"
+	readPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, displayName)
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				// The config omits `start_mode` entirely; the server response supplies a default.
+				Config: testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, displayName),
+					// The server-derived start mode must land in state even though the config omitted it.
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.0.kind", "RESUME_OR_FROM_BEGINNING"),
+				),
+			},
+			{
+				// Re-planning the same config (still omitting `start_mode`) must be a no-op.
+				// Without start_mode being Optional+Computed, this produces a perpetual diff and fails.
+				Config:             testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableServerDerivedStartModeConfig(mockServerUrl, resourceLabel, displayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  # NOTE: no start_mode block on purpose - Confluent Cloud echoes back a default start mode.
 }
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
