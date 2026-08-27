@@ -1,0 +1,30 @@
+name: Telemetry Attribute Allowlist Check
+
+# Regenerates the client-analytics attribute allowlist (TFCA-B2) and fails if the
+# committed internal/provider/telemetry_attrs_allowlist.json no longer matches the
+# provider schema, so the allowlist can never silently drift as resources change.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-attrs-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: .go-version
+          # vendor/ is not committed, so `go run` resolves modules from the
+          # network; cache them across runs (keyed on go.sum) to keep this fast.
+          cache: true
+
+      - name: Regenerate and diff the attribute allowlist
+        run: make telemetry-attrs-check
