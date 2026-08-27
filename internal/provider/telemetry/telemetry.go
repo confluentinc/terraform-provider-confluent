@@ -29,20 +29,27 @@ import "time"
 
 // Operation identifies which CRUD or import entry point produced a Usage event.
 // The set is closed and known at compile time; these are the only valid values.
+//
+// The values are the uppercase verbs defined by the TFCA-A1 contract's
+// `operation` x-extensible-enum (pattern ^[A-Z][A-Z0-9_]*$), so a Usage
+// serializes to the exact contract value. The cc-cli-service backend records
+// this value verbatim as the terraform.operation span attribute and lowercases
+// it itself only when composing the <resource_type>.<operation> span name.
 type Operation string
 
 const (
-	OperationCreate Operation = "create"
-	OperationRead   Operation = "read"
-	OperationUpdate Operation = "update"
-	OperationDelete Operation = "delete"
-	OperationImport Operation = "import"
+	OperationCreate Operation = "CREATE"
+	OperationRead   Operation = "READ"
+	OperationUpdate Operation = "UPDATE"
+	OperationDelete Operation = "DELETE"
+	OperationImport Operation = "IMPORT"
 )
 
 // Usage is the metadata-only analytics payload emitted for a single resource
-// CRUD or import operation. Its field names mirror the TFCA-A1 `terraform/v1`
-// usage contract; the concrete wire client is generated separately (TFCA-A2),
-// and this struct is the provider-internal model that populates it.
+// CRUD or import operation. Its JSON field names mirror the TFCA-A1
+// `terraform-usage/v1` usage contract; the concrete wire client is generated
+// separately (TFCA-A2), and this struct is the provider-internal model that
+// populates it.
 //
 // By construction Usage never carries attribute values or the keys of a
 // user-controlled map: ChangedAttributes holds schema-declared attribute names
@@ -71,12 +78,12 @@ type Usage struct {
 	// contain gaps; consumers must not assume every value was emitted.
 	Sequence int64 `json:"sequence"`
 
-	// StartTime is when the operation began, captured at wrapper entry.
-	StartTime time.Time `json:"start_time"`
+	// StartedAt is when the operation began, captured at wrapper entry.
+	StartedAt time.Time `json:"started_at"`
 
-	// Duration is the operation's elapsed time in milliseconds, measured with a
+	// DurationMs is the operation's elapsed time in milliseconds, measured with a
 	// monotonic clock from entry to just before the wrapped function returns.
-	Duration int64 `json:"duration"`
+	DurationMs int64 `json:"duration_ms"`
 
 	// OS is the reporting host's operating system (runtime.GOOS), e.g. "darwin".
 	OS string `json:"os"`

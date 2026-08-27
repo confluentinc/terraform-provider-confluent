@@ -192,15 +192,15 @@ func topLevelJSONKeys(t *testing.T, v any) map[string]json.RawMessage {
 }
 
 var requiredUsageFields = []string{
-	"run_id", "sequence", "start_time", "duration", "os", "arch",
+	"run_id", "sequence", "started_at", "duration_ms", "os", "arch",
 	"provider_version", "terraform_version", "resource_type", "operation",
 	"changed_attributes", "error",
 }
 
 // Every required contract field must appear on the wire for BOTH a fully
 // populated event and a zero-value / read-shaped event. The zero-value case is
-// the load-bearing one: duration, sequence, and changed_attributes are exactly
-// the fields that are legitimately zero/empty on a common read, so this guards
+// the load-bearing one: duration_ms, sequence, and changed_attributes are
+// exactly the fields that are legitimately zero/empty on a common read, so this guards
 // against a future ",omitempty" (or a switch to pointer fields) silently
 // dropping them from the payload for the most common events — a regression a
 // fully-populated fixture cannot catch.
@@ -209,8 +209,8 @@ func TestUsage_RequiredFieldsAlwaysPresent(t *testing.T) {
 		"populated": {
 			RunID:             "run-1",
 			Sequence:          3,
-			StartTime:         time.Unix(0, 0).UTC(),
-			Duration:          42,
+			StartedAt:         time.Unix(0, 0).UTC(),
+			DurationMs:        42,
 			OS:                "darwin",
 			Arch:              "arm64",
 			ProviderVersion:   "2.0.0",
@@ -220,7 +220,7 @@ func TestUsage_RequiredFieldsAlwaysPresent(t *testing.T) {
 			ChangedAttributes: []string{"config"},
 			Error:             false,
 		},
-		// Everything left at its zero value except operation: duration 0,
+		// Everything left at its zero value except operation: duration_ms 0,
 		// sequence 0, error false, nil changed attributes, empty strings.
 		"zero-value read": {
 			Operation: OperationRead,
@@ -274,15 +274,18 @@ func TestUsage_ChangedAttributesSerialization(t *testing.T) {
 }
 
 // operation is a fixed, compile-time-known set; the wire values must be exactly
-// these lowercase verbs so downstream span names (<resource_type>.<operation>)
-// stay stable.
+// these uppercase verbs, matching the TFCA-A1 contract's `operation`
+// x-extensible-enum (pattern ^[A-Z][A-Z0-9_]*$). The cc-cli-service backend
+// stores this value verbatim as the terraform.operation attribute and lowercases
+// it itself when composing the <resource_type>.<operation> span name, so the
+// span name stays stable regardless of what the provider sends.
 func TestOperationConstants(t *testing.T) {
 	want := map[Operation]string{
-		OperationCreate: "create",
-		OperationRead:   "read",
-		OperationUpdate: "update",
-		OperationDelete: "delete",
-		OperationImport: "import",
+		OperationCreate: "CREATE",
+		OperationRead:   "READ",
+		OperationUpdate: "UPDATE",
+		OperationDelete: "DELETE",
+		OperationImport: "IMPORT",
 	}
 	for op, s := range want {
 		if string(op) != s {
