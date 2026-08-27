@@ -301,9 +301,11 @@ func trimmedStackFrames() []string {
 			continue
 		}
 		// A stack location line looks like "/abs/path/pkg/file.go:123 +0x1f".
-		// Drop the trailing " +0x.." program-counter offset.
-		if sp := strings.IndexByte(loc, ' '); sp >= 0 {
-			loc = loc[:sp]
+		// Drop the trailing " +0x.." program-counter offset specifically, rather
+		// than cutting at the first space, so a build path containing a space
+		// (e.g. "/Users/Jane Doe/...") is not truncated mid-path.
+		if off := strings.LastIndex(loc, " +0x"); off >= 0 {
+			loc = loc[:off]
 		}
 		frames = append(frames, shortenSourcePath(loc))
 		if len(frames) >= maxStackFrames {

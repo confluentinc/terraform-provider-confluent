@@ -54,6 +54,16 @@ func TestWrapper_RecoversCrudPanic(t *testing.T) {
 				r.CreateContext = fn
 			},
 			func(r *schema.Resource) diag.Diagnostics { return r.CreateContext(context.Background(), nil, nil) }},
+		{telemetry.OperationRead,
+			func(r *schema.Resource, fn func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics) {
+				r.ReadContext = fn
+			},
+			func(r *schema.Resource) diag.Diagnostics { return r.ReadContext(context.Background(), nil, nil) }},
+		{telemetry.OperationUpdate,
+			func(r *schema.Resource, fn func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics) {
+				r.UpdateContext = fn
+			},
+			func(r *schema.Resource) diag.Diagnostics { return r.UpdateContext(context.Background(), nil, nil) }},
 		{telemetry.OperationDelete,
 			func(r *schema.Resource, fn func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics) {
 				r.DeleteContext = fn
