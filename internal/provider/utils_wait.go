@@ -1229,17 +1229,17 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, wantStopped bool, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	var pendingStates []string
-	var target string
+	var target []string
 	if wantStopped {
 		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
-		target = stateStopped
+		target = []string{stateStopped, stateCompleted}
 	} else {
 		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
-		target = stateRunning
+		target = []string{stateRunning, stateCompleted}
 	}
 	stateConf := &resource.StateChangeConf{
 		Pending:      pendingStates,
-		Target:       []string{target},
+		Target:       target,
 		Refresh:      flinkMaterializedTableProvisionStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
 		Timeout:      timeout,
 		Delay:        delay,
@@ -1260,11 +1260,11 @@ func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestC
 
 	if toStop {
 		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
-		targetStates = []string{stateStopped}
+		targetStates = []string{stateStopped, stateCompleted}
 		targetStatusMessage = stateStopped
 	} else {
 		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
-		targetStates = []string{stateRunning}
+		targetStates = []string{stateRunning, stateCompleted}
 		targetStatusMessage = stateRunning
 	}
 
@@ -1321,7 +1321,7 @@ func flinkMaterializedTableProvisionStatus(ctx context.Context, c *FlinkRestClie
 
 		phase := table.Status.GetPhase()
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q provisioning status to become target: current status is %q", tableName, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
-		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped || phase == stateCompleted {
 			return table, phase, nil
 		} else if phase == stateFailed || phase == stateFailing {
 			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q provisioning status is %q: %s", tableName, phase, table.Status.GetDetail())
@@ -1341,7 +1341,7 @@ func flinkMaterializedTableUpdatingStatus(ctx context.Context, c *FlinkRestClien
 
 		phase := table.Status.GetPhase()
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q status to become %q: current status is %q", tableName, targetStatusMessage, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
-		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped || phase == stateCompleted {
 			return table, phase, nil
 		} else if phase == stateFailed || phase == stateFailing {
 			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q status is %q: %s", tableName, phase, table.Status.GetDetail())
