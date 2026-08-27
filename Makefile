@@ -139,6 +139,13 @@ endif
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
 # RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
 # run them via the dedicated `live-test-rtce` target below.
+# Flink Materialized Table live tests are excluded here too, temporarily: the Flink
+# Gateway now returns columns[].type as a structured object instead of a plain string,
+# which panics inside d.Set under TF_ACC=1. All live tests share one test binary
+# (-parallel 10), so that panic takes every other in-flight live test down with it
+# (INC-12957). Run them deliberately via `live-test-flink-materialized-table` below;
+# remove this exclusion and that target once the provider-side fix
+# (confluentinc/terraform-provider-confluent#1178 or #1180) merges.
 # VERBOSE is empty under CI deliberately: -v breaks gotestsum's report, per the note above `test`.
 # A failed gotestsum install degrades to plain `go test` rather than aborting: smoke-tests wraps
 # this in a PASS/FAIL that pages, so a module-proxy blip must not look like a Confluent outage.
@@ -155,14 +162,14 @@ live-test:
 	fi; \
 	if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce|FlinkMaterializedTable" -tags="live_test,all" -timeout 1440m -parallel 10; \
 	else \
 		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce|FlinkMaterializedTable" -tags="$$TAGS" -timeout 1440m -parallel 10; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
@@ -183,6 +190,27 @@ live-test-rtce:
 	fi; \
 	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOENV) $$RUNNER ./internal/provider/ $$VERBOSE -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
 	@echo "Finished running RTCE live integration tests"
+
+# Flink Materialized Table live tests — temporarily excluded from the main `live-test`
+# target (see the comment there) because of INC-12957: the Flink Gateway now returns
+# columns[].type as a structured object instead of a plain string, which panics inside
+# d.Set under TF_ACC=1 and takes down every other live test sharing the test binary.
+# Run these deliberately here instead, e.g. to validate
+# confluentinc/terraform-provider-confluent#1178 or #1180 against real Confluent Cloud.
+# Remove this target and its exclusion from `live-test` once one of those merges.
+.PHONY: live-test-flink-materialized-table
+live-test-flink-materialized-table:
+	@echo "Running Flink Materialized Table live integration tests against Confluent Cloud..."
+	@if [ "$(CI)" != "true" ]; then \
+		RUNNER="go test"; VERBOSE="-v"; \
+	elif $(GOTESTSUM_INSTALL); then \
+		RUNNER="gotestsum --format testname --junitfile live-flink-materialized-table-report.xml --"; VERBOSE=""; \
+	else \
+		echo "gotestsum unavailable, running without a JUnit report"; \
+		RUNNER="go test"; VERBOSE="-v"; \
+	fi; \
+	$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*FlinkMaterializedTable.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+	@echo "Finished running Flink Materialized Table live integration tests"
 
 # Helper targets for common group combinations
 .PHONY: live-test-core
