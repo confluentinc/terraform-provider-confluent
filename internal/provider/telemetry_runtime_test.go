@@ -107,7 +107,7 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("non-default endpoint publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		publishTelemetryRuntime(t.Context(), "https://mock.local", "ua", "key", "secret", nil, nil)
+		publishTelemetryRuntime(t.Context(), "https://mock.local", "ua", "key", "secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
 			t.Fatalf("expected a disabled runtime with no reporter, got %+v", rt)
@@ -117,7 +117,7 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("env var publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "1")
-		publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "key", "secret", nil, nil)
+		publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "key", "secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
 			t.Fatalf("expected a disabled runtime, got %+v", rt)
@@ -127,7 +127,7 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("default endpoint with a cloud key publishes an enabled transport", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "key", "secret", nil, nil)
+		publishTelemetryRuntime(t.Context(), defaultCloudEndpoint, "ua", "key", "secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || rt.config.Disabled {
 			t.Fatalf("expected an enabled runtime, got %+v", rt)

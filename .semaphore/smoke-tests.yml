@@ -19,6 +19,10 @@ global_job_config:
       - 'export "PATH=${GOPATH}/bin:${PATH}"'
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
+      # Belt-and-suspenders for TFCA-B8: the provider already gates client
+      # analytics off in test mode (TF_ACC/TF_ACC_PROD), and again disable it
+      # here so smoke runs never emit telemetry even if that gate regresses.
+      - 'export "CONFLUENT_DISABLE_PROVIDER_ANALYTICS=1"'
 
 execution_time_limit:
   minutes: 30

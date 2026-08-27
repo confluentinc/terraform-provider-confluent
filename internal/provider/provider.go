@@ -809,7 +809,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	// opt-out from the env var and endpoint, and, when enabled, stand up the
 	// bounded-worker transport that the resource wrappers report through. Written
 	// once here, before the concurrent CRUD/import goroutines run.
-	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken)
+	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken, acceptanceTestMode || liveProductionTestMode)
 
 	return &client, nil
 }
