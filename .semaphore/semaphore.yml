@@ -67,3 +67,5 @@ promotions:
     pipeline_file: goreleaser.yml
   - name: Run Live Integration Tests
     pipeline_file: live-tests.yml
+  - name: Run Relevant Live Tests (PR)
+    pipeline_file: live-tests-pr.yml
