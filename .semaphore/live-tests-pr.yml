@@ -34,19 +34,27 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - |
               set -e
-              GROUPS="$(BASE_REF=origin/master bash scripts/live-test-affected-groups.sh)"
-              echo "==> Affected live-test groups for this PR: ${GROUPS}"
+              # Detector prints two lines: GROUPS=<...> and RUN=<regex|empty>.
+              OUT="$(BASE_REF=origin/master bash scripts/live-test-affected-groups.sh)"
+              GROUPS="$(printf '%s\n' "$OUT" | sed -n 's/^GROUPS=//p')"
+              RUN="$(printf '%s\n' "$OUT" | sed -n 's/^RUN=//p')"
+              echo "==> groups=[$GROUPS] run=[${RUN:-<all in groups>}]"
               if [ "$GROUPS" = "NONE" ]; then
                 echo "No provider code changed; skipping live tests."
                 exit 0
-              elif [ "$GROUPS" = "all" ]; then
+              fi
+              # Exported (not passed as a make arg): make would strip the trailing `$`
+              # anchor from a command-line variable. Empty -> Makefile default pattern.
+              export TF_LIVE_TEST_RUN="$RUN"
+              if [ "$GROUPS" = "all" ]; then
                 make live-test
                 make live-test-rtce
               else
                 make live-test TF_LIVE_TEST_GROUPS="$GROUPS"
                 # RTCE tests are tagged `core` but skipped by `live-test` (-skip=Rtce);
                 # the nightly runs them via live-test-rtce whenever the groups include
-                # core (or is empty/all), so mirror that here.
+                # core (or is empty/all), so mirror that here. live-test-rtce has its
+                # own -run and ignores TF_LIVE_TEST_RUN.
                 case ",$GROUPS," in *,core,*) make live-test-rtce ;; esac
               fi
       epilogue:
