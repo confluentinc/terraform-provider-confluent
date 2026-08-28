@@ -3,7 +3,7 @@
   "kind": "Integration",
   "id": "cspi-abc123",
   "display_name": "azure-test-integration",
-  "provider": "azure",
+  "provider": "AZURE",
   "status": "CREATED",
   "config": {
     "customer_azure_tenant_id": "12345678-1234-1234-1234-123456789abc",

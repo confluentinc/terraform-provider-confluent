@@ -3,7 +3,7 @@
   "kind": "Integration",
   "id": "cspi-def456",
   "display_name": "gcp-test-integration",
-  "provider": "gcp",
+  "provider": "GCP",
   "status": "CREATED",
   "config": {
     "customer_google_service_account": "test-sa@test-project.iam.gserviceaccount.com",
