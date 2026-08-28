@@ -133,24 +133,6 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 	return nil
 }
 
-func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateProvisioned},
-		Refresh:      ksqlClusterProvisionStatus(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId),
-		Timeout:      ksqlCreateTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %v", clusterId, []string{stateUp, stateProvisioned}), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.ksqlV2ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -933,25 +915,6 @@ func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId s
 		}
 		// Kafka Cluster is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("kafka Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
-	}
-}
-
-func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKsqlRead(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %q: current status is %q", clusterId, stateProvisioned, cluster.Status.GetPhase()), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
-			return cluster, cluster.Status.GetPhase(), nil
-		} else if cluster.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("ksqlDB Cluster %q provisioning status is %q", clusterId, stateFailed)
-		}
-		// ksqlDB Cluster is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("ksqlDB Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
 	}
 }
 

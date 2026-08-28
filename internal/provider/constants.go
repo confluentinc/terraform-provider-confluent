@@ -179,6 +179,7 @@ const (
 	kindGcp                                              = "GcpKey"
 	ksqlClusterLoggingKey                                = "ksql_cluster_id"
 	ksqlCreateTimeout                                    = 12 * time.Hour
+	ksqlDeleteTimeout                                    = 1 * time.Hour
 	ksqldbcmApiVersion                                   = "ksqldbcm/v2"
 	ksqlDbKind                                           = "ksqlDB"
 	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
