@@ -31,6 +31,8 @@ import (
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
@@ -82,16 +84,20 @@ func TestCCPMV1ApiContextUsesCCPMOAuthContextKey(t *testing.T) {
 	}
 }
 
-func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testing.T) {
+func TestRestClientApiContextUsesCachedOAuthTokenOnRefreshError(t *testing.T) {
 	tests := []struct {
-		name string
-		call func(context.Context, *OAuthToken) (context.Context, *OAuthToken)
+		name        string
+		call        func(context.Context, *OAuthToken) (context.Context, *OAuthToken)
+		accessToken func(context.Context) interface{}
 	}{
 		{
 			name: "Kafka",
 			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
 				c := &KafkaRestClient{externalAccessToken: token}
 				return c.apiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(kafkarestv3.ContextAccessToken)
 			},
 		},
 		{
@@ -100,12 +106,18 @@ func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testin
 				c := &SchemaRegistryRestClient{externalAccessToken: token}
 				return c.apiContext(ctx), c.externalAccessToken
 			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(schemaregistryv1.ContextAccessToken)
+			},
 		},
 		{
 			name: "Schema Registry Data Catalog",
 			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
 				c := &SchemaRegistryRestClient{externalAccessToken: token}
 				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(datacatalogv1.ContextAccessToken)
 			},
 		},
 		{
@@ -114,6 +126,9 @@ func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testin
 				c := &CatalogRestClient{externalAccessToken: token}
 				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
 			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(datacatalogv1.ContextAccessToken)
+			},
 		},
 		{
 			name: "Flink",
@@ -121,23 +136,27 @@ func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testin
 				c := &FlinkRestClient{externalAccessToken: token}
 				return c.apiContext(ctx), c.externalAccessToken
 			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(flinkgatewayv1.ContextAccessToken)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			token := &OAuthToken{
-				TokenUrl:   "https://example.com/oauth/token",
-				ValidUntil: time.Now().Add(-time.Hour),
+				AccessToken: "existing-access-token",
+				TokenUrl:    "https://example.com/oauth/token",
+				ValidUntil:  time.Now().Add(-time.Hour),
 			}
 			ctx := context.WithValue(context.Background(), struct{}{}, "test-value")
 
 			gotContext, gotToken := tt.call(ctx, token)
-			if gotContext != ctx {
-				t.Fatal("expected the original context after OAuth refresh failure")
+			if got := tt.accessToken(gotContext); got != token.AccessToken {
+				t.Fatalf("context access token = %v, want %q", got, token.AccessToken)
 			}
 			if gotToken != token {
-				t.Fatal("expected the expired token to remain cached after OAuth refresh failure")
+				t.Fatal("expected the cached token to remain after OAuth refresh failure")
 			}
 		})
 	}
