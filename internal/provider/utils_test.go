@@ -63,6 +63,24 @@ func TestKafkaAclResourceStateUpgradeV0(t *testing.T) {
 	}
 }
 
+func TestCCPMV1ApiContextUsesCCPMOAuthContextKey(t *testing.T) {
+	const expectedAccessToken = "test-access-token"
+
+	c := &Client{
+		oauthToken: &OAuthToken{},
+		stsToken: &STSToken{
+			AccessToken: expectedAccessToken,
+			ValidUntil:  time.Now().Add(time.Hour),
+		},
+	}
+
+	ctx := c.ccpmV1ApiContext(context.Background())
+	accessToken, ok := ctx.Value(ccpmv1.ContextAccessToken).(string)
+	if !ok || accessToken != expectedAccessToken {
+		t.Fatalf("CCPM context access token = %q, want %q", accessToken, expectedAccessToken)
+	}
+}
+
 func TestExtractOrgIdFromResourceName(t *testing.T) {
 	tests := []struct {
 		input    string
