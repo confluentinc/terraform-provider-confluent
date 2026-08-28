@@ -20,8 +20,11 @@ global_job_config:
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
 
+# Raised from 2h so the merge-queue live-test block below (which only runs on
+# gh-readonly-queue/* branches) has room; normal PR/branch runs finish in minutes
+# and are unaffected -- this is a ceiling, not a fixed duration.
 execution_time_limit:
-  hours: 2
+  hours: 12
 
 blocks:
   - name: Build & Test & Release
@@ -49,6 +52,43 @@ blocks:
             # --trim-output-to keeps the LAST N characters; the 1000 default drops the assertion.
             - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing --trim-output-to 20000
 
+  # Automatic pre-merge gate: GitHub merge queue builds a temporary
+  # gh-readonly-queue/master/* branch (master + the queued PR(s)); this block runs
+  # ONLY there, so the affected live tests must pass before the PR merges -- no
+  # manual click. On normal PR/branch runs the `run/when` skips it, so this
+  # pipeline's required check passes fast and the PR can enter the queue.
+  # Requires: merge queue enabled on master, and this pipeline's check kept
+  # required. If Semaphore does NOT build gh-readonly-queue branches, do NOT make
+  # it required (the queue would deadlock waiting for a check that never runs).
+  - name: "Relevant Live Tests (merge queue)"
+    dependencies: ["Build & Test & Release"]
+    run:
+      when: "branch =~ '^gh-readonly-queue/'"
+    task:
+      jobs:
+        - name: "Detect & run affected live tests"
+          execution_time_limit:
+            hours: 8
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - |
+              set -e
+              GROUPS="$(BASE_REF=origin/master bash scripts/live-test-affected-groups.sh)"
+              echo "Affected live-test groups: $GROUPS"
+              if [ "$GROUPS" = "NONE" ]; then
+                echo "No provider code changed; skipping live tests."
+              elif [ "$GROUPS" = "all" ]; then
+                make live-test
+                make live-test-rtce
+              else
+                make live-test TF_LIVE_TEST_GROUPS="$GROUPS"
+                case ",$GROUPS," in *,core,*) make live-test-rtce ;; esac
+              fi
+      epilogue:
+        always:
+          commands:
+            - test-results publish live-report.xml live-rtce-report.xml -N "live-tests-queue" --ignore-missing --trim-output-to 20000
+
 after_pipeline:
   task:
     jobs:
@@ -67,3 +107,5 @@ promotions:
     pipeline_file: goreleaser.yml
   - name: Run Live Integration Tests
     pipeline_file: live-tests.yml
+  - name: Run Relevant Live Tests (PR)
+    pipeline_file: live-tests-pr.yml
