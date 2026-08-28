@@ -44,8 +44,10 @@ blocks:
                 make live-test-rtce
               else
                 make live-test TF_LIVE_TEST_GROUPS="$GROUPS"
-                # networking group carries the RTCE tests, which live-test skips.
-                case ",$GROUPS," in *,networking,*) make live-test-rtce ;; esac
+                # RTCE tests are tagged `core` but skipped by `live-test` (-skip=Rtce);
+                # the nightly runs them via live-test-rtce whenever the groups include
+                # core (or is empty/all), so mirror that here.
+                case ",$GROUPS," in *,core,*) make live-test-rtce ;; esac
               fi
       epilogue:
         always:
