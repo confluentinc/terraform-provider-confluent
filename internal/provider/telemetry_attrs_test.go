@@ -125,13 +125,21 @@ func TestResourceAttributeAllowlist_TypeMapContributesNameOnly(t *testing.T) {
 		t.Errorf("confluent_kafka_topic allowlist %v should contain the map attribute name \"config\"", topicNames)
 	}
 
-	// Every map-bearing attribute must appear by name in its resource's
-	// allowlist, and no allowlist entry may contain a dynamic map key.
+	// For every map-bearing attribute, the resource's allowlist must contain its
+	// declared name AND nothing derived from the map's contents: no nested address
+	// like "config.cleanup.policy". The second check is the load-bearing one — it
+	// is the "names only, never keys/values" guarantee at the map boundary, and it
+	// would fail if the generator ever descended into a map's contents.
 	for _, id := range mapBearingAttributes(p) {
-		parts := strings.SplitN(id, ".", 2)
-		resourceType, attr := parts[0], parts[1]
-		if !contains(allowlist[resourceType], attr) {
-			t.Errorf("map attribute %q not present by name in allowlist %v", id, allowlist[resourceType])
+		resourceType, attr, _ := strings.Cut(id, ".")
+		names := allowlist[resourceType]
+		if !contains(names, attr) {
+			t.Errorf("map attribute %q not present by name in allowlist %v", id, names)
+		}
+		for _, name := range names {
+			if strings.HasPrefix(name, attr+".") {
+				t.Errorf("resource %q leaked a nested key %q under map attribute %q — map contents must never reach the allowlist", resourceType, name, attr)
+			}
 		}
 	}
 }
