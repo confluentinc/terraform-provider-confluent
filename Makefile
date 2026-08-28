@@ -137,12 +137,6 @@ endif
 
 # Live integration tests with group filtering and concurrency support
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
-# Optional TF_LIVE_TEST_RUN (an environment variable) overrides the -run pattern to
-# a specific set of tests; it must be exported, not passed as a make argument, since
-# make would strip the trailing `$` anchor. Defaults to all Live/DriftDetection tests
-# in the selected groups. The scoped PR pipeline uses it to run only the tests for the
-# resources/data sources a PR changed, e.g.:
-#   TF_LIVE_TEST_RUN='^(TestAccKafkaTopicLive)$' make live-test TF_LIVE_TEST_GROUPS=kafka
 # RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
 # run them via the dedicated `live-test-rtce` target below.
 # VERBOSE is empty under CI deliberately: -v breaks gotestsum's report, per the note above `test`.
@@ -159,17 +153,16 @@ live-test:
 		echo "gotestsum unavailable, running without a JUnit report"; \
 		RUNNER="go test"; VERBOSE="-v"; \
 	fi; \
-	RUN_PATTERN="$${TF_LIVE_TEST_RUN:-.*Live$$|.*DriftDetection$$}"; \
 	if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run="$$RUN_PATTERN" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
 	else \
-		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) (tests: $${TF_LIVE_TEST_RUN:-all})..."; \
+		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run="$$RUN_PATTERN" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
+		$(GOENV) TF_ACC=1 TF_ACC_PROD=1 $$RUNNER ./internal/provider/ $$VERBOSE -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
