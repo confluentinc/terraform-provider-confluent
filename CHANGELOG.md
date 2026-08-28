@@ -1,3 +1,8 @@
+## 2.85.0 (August 28th, 2026)
+
+**Bug fixes:**
+* Fixed a bug where creating the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) failed with an "unexpected state" error for a table whose query reaches the terminal `COMPLETED` phase.
+
 ## 2.84.0 (August 27th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.83.0...v2.84.0)
