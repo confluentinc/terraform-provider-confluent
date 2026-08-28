@@ -29,6 +29,7 @@ import (
 	"time"
 
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
@@ -139,6 +140,31 @@ func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testin
 				t.Fatal("expected the expired token to remain cached after OAuth refresh failure")
 			}
 		})
+	}
+}
+
+func TestCamV1ApiContextPreservesCallerContext(t *testing.T) {
+	type contextKey string
+
+	key := contextKey("test-key")
+	baseContext := context.WithValue(context.Background(), key, "test-value")
+	ctx, cancel := context.WithCancel(baseContext)
+	cancel()
+
+	c := &Client{cloudApiKey: "test-key", cloudApiSecret: "test-secret"}
+	gotContext := c.camV1ApiContext(ctx)
+
+	if got := gotContext.Value(key); got != "test-value" {
+		t.Fatalf("CAM context value = %v, want test-value", got)
+	}
+	select {
+	case <-gotContext.Done():
+	default:
+		t.Fatal("expected CAM context to remain cancelled")
+	}
+	auth, ok := gotContext.Value(camv1.ContextBasicAuth).(camv1.BasicAuth)
+	if !ok || auth.UserName != "test-key" || auth.Password != "test-secret" {
+		t.Fatalf("CAM basic auth = %#v, want test credentials", auth)
 	}
 }
 

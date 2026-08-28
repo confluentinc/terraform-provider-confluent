@@ -243,7 +243,7 @@ func (c *Client) certificateAuthorityV2ApiContext(ctx context.Context) context.C
 
 func (c *Client) camV1ApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), camv1.ContextBasicAuth, camv1.BasicAuth{
+		return context.WithValue(ctx, camv1.ContextBasicAuth, camv1.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
