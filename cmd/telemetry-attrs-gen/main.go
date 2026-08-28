@@ -1,5 +1,5 @@
 // Command telemetry-attrs-gen regenerates the client-analytics attribute
-// allowlist (TFCA-B2).
+// allowlist.
 //
 // It constructs the provider, walks the runtime ResourcesMap, and writes each
 // managed resource's sorted, names-only attribute list to a JSON file that is

@@ -20,8 +20,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// This file is the source of truth for the client-analytics attribute allowlist
-// (TFCA-B2). The build-time generator (cmd/telemetry-attrs-gen) serializes
+// This file is the source of truth for the client-analytics attribute allowlist.
+// The build-time generator (cmd/telemetry-attrs-gen) serializes
 // ResourceAttributeAllowlist to telemetry_attrs_allowlist.json, and a drift test
 // fails CI when the committed file no longer matches the live schema.
 //
