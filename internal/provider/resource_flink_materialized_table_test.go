@@ -675,11 +675,8 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
 
-// TestAccFlinkMaterializedTableCompletedPhase is a regression test for the bug where a Materialized
-// Table whose query is bounded reaches the terminal COMPLETED phase, which the provider treated as
-// "an unexpected state" and failed the create. COMPLETED is a valid success phase (confluent_flink_statement
-// already accepts it), so the create must succeed. Before the fix, this test fails with
-// `Flink Materialized Table "table_completed" is in an unexpected state "COMPLETED"`.
+// TestAccFlinkMaterializedTableCompletedPhase locks in that a bounded table reaching the terminal
+// COMPLETED phase is accepted as a successful create (COMPLETED is valid, like confluent_flink_statement).
 func TestAccFlinkMaterializedTableCompletedPhase(t *testing.T) {
 	ctx := context.Background()
 
@@ -736,8 +733,6 @@ func TestAccFlinkMaterializedTableCompletedPhase(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				// A bounded query drives the table to COMPLETED; the create must succeed rather than
-				// fail with "unexpected state".
 				Config: testAccCheckMaterializedTableCompletedPhaseConfig(mockTestServerUrl, resourceLabel, completedDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedTableExists(fullResourceLabel),
