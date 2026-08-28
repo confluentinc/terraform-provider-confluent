@@ -237,8 +237,7 @@ live-test-smoke:
 build-otel-smoke-metric:
 	$(GOBUILD) -o ./$(BUILD_DIR)/otel-smoke-metric ./cmd/otel-smoke-metric
 
-# Regenerate the client-analytics attribute allowlist (TFCA-B2). Walks the
-# runtime ResourcesMap and rewrites internal/provider/telemetry_attrs_allowlist.json.
+# Walks the runtime ResourcesMap and rewrites internal/provider/telemetry_attrs_allowlist.json.
 # Run this and commit the result whenever a resource's schema attributes change.
 .PHONY: telemetry-attrs
 telemetry-attrs: ## Regenerate the client-analytics attribute allowlist
