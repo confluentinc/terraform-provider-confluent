@@ -1,0 +1,70 @@
+version: v1.0
+name: Relevant Live Tests (PR, manual)
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+# A newer push to the PR cancels an in-flight scoped run (unlike nightly, which never cancels).
+auto_cancel:
+  running:
+    when: "true"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.25.12
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+# Scoped runs are a subset of the 24h nightly. Tune once you see real durations.
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Relevant Live Tests"
+    task:
+      jobs:
+        - name: "Detect affected groups & run"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - |
+              set -e
+              # Detector prints two lines: GROUPS=<...> and RUN=<regex|empty>.
+              OUT="$(BASE_REF=origin/master bash scripts/live-test-affected-groups.sh)"
+              GROUPS="$(printf '%s\n' "$OUT" | sed -n 's/^GROUPS=//p')"
+              RUN="$(printf '%s\n' "$OUT" | sed -n 's/^RUN=//p')"
+              echo "==> groups=[$GROUPS] run=[${RUN:-<all in groups>}]"
+              if [ "$GROUPS" = "NONE" ]; then
+                echo "No provider code changed; skipping live tests."
+                exit 0
+              fi
+              # Exported (not passed as a make arg): make would strip the trailing `$`
+              # anchor from a command-line variable. Empty -> Makefile default pattern.
+              export TF_LIVE_TEST_RUN="$RUN"
+              if [ "$GROUPS" = "all" ]; then
+                make live-test
+                make live-test-rtce
+              else
+                make live-test TF_LIVE_TEST_GROUPS="$GROUPS"
+                # RTCE tests are tagged `core` but skipped by `live-test` (-skip=Rtce);
+                # the nightly runs them via live-test-rtce whenever the groups include
+                # core (or is empty/all), so mirror that here. live-test-rtce has its
+                # own -run and ignores TF_LIVE_TEST_RUN.
+                case ",$GROUPS," in *,core,*) make live-test-rtce ;; esac
+              fi
+      epilogue:
+        always:
+          commands:
+            - test-results publish live-report.xml live-rtce-report.xml -N "live-tests-pr" --ignore-missing --trim-output-to 20000
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          - test-results gen-pipeline-report || echo "no test results available"
