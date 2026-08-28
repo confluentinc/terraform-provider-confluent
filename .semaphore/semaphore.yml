@@ -28,6 +28,9 @@ execution_time_limit:
 
 blocks:
   - name: Build & Test & Release
+    # Explicit (empty) deps: Semaphore forbids mixing blocks with implicit and
+    # explicit dependencies, and the merge-queue block below declares one.
+    dependencies: []
     task:
       jobs:
         - name: "Build & Test & Release"
