@@ -81,6 +81,67 @@ func TestCCPMV1ApiContextUsesCCPMOAuthContextKey(t *testing.T) {
 	}
 }
 
+func TestRestClientApiContextReturnsOriginalContextOnOAuthRefreshError(t *testing.T) {
+	tests := []struct {
+		name string
+		call func(context.Context, *OAuthToken) (context.Context, *OAuthToken)
+	}{
+		{
+			name: "Kafka",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &KafkaRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+		},
+		{
+			name: "Schema Registry",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &SchemaRegistryRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+		},
+		{
+			name: "Schema Registry Data Catalog",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &SchemaRegistryRestClient{externalAccessToken: token}
+				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
+			},
+		},
+		{
+			name: "Catalog",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &CatalogRestClient{externalAccessToken: token}
+				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
+			},
+		},
+		{
+			name: "Flink",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &FlinkRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := &OAuthToken{
+				TokenUrl:   "https://example.com/oauth/token",
+				ValidUntil: time.Now().Add(-time.Hour),
+			}
+			ctx := context.WithValue(context.Background(), struct{}{}, "test-value")
+
+			gotContext, gotToken := tt.call(ctx, token)
+			if gotContext != ctx {
+				t.Fatal("expected the original context after OAuth refresh failure")
+			}
+			if gotToken != token {
+				t.Fatal("expected the expired token to remain cached after OAuth refresh failure")
+			}
+		})
+	}
+}
+
 func TestExtractOrgIdFromResourceName(t *testing.T) {
 	tests := []struct {
 		input    string
