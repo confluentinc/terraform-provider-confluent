@@ -215,7 +215,7 @@ func switchoverEndpointDelete(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 
 	req := c.switchoverV1Client.SwitchoverEndpointsSwitchoverV1Api.DeleteSwitchoverV1SwitchoverEndpoint(c.switchoverV1ApiContext(ctx), d.Id()).Environment(environmentId)
-	if resp, err := req.Execute(); err != nil {
+	if _, resp, err := req.Execute(); err != nil {
 		return diag.Errorf("error deleting switchover endpoint %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 

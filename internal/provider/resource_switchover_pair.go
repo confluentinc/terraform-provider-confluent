@@ -188,7 +188,7 @@ func switchoverPairDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Deleting switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.DeleteSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), d.Id()).Environment(environmentId)
-	if resp, err := req.Execute(); err != nil {
+	if _, resp, err := req.Execute(); err != nil {
 		return diag.Errorf("error deleting switchover pair %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
