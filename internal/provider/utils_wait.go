@@ -187,24 +187,6 @@ func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, env
 	return nil
 }
 
-func waitForPrivateLinkAttachmentConnectionToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentConnectionId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateReady},
-		Refresh:      privateLinkAttachmentConnectionProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentConnectionId),
-		Timeout:      networkingAPICreateTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q", privateLinkAttachmentConnectionId, stateReady), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
-	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -614,24 +596,6 @@ func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environ
 	return nil
 }
 
-func waitForPrivateLinkAttachmentConnectionToBeDeleted(ctx context.Context, c *Client, environmentId, plattcId string) error {
-	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateInProgress},
-		Target:       []string{stateDone},
-		Refresh:      plattcDeleteStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId),
-		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for private link attachment connection %q to be deleted", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, peeringId string) error {
 	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -819,26 +783,6 @@ func kafkaMirrorTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, linkN
 	}
 }
 
-func plattcDeleteStatus(ctx context.Context, c *Client, environmentId, plattcId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		plattc, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-			if isResourceNotFound {
-				tflog.Debug(ctx, fmt.Sprintf("Finishing Private Link Attachment Connection %q deletion process: Received %d status code when reading %q Plattc", plattcId, resp.StatusCode, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-				return 0, stateDone, nil
-			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Attachment Connection %q deletion process: Failed when reading Plattc: %s: %s", plattcId, createDescriptiveError(err, resp), plattc.Status.GetErrorMessage()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-				return nil, stateFailed, err
-			}
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Performing Private Link Attachment Connection %q deletion process: private link attachment connection %d's status is %q", plattcId, resp.StatusCode, plattc.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-		return plattc, stateInProgress, nil
-	}
-}
-
 func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName string, isAcceptanceTestMode bool) error {
 	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1022,25 +966,6 @@ func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, enviro
 		}
 		// Private Link Attachment is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("private Link Attachment %q is an unexpected state %q: %s", privateLinkAttachmentId, privateLinkAttachment.Status.GetPhase(), privateLinkAttachment.Status.GetErrorMessage())
-	}
-}
-
-func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentConnectionId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		privateLinkAttachmentConnection, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", privateLinkAttachmentConnectionId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q: current status is %q", privateLinkAttachmentConnectionId, stateReady, privateLinkAttachmentConnection.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
-		if privateLinkAttachmentConnection.Status.GetPhase() == stateProvisioning || privateLinkAttachmentConnection.Status.GetPhase() == stateReady {
-			return privateLinkAttachmentConnection, privateLinkAttachmentConnection.Status.GetPhase(), nil
-		} else if privateLinkAttachmentConnection.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("private Link Attachment Connection %q provisioning status is %q: %s", privateLinkAttachmentConnectionId, stateFailed, privateLinkAttachmentConnection.Status.GetErrorMessage())
-		}
-		// Private Link Attachment Connection is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("private Link Attachment Connection %q is an unexpected state %q: %s", privateLinkAttachmentConnectionId, privateLinkAttachmentConnection.Status.GetPhase(), privateLinkAttachmentConnection.Status.GetErrorMessage())
 	}
 }
 

@@ -103,14 +103,14 @@ func TestAccPrivateLinkAttachmentConnectionAws(t *testing.T) {
 			http.StatusNoContent,
 		))
 
-	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
-	InScenario(privateLinkAttachmentConnectionAwsResourceScenarioName).
-	WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenDeleted).
-	WillReturn(
-		"",
-		contentTypeJSONHeader,
-		http.StatusNotFound,
-	))*/
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAwsReadUrlPath)).
+		InScenario(privateLinkAttachmentConnectionAwsResourceScenarioName).
+		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
