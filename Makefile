@@ -237,6 +237,12 @@ live-test-smoke:
 build-otel-smoke-metric:
 	$(GOBUILD) -o ./$(BUILD_DIR)/otel-smoke-metric ./cmd/otel-smoke-metric
 
+# Walks the runtime ResourcesMap and rewrites internal/provider/telemetry_attrs_allowlist.json.
+# Run this and commit the result whenever a resource's schema attributes change.
+.PHONY: telemetry-attrs
+telemetry-attrs: ## Regenerate the client-analytics attribute allowlist
+	@ $(MAKE) --no-print-directory log-$@
+	$(GOCMD) run ./cmd/telemetry-attrs-gen
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
