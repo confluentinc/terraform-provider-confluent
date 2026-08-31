@@ -19,6 +19,7 @@ import (
 	"runtime"
 	"sort"
 	"sync"
+	"weak"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -99,7 +100,14 @@ func (c telemetryWrapConfig) tfVersion() string {
 // xResource() constructor returns a fresh *schema.Resource), so resources from
 // different providers never collide here and one provider's wrapping never
 // suppresses another's.
-var wrappedResources sync.Map // map[*schema.Resource]struct{}
+//
+// Keys are weak.Pointers so an entry here does not keep the resource — nor the
+// whole provider graph its wrapper closures transitively capture (via the
+// terraformVersion closure) — alive for the life of the process. Each resource
+// registers a cleanup that removes its now-dead stub once it is collected, so the
+// map does not grow without bound when New() is called repeatedly (e.g.
+// confluent_tf_importer builds a fresh provider on every apply).
+var wrappedResources sync.Map // map[weak.Pointer[schema.Resource]]struct{}
 
 // wrapResourcesMapForTelemetry wraps the CRUD and import entry points of every
 // resource in the map. It must run after ResourcesMap is fully constructed and
@@ -113,9 +121,14 @@ func wrapResourcesMapForTelemetry(resources map[string]*schema.Resource, cfg tel
 		if r == nil {
 			continue
 		}
-		if _, alreadyWrapped := wrappedResources.LoadOrStore(r, struct{}{}); alreadyWrapped {
+		key := weak.Make(r)
+		if _, alreadyWrapped := wrappedResources.LoadOrStore(key, struct{}{}); alreadyWrapped {
 			continue
 		}
+		// Reap the weak stub once the resource is collected, so repeated New()
+		// calls don't accumulate dead entries. The cleanup captures only the weak
+		// key (never r), so it cannot keep r alive.
+		runtime.AddCleanup(r, wrappedResources.Delete, any(key))
 		wrapResourceForTelemetry(resourceType, r, cfg)
 	}
 }
@@ -123,7 +136,7 @@ func wrapResourcesMapForTelemetry(resources map[string]*schema.Resource, cfg tel
 // resourceWrapped reports whether r has been through wrapResourcesMapForTelemetry.
 // It exists for tests that assert coverage of the wrap pass.
 func resourceWrapped(r *schema.Resource) bool {
-	_, ok := wrappedResources.Load(r)
+	_, ok := wrappedResources.Load(weak.Make(r))
 	return ok
 }
 
