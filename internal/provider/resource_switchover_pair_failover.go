@@ -59,22 +59,28 @@ func switchoverPairFailoverResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "The name of the member to promote to active. Required when `failover_type` is `CLEAN` or `UNCLEAN`.",
+				Description: "The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`.",
 			},
 			paramFailoverType: {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Default:      "CLEAN",
-				Description:  "The failover semantics to apply: `CLEAN` (graceful, after replication lag reaches zero), `UNCLEAN` (immediate), or `RESTORE` (re-establish the cluster link after an unclean failover).",
-				ValidateFunc: validation.StringInSlice([]string{"CLEAN", "UNCLEAN", "RESTORE"}, false),
+				Default:      "PLANNED",
+				Description:  "The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover).",
+				ValidateFunc: validation.StringInSlice([]string{"PLANNED", "UNPLANNED", "RESTORE"}, false),
 			},
 			paramPhase: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The lifecycle phase of the switchover pair after the failover was triggered (transitions to `SWITCHING`).",
+				Description: "The lifecycle phase of the switchover pair after the failover was triggered (transitions to `UPDATING`).",
 			},
-			paramEnvironment: environmentSchema(),
+			paramEnvironmentCrn: {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The CRN of the environment that owns the switchover pair.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -83,17 +89,19 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*Client)
 
 	switchoverPairId := d.Get(paramSwitchoverPairId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	activeMember := d.Get(paramActiveMember).(string)
 	failoverType := d.Get(paramFailoverType).(string)
 
-	if (failoverType == "CLEAN" || failoverType == "UNCLEAN") && activeMember == "" {
-		return diag.Errorf("error triggering switchover pair failover: %q is required when %q is %q or %q", paramActiveMember, paramFailoverType, "CLEAN", "UNCLEAN")
+	if (failoverType == "PLANNED" || failoverType == "UNPLANNED") && activeMember == "" {
+		return diag.Errorf("error triggering switchover pair failover: %q is required when %q is %q or %q", paramActiveMember, paramFailoverType, "PLANNED", "UNPLANNED")
 	}
 
+	// The :failover body carries the environment as a CRN (ORC-9794), unlike other operations which
+	// take it as a bare query parameter.
 	failoverSpec := switchoverv1.SwitchoverV1SwitchoverPairFailoverRequestSpec{
-		Environment:  environmentId,
-		FailoverType: switchoverv1.PtrString(failoverType),
+		EnvironmentCrn: environmentCrn,
+		FailoverType:   failoverType,
 	}
 	if activeMember != "" {
 		failoverSpec.ActiveMember = switchoverv1.PtrString(activeMember)
@@ -125,7 +133,7 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 func switchoverPairFailoverRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	switchoverPairId := d.Get(paramSwitchoverPairId).(string)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	environmentId := extractEnvironmentIdFromCrn(d.Get(paramEnvironmentCrn).(string))
 	tflog.Debug(ctx, fmt.Sprintf("Reading switchover pair failover %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: switchoverPairId})
 
 	req := c.switchoverV1Client.SwitchoverPairsSwitchoverV1Api.GetSwitchoverV1SwitchoverPair(c.switchoverV1ApiContext(ctx), switchoverPairId).Environment(environmentId)
