@@ -18,9 +18,11 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -152,7 +154,7 @@ func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
 }
 
 // Guards that every managed resource uses only *Context entry points; a deprecated
-// or WithoutTimeout variant would escape telemetry and fails the build here.
+// or WithoutTimeout variant would escape telemetry, so this test fails here.
 func TestWrapResourcesMap_OnlyContextEntryPointsAreUsed(t *testing.T) {
 	p := New(testVersion, "")()
 	for name, r := range p.ResourcesMap {
@@ -179,7 +181,9 @@ func TestWrapper_TransparentOnHappyPath(t *testing.T) {
 
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(rec))
 
+	before := time.Now()
 	got := r.CreateContext(context.Background(), nil, nil)
+	after := time.Now()
 	if len(got) != 1 || got[0].Summary != "hello" {
 		t.Fatalf("wrapper did not pass inner diagnostics through unchanged: %+v", got)
 	}
@@ -204,6 +208,18 @@ func TestWrapper_TransparentOnHappyPath(t *testing.T) {
 	}
 	if u.ChangedAttributes == nil {
 		t.Errorf("ChangedAttributes must be non-nil so it serializes as [] not null")
+	}
+	if u.OS != runtime.GOOS {
+		t.Errorf("OS = %q, want %q", u.OS, runtime.GOOS)
+	}
+	if u.Arch != runtime.GOARCH {
+		t.Errorf("Arch = %q, want %q", u.Arch, runtime.GOARCH)
+	}
+	if u.StartedAt.Before(before) || u.StartedAt.After(after) {
+		t.Errorf("StartedAt %v not within the call window [%v, %v]", u.StartedAt, before, after)
+	}
+	if u.DurationMs < 0 {
+		t.Errorf("DurationMs = %d, want >= 0", u.DurationMs)
 	}
 }
 
