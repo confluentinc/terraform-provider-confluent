@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -93,10 +94,9 @@ func awsEgressPrivateLinkEndpointAccessPointSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramAwsEgressPrivateLinkEndpointVpcEndpointServiceName: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
 				},
 				paramAwsEgressPrivateLinkEndpointEnableHighAvailability: {
 					Type:     schema.TypeBool,
@@ -128,10 +128,9 @@ func awsIngressPrivateLinkEndpointAccessPointSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramAwsIngressPrivateLinkEndpointVpcEndpointId: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
 				},
 				paramAwsIngressPrivateLinkEndpointDnsDomain: {
 					Type:     schema.TypeString,
@@ -157,10 +156,9 @@ func azureEgressPrivateLinkEndpointAccessPointSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramAzureEgressPrivateLinkEndpointPrivateLinkServiceResourceId: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
 				},
 				paramAzureEgressPrivateLinkEndpointPrivateLinkSubresourceName: {
 					Type:     schema.TypeString,
@@ -169,7 +167,7 @@ func azureEgressPrivateLinkEndpointAccessPointSchema() *schema.Schema {
 					ForceNew: true,
 				},
 				paramAzureEgressPrivateLinkEndpointPrivateEndpointCustomDnsConfigDomains: {
-					Type:     schema.TypeSet,
+					Type:     schema.TypeList,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 					Computed: true,
 				},
@@ -201,10 +199,10 @@ func azureIngressPrivateLinkEndpointAccessPointSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramAzureIngressPrivateLinkEndpointPrivateEndpointResourceId: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					Type:             schema.TypeString,
+					Required:         true,
+					ForceNew:         true,
+					DiffSuppressFunc: suppressSameValueIgnoringCase,
 				},
 				paramAzureIngressPrivateLinkEndpointDnsDomain: {
 					Type:     schema.TypeString,
@@ -265,10 +263,10 @@ func gcpEgressPrivateServiceConnectEndpointAccessPointSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramGcpEgressPrivateServiceConnectEndpointPrivateServiceConnectEndpointTarget: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					Type:             schema.TypeString,
+					Required:         true,
+					ForceNew:         true,
+					DiffSuppressFunc: suppressAllGoogleApisEquivalence,
 				},
 				paramGcpEgressPrivateServiceConnectEndpointPrivateServiceConnectEndpointConnectionId: {
 					Type:     schema.TypeString,
@@ -301,7 +299,7 @@ func gcpIngressPrivateServiceConnectEndpointAccessPointSchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
+					ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "must be a numeric string"),
 				},
 				paramGcpIngressPrivateServiceConnectEndpointDnsDomain: {
 					Type:     schema.TypeString,

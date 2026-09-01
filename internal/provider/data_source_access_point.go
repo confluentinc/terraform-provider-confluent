@@ -129,7 +129,7 @@ func azureEgressPrivateLinkEndpointAccessPointDataSourceSchema() *schema.Schema 
 					Computed: true,
 				},
 				paramAzureEgressPrivateLinkEndpointPrivateEndpointCustomDnsConfigDomains: {
-					Type:     schema.TypeSet,
+					Type:     schema.TypeList,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 					Computed: true,
 				},
