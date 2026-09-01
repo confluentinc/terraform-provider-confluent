@@ -28,8 +28,7 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// recordingReporter is a concurrency-safe telemetryReporter that keeps every
-// Usage it is handed, for assertions.
+// recordingReporter is a concurrency-safe telemetryReporter that records every Usage.
 type recordingReporter struct {
 	mu    sync.Mutex
 	usage []telemetry.Usage
@@ -55,9 +54,7 @@ func (r *recordingReporter) count() int {
 	return len(r.usage)
 }
 
-// newTestResource builds a minimal managed resource whose CRUD and import entry
-// points are transparent no-ops, so the only observable effect of invoking them
-// is whatever the telemetry wrapper adds.
+// newTestResource builds a minimal managed resource with no-op CRUD/import entry points.
 func newTestResource() *schema.Resource {
 	okDiag := func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics { return nil }
 	return &schema.Resource{
@@ -84,16 +81,11 @@ func testWrapConfig(reporter telemetryReporter) telemetryWrapConfig {
 	}
 }
 
-// TestWrapResourcesMap_CoversAllManagedResourcesAndExcludesDataSources asserts
-// the central pass wraps every managed resource (v1 scope) and leaves every data
-// source untouched, with no per-resource file edits.
+// Asserts the central pass wraps every managed resource and leaves data sources untouched.
 func TestWrapResourcesMap_CoversAllManagedResourcesAndExcludesDataSources(t *testing.T) {
 	p := New(testVersion, "")()
 
-	// v1 scope is the 64 managed resources; the 63 data sources are excluded.
-	// This count is pinned deliberately: adding a managed resource should be a
-	// conscious decision to extend telemetry coverage, so bump it here when the
-	// ResourcesMap grows.
+	// v1 scope is the 64 managed resources; bump this pin when ResourcesMap changes.
 	const wantManagedResources = 64
 	if got := len(p.ResourcesMap); got != wantManagedResources {
 		t.Errorf("ResourcesMap has %d resources, want %d (update this pin if resources were intentionally added/removed)", got, wantManagedResources)
@@ -111,13 +103,9 @@ func TestWrapResourcesMap_CoversAllManagedResourcesAndExcludesDataSources(t *tes
 	}
 }
 
-// TestWrapResourcesMap_PreservesNilUpdateContext asserts a resource with no
-// UpdateContext still has a nil UpdateContext after wrapping — never a non-nil
-// no-op closure that would nil-panic and change the SDK's update-legality check.
+// Asserts a nil UpdateContext stays nil after wrapping (never a non-nil no-op closure).
 func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
-	// The real provider's known nil-update resources, at the time of writing.
-	// Used only as a readable cross-check; the load-bearing assertion below is
-	// the count, which needs no name maintenance.
+	// The real provider's known nil-update resources; the load-bearing check is the count.
 	knownNilUpdate := map[string]bool{
 		"confluent_byok_key":                        true,
 		"confluent_connect_artifact":                true,
@@ -141,8 +129,7 @@ func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
 		}
 	}
 
-	// If wrapping had turned any nil UpdateContext into a non-nil no-op closure,
-	// this count would drop below the known set.
+	// A nil→non-nil substitution would drop this count below the known set.
 	if len(gotNilUpdate) != len(knownNilUpdate) {
 		t.Errorf("found %d resources with nil UpdateContext (%v), want %d", len(gotNilUpdate), gotNilUpdate, len(knownNilUpdate))
 	}
@@ -152,8 +139,7 @@ func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
 		}
 	}
 
-	// Also assert at the mechanism level, independent of the resource catalog: a
-	// synthetic resource with a nil UpdateContext stays nil.
+	// Mechanism-level check, independent of the resource catalog.
 	r := newTestResource()
 	r.UpdateContext = nil
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"x": r}, testWrapConfig(&recordingReporter{}))
@@ -165,11 +151,8 @@ func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
 	}
 }
 
-// TestWrapResourcesMap_OnlyContextEntryPointsAreUsed guards the assumption the
-// wrapper relies on: every managed resource uses only the *Context entry points.
-// If a future resource uses a deprecated (Create) or WithoutTimeout variant, it
-// would silently escape telemetry; this fails the build so the wrapper is
-// extended deliberately.
+// Guards that every managed resource uses only *Context entry points; a deprecated
+// or WithoutTimeout variant would escape telemetry and fails the build here.
 func TestWrapResourcesMap_OnlyContextEntryPointsAreUsed(t *testing.T) {
 	p := New(testVersion, "")()
 	for name, r := range p.ResourcesMap {
@@ -179,17 +162,14 @@ func TestWrapResourcesMap_OnlyContextEntryPointsAreUsed(t *testing.T) {
 		if r.CreateWithoutTimeout != nil || r.ReadWithoutTimeout != nil || r.UpdateWithoutTimeout != nil || r.DeleteWithoutTimeout != nil {
 			t.Errorf("resource %q uses a *WithoutTimeout CRUD func; extend the telemetry wrapper", name)
 		}
-		// The import wrapper only wraps Importer.StateContext; a resource using
-		// the deprecated Importer.State would silently escape import telemetry.
 		if r.Importer != nil && r.Importer.State != nil {
 			t.Errorf("resource %q uses the deprecated Importer.State; extend the telemetry wrapper to wrap it", name)
 		}
 	}
 }
 
-// TestWrapper_TransparentOnHappyPath asserts wrapped CRUD is behaviorally
-// transparent: the inner return value passes through unchanged, and exactly one
-// event is emitted per call carrying the right operation, run ID, and metadata.
+// Asserts wrapped CRUD is transparent: the inner return passes through and exactly
+// one event is emitted with the right operation, run ID, and metadata.
 func TestWrapper_TransparentOnHappyPath(t *testing.T) {
 	rec := &recordingReporter{}
 	r := newTestResource()
@@ -246,8 +226,7 @@ func TestWrapper_ErrorFlag(t *testing.T) {
 	}
 }
 
-// TestWrapper_ImportWrappedSeparately asserts the import path is wrapped with the
-// correct signature and reports an IMPORT event while passing results through.
+// Asserts import is wrapped with the correct signature, emits IMPORT, and passes results through.
 func TestWrapper_ImportWrappedSeparately(t *testing.T) {
 	rec := &recordingReporter{}
 	r := newTestResource()
@@ -272,9 +251,7 @@ func TestWrapper_ImportWrappedSeparately(t *testing.T) {
 	}
 }
 
-// TestWrapper_DoubleWrapEmitsOneEventPerCall asserts running the wrap pass twice
-// over the same map does not compose wrappers: each CRUD call still emits exactly
-// one event.
+// Asserts wrapping the same map twice does not compose wrappers: one event per call.
 func TestWrapper_DoubleWrapEmitsOneEventPerCall(t *testing.T) {
 	rec := &recordingReporter{}
 	r := newTestResource()
@@ -289,10 +266,8 @@ func TestWrapper_DoubleWrapEmitsOneEventPerCall(t *testing.T) {
 	}
 }
 
-// TestWrapper_ConcurrentRunIDsAndSequences drives ~20 independent resources'
-// entry points concurrently — modeling Terraform's parallel graph walk — and
-// asserts the run ID is stable and every sequence number is unique. Run with
-// -race to catch data races in the process-scoped run ID and sequence counter.
+// Drives ~20 resources' entry points concurrently (run with -race): the run ID is
+// stable and every sequence number is unique.
 func TestWrapper_ConcurrentRunIDsAndSequences(t *testing.T) {
 	rec := &recordingReporter{}
 	const numResources = 20
@@ -303,7 +278,7 @@ func TestWrapper_ConcurrentRunIDsAndSequences(t *testing.T) {
 	}
 	wrapResourcesMapForTelemetry(m, testWrapConfig(rec))
 
-	// Collect every entry point to invoke; ~20 resources x 4 CRUD + 1 import.
+	// ~20 resources x 4 CRUD + 1 import.
 	type call func()
 	var calls []call
 	for _, r := range m {
@@ -351,11 +326,8 @@ func TestWrapper_ConcurrentRunIDsAndSequences(t *testing.T) {
 	}
 }
 
-// TestCollectChangedNames_NamesOnlyNeverMapKeys asserts the changed-attribute
-// computation can only ever emit statically declared attribute names — never a
-// user-controlled map key or value — even when the change detector claims a
-// nested map key changed. This is the provider-side guarantee that pairs with
-// the TFCA-B2 build-time allowlist.
+// Asserts changed-attribute computation emits only declared schema names — never a
+// user-controlled map key or value — even when the detector reports everything.
 func TestCollectChangedNames_NamesOnlyNeverMapKeys(t *testing.T) {
 	// Schema modeled on confluent_kafka_topic: a TypeMap "config" plus scalars.
 	resourceSchema := map[string]*schema.Schema{
@@ -365,9 +337,7 @@ func TestCollectChangedNames_NamesOnlyNeverMapKeys(t *testing.T) {
 		"never_touched": {Type: schema.TypeString, Optional: true},
 	}
 
-	// A detector that reports EVERYTHING as changed, including a runtime map key
-	// that must never leak. The map key is never queried (the function only
-	// iterates schema keys), so it cannot appear in the output.
+	// A detector that reports everything changed; a runtime map key must never leak.
 	hasChange := func(name string) bool { return true }
 
 	got := collectChangedNames(resourceSchema, hasChange)
@@ -380,14 +350,13 @@ func TestCollectChangedNames_NamesOnlyNeverMapKeys(t *testing.T) {
 		if !want[name] {
 			t.Errorf("emitted %q which is not a declared schema attribute name", name)
 		}
-		// Defense-in-depth: a leaked map key would contain a '.' address like
-		// "config.cleanup.policy". None of the declared names do.
+		// A leaked map key would contain a '.' address; none of the declared names do.
 		if name == "config.cleanup.policy" || name == "cleanup.policy" {
 			t.Errorf("emitted a runtime map key %q — map contents must never leak", name)
 		}
 	}
 
-	// And when nothing changed, the result is an empty, non-nil slice.
+	// When nothing changed, the result is an empty, non-nil slice.
 	none := collectChangedNames(resourceSchema, func(string) bool { return false })
 	if none == nil {
 		t.Errorf("collectChangedNames must return non-nil even when nothing changed")
@@ -397,12 +366,8 @@ func TestCollectChangedNames_NamesOnlyNeverMapKeys(t *testing.T) {
 	}
 }
 
-// TestWrapper_ChangedAttributesFromRealResourceData exercises the full
-// changed-attributes path end to end with a genuine diff-bearing
-// *schema.ResourceData rather than a stubbed detector, proving that a
-// user-controlled map attribute contributes only its declared name to a Usage —
-// never its runtime keys. This is the empirical counterpart to the structural
-// TestCollectChangedNames_NamesOnlyNeverMapKeys.
+// Exercises the changed-attributes path end to end with a real diff-bearing
+// ResourceData: a map attribute contributes only its declared name, never its keys.
 func TestWrapper_ChangedAttributesFromRealResourceData(t *testing.T) {
 	rec := &recordingReporter{}
 	// Schema modeled on confluent_kafka_topic: a TypeMap "config" plus a scalar.
@@ -415,8 +380,7 @@ func TestWrapper_ChangedAttributesFromRealResourceData(t *testing.T) {
 	}
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_kafka_topic": r}, testWrapConfig(rec))
 
-	// A create-style ResourceData whose config map carries a user key
-	// ("cleanup.policy") that must never leak into telemetry.
+	// config carries a user key ("cleanup.policy") that must never leak into telemetry.
 	d := schema.TestResourceDataRaw(t, r.Schema, map[string]interface{}{
 		"config":     map[string]interface{}{"cleanup.policy": "compact"},
 		"topic_name": "orders",
@@ -436,9 +400,7 @@ func TestWrapper_ChangedAttributesFromRealResourceData(t *testing.T) {
 	}
 }
 
-// TestChangedAttributeNames_NonCreateUpdateAreEmpty asserts read/delete/import
-// report an empty (non-nil) changed-attributes slice and never dereference a nil
-// ResourceData.
+// Asserts read/delete/import report an empty non-nil slice and never deref a nil ResourceData.
 func TestChangedAttributeNames_NonCreateUpdateAreEmpty(t *testing.T) {
 	resourceSchema := map[string]*schema.Schema{"name": {Type: schema.TypeString}}
 	for _, op := range []telemetry.Operation{telemetry.OperationRead, telemetry.OperationDelete, telemetry.OperationImport} {
