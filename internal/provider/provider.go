@@ -445,6 +445,16 @@ func New(version, userAgent string) func() *schema.Provider {
 			},
 		}
 
+		// Wrap every managed resource's CRUD/import entry points with telemetry
+		// (TFCA-B3), once ResourcesMap is complete. The no-op sink keeps this
+		// transparent until TFCA-B5/B6 supply the real reporter; terraformVersion
+		// is read lazily because Core sets it during ConfigureProvider, later.
+		wrapResourcesMapForTelemetry(provider.ResourcesMap, telemetryWrapConfig{
+			reporter:         noopTelemetryReporter{},
+			providerVersion:  version,
+			terraformVersion: func() string { return provider.TerraformVersion },
+		})
+
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 			return providerConfigure(ctx, d, provider, version, userAgent)
 		}
