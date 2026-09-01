@@ -7,7 +7,7 @@ terraform {
     }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.83.0"
+      version = "2.85.0"
     }
     random = {
       source  = "hashicorp/random"

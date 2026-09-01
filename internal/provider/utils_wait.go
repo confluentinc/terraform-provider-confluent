@@ -133,24 +133,6 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 	return nil
 }
 
-func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateProvisioned},
-		Refresh:      ksqlClusterProvisionStatus(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId),
-		Timeout:      ksqlCreateTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %v", clusterId, []string{stateUp, stateProvisioned}), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.ksqlV2ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -182,24 +164,6 @@ func waitForConnectorOffsetsUpdateToComplete(ctx context.Context, c *Client, env
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q", displayName, stateApplied), map[string]interface{}{connectorLoggingKey: displayName})
 	if _, err := stateConf.WaitForStateContext(c.connectV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateReady, stateWaitingForConnections},
-		Refresh:      privateLinkAttachmentProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentId),
-		Timeout:      networkingAPICreateTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q", privateLinkAttachmentId, stateWaitingForConnections), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -936,25 +900,6 @@ func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId s
 	}
 }
 
-func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKsqlRead(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %q: current status is %q", clusterId, stateProvisioned, cluster.Status.GetPhase()), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
-			return cluster, cluster.Status.GetPhase(), nil
-		} else if cluster.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("ksqlDB Cluster %q provisioning status is %q", clusterId, stateFailed)
-		}
-		// ksqlDB Cluster is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("ksqlDB Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
-	}
-}
-
 func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		clusters, err := loadSchemaRegistryClusters(c.srcmV3ApiContext(ctx), c, environmentId)
@@ -1040,25 +985,6 @@ func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, 
 		}
 		// Connector offsets update is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("connector %q offsets update status is an unexpected state %q: %s", displayName, status.Status.GetPhase(), status.Status.GetMessage())
-	}
-}
-
-func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		privateLinkAttachment, resp, err := executePlattRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentId, environmentId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", privateLinkAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q: current status is %q", privateLinkAttachmentId, stateWaitingForConnections, privateLinkAttachment.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-		if privateLinkAttachment.Status.GetPhase() == stateProvisioning || privateLinkAttachment.Status.GetPhase() == stateReady || privateLinkAttachment.Status.GetPhase() == stateWaitingForConnections {
-			return privateLinkAttachment, privateLinkAttachment.Status.GetPhase(), nil
-		} else if privateLinkAttachment.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("private Link Attachment %q provisioning status is %q: %s", privateLinkAttachmentId, stateFailed, privateLinkAttachment.Status.GetErrorMessage())
-		}
-		// Private Link Attachment is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("private Link Attachment %q is an unexpected state %q: %s", privateLinkAttachmentId, privateLinkAttachment.Status.GetPhase(), privateLinkAttachment.Status.GetErrorMessage())
 	}
 }
 
@@ -1229,17 +1155,17 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, wantStopped bool, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	var pendingStates []string
-	var target string
+	var target []string
 	if wantStopped {
 		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
-		target = stateStopped
+		target = []string{stateStopped, stateCompleted}
 	} else {
 		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
-		target = stateRunning
+		target = []string{stateRunning, stateCompleted}
 	}
 	stateConf := &resource.StateChangeConf{
 		Pending:      pendingStates,
-		Target:       []string{target},
+		Target:       target,
 		Refresh:      flinkMaterializedTableProvisionStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
 		Timeout:      timeout,
 		Delay:        delay,
@@ -1260,11 +1186,11 @@ func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestC
 
 	if toStop {
 		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
-		targetStates = []string{stateStopped}
+		targetStates = []string{stateStopped, stateCompleted}
 		targetStatusMessage = stateStopped
 	} else {
 		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
-		targetStates = []string{stateRunning}
+		targetStates = []string{stateRunning, stateCompleted}
 		targetStatusMessage = stateRunning
 	}
 
@@ -1321,7 +1247,7 @@ func flinkMaterializedTableProvisionStatus(ctx context.Context, c *FlinkRestClie
 
 		phase := table.Status.GetPhase()
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q provisioning status to become target: current status is %q", tableName, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
-		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped || phase == stateCompleted {
 			return table, phase, nil
 		} else if phase == stateFailed || phase == stateFailing {
 			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q provisioning status is %q: %s", tableName, phase, table.Status.GetDetail())
@@ -1341,7 +1267,7 @@ func flinkMaterializedTableUpdatingStatus(ctx context.Context, c *FlinkRestClien
 
 		phase := table.Status.GetPhase()
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q status to become %q: current status is %q", tableName, targetStatusMessage, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
-		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped || phase == stateCompleted {
 			return table, phase, nil
 		} else if phase == stateFailed || phase == stateFailing {
 			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q status is %q: %s", tableName, phase, table.Status.GetDetail())
