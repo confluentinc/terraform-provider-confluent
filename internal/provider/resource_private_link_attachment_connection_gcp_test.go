@@ -65,10 +65,20 @@ func TestAccPrivateLinkAttachmentConnectionGcp(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionGcpResourceScenarioName).
+		WillSetStateTo(scenarioStatePrivateLinkAttachmentConnectionGcpHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
+		InScenario(privateLinkAttachmentConnectionGcpResourceScenarioName).
+		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionGcpHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
