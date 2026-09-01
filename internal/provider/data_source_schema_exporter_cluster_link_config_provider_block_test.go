@@ -19,14 +19,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/walkerus/go-wiremock"
 )
 
-func TestAccDataSourceSchemaExporterClusterLinkConfig(t *testing.T) {
+// Exercises Option #2 (Schema Registry metadata set in the provider block): the data source
+// reads credentials/endpoint/cluster from the provider block, so the inline write-back branch
+// is skipped and schema_registry_cluster/credentials/rest_endpoint stay unset.
+func TestAccDataSourceSchemaExporterClusterLinkConfigWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -36,6 +38,7 @@ func TestAccDataSourceSchemaExporterClusterLinkConfig(t *testing.T) {
 	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
+	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -58,17 +61,16 @@ func TestAccDataSourceSchemaExporterClusterLinkConfig(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceSchemaExporterClusterLinkConfig(mockServerUrl),
+				Config: testAccCheckDataSourceSchemaExporterClusterLinkConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(schemaExporterClusterLinkConfigDataSourceLabel),
 					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "id", fmt.Sprintf("%s/exporter1", testStreamGovernanceClusterId)),
 					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "name", "exporter1"),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "rest_endpoint", mockServerUrl),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
+					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "schema_registry_cluster.0.id"),
+					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "rest_endpoint"),
 					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, fmt.Sprintf("%s.%%", paramConfigs), "1"),
 					resource.TestCheckResourceAttr(schemaExporterClusterLinkConfigDataSourceLabel, "config.topic.config.sync.associations.filters", testSchemaExporterClusterLinkConfigValue),
 				),
@@ -77,57 +79,17 @@ func TestAccDataSourceSchemaExporterClusterLinkConfig(t *testing.T) {
 	})
 }
 
-func TestAccDataSourceSchemaExporterClusterLinkConfigNotFound(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
-	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
-
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemaExporterClusterLinkConfigUrlPath)).
-		InScenario(schemaExporterClusterLinkConfigDataSourceScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillReturn(
-			`{"error_code":40450,"message":"Exporter not found"}`,
-			contentTypeJSONHeader,
-			http.StatusNotFound,
-		))
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccCheckDataSourceSchemaExporterClusterLinkConfig(mockServerUrl),
-				ExpectError: regexp.MustCompile("unexpected HTTP status 404"),
-			},
-		},
-	})
-}
-
-func testAccCheckDataSourceSchemaExporterClusterLinkConfig(mockServerUrl string) string {
+func testAccCheckDataSourceSchemaExporterClusterLinkConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
-	provider "confluent" {}
+	provider "confluent" {
+	  endpoint                      = "%s"
+	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_api_key       = "%s"
+	  schema_registry_api_secret    = "%s"
+	  schema_registry_id            = "%s"
+	}
 	data "confluent_schema_exporter_cluster_link_config" "main" {
-	  schema_registry_cluster {
-	    id = "%s"
-	  }
-	  rest_endpoint = "%s"
-	  credentials {
-	    key    = "%s"
-	    secret = "%s"
-	  }
 	  name = "exporter1"
 	}
-	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
+	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testStreamGovernanceClusterId)
 }

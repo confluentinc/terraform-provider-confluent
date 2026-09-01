@@ -43,9 +43,10 @@ func schemaExporterClusterLinkConfigDataSource() *schema.Resource {
 			},
 			paramCredentials: credentialsSchema(),
 			paramName: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The name of the Schema Exporter.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
+				Description:  "The name of the Schema Exporter, for example, `my-exporter`.",
 			},
 			paramConfigs: {
 				Type:        schema.TypeMap,
@@ -79,7 +80,7 @@ func schemaExporterClusterLinkConfigDataSourceRead(ctx context.Context, d *schem
 	name := d.Get(paramName).(string)
 	id := createExporterId(clusterId, name)
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Cluster Link Config %q", id))
+	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Cluster Link Config %q", id), map[string]interface{}{schemaExporterLoggingKey: id})
 
 	configs, err := readSchemaExporterClusterLinkConfig(ctx, c, name)
 	if err != nil {
@@ -107,7 +108,7 @@ func schemaExporterClusterLinkConfigDataSourceRead(ctx context.Context, d *schem
 
 	d.SetId(id)
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema Exporter Cluster Link Config %q", id))
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema Exporter Cluster Link Config %q", id), map[string]interface{}{schemaExporterLoggingKey: id})
 
 	return nil
 }
@@ -150,7 +151,7 @@ func readSchemaExporterClusterLinkConfig(ctx context.Context, c *SchemaRegistryR
 
 	configs := map[string]string{}
 	if err := json.NewDecoder(resp.Body).Decode(&configs); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding cluster-link config response for exporter %q: %w", name, err)
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Exporter Cluster Link Config for exporter %q", name))
