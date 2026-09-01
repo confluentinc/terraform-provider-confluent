@@ -27,21 +27,16 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// Central client-analytics wrapping (TFCA-B3): replaces every managed resource's
-// CRUD and import entry points, once, with wrappers that build a telemetry.Usage
-// and hand it to a reporter — no resource_*.go file is touched. Reporting goes to
-// a no-op sink until the TFCA-B5 transport and TFCA-B6 opt-out supply the real
-// reporter, so today the wrapper does no I/O and changes no behavior. Panic
-// recovery is deferred to TFCA-B4; a panic here propagates unchanged.
+// Central client-analytics wrapping. Replaces every managed resource's CRUD and
+// import entry points, once, with wrappers that build a telemetry.Usage and hand
+// it to a reporter.
 
-// telemetryReporter receives a fully-populated Usage. Report must not block the
-// calling goroutine for long (the TFCA-B5 transport hands off to a worker pool).
+// telemetryReporter receives a populated Usage; Report should not block the caller.
 type telemetryReporter interface {
 	Report(telemetry.Usage)
 }
 
-// noopTelemetryReporter drops every Usage; it keeps this mechanism transparent
-// until the TFCA-B5 transport replaces it.
+// noopTelemetryReporter drops every Usage.
 type noopTelemetryReporter struct{}
 
 func (noopTelemetryReporter) Report(telemetry.Usage) {}
@@ -54,9 +49,8 @@ type telemetryWrapConfig struct {
 	// providerVersion is the released provider version.
 	providerVersion string
 
-	// terraformVersion is a func, not a value, because Core populates
-	// schema.Provider.TerraformVersion during ConfigureProvider — after New
-	// returns but before any CRUD/import call. A nil func yields "".
+	// terraformVersion returns Terraform Core's version. It is a func because Core
+	// sets it during ConfigureProvider, after New returns; a nil func yields "".
 	terraformVersion func() string
 }
 
@@ -76,11 +70,8 @@ func (c telemetryWrapConfig) tfVersion() string {
 }
 
 // wrappedResources makes wrapping idempotent: a resource wrapped once is skipped
-// on any later pass, so composing the wrap twice never double-emits. Keys are
-// weak.Pointers so an entry does not keep the resource — or the provider graph
-// its closures capture — alive; each resource registers a cleanup that drops its
-// dead stub once collected, so repeated New() calls (e.g. confluent_tf_importer,
-// one per apply) don't leak.
+// on later passes. Keys are weak.Pointers with a cleanup, so an entry never keeps
+// the resource (or the provider graph its closures capture) alive.
 var wrappedResources sync.Map // map[weak.Pointer[schema.Resource]]struct{}
 
 // wrapResourcesMapForTelemetry wraps every resource's CRUD and import entry
@@ -110,10 +101,9 @@ func resourceWrapped(r *schema.Resource) bool {
 	return ok
 }
 
-// wrapResourceForTelemetry wraps each entry point only when it is already
-// non-nil. This matters: 8 managed resources have a nil UpdateContext, and the
-// SDK treats a set update func as "updates allowed" — turning nil into a wrapper
-// closure would nil-panic and falsely advertise those resources as updatable.
+// wrapResourceForTelemetry wraps each entry point only when it is already non-nil.
+// A nil UpdateContext means the resource has no update; wrapping it would nil-panic
+// and make the SDK treat the resource as updatable.
 func wrapResourceForTelemetry(resourceType string, r *schema.Resource, cfg telemetryWrapConfig) {
 	if r.CreateContext != nil {
 		r.CreateContext = wrapContextFunc(resourceType, r.Schema, telemetry.OperationCreate, r.CreateContext, cfg)
@@ -132,11 +122,9 @@ func wrapResourceForTelemetry(resourceType string, r *schema.Resource, cfg telem
 	}
 }
 
-// wrapContextFunc wraps a Create/Read/Update/DeleteContext function. Sequence and
-// timer are taken at entry (so order/duration are correct even if the report is
-// dropped), and the Usage is built and reported synchronously after inner returns
-// — the SDK reads ResourceData right after CRUD returns, so nothing may defer to
-// a goroutine that touches d.
+// wrapContextFunc wraps a Create/Read/Update/DeleteContext function: it times the
+// inner call and reports a Usage after it returns. Reporting is synchronous because
+// the SDK reads ResourceData as soon as the CRUD call returns.
 func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Schema, op telemetry.Operation, inner func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics, cfg telemetryWrapConfig) func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		seq := telemetry.NextSequence()
@@ -189,10 +177,9 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 	}
 }
 
-// changedAttributeNames returns the top-level schema attribute names that
-// changed, as a non-nil slice (so it serializes as [] not null). It appends only
-// static schema keys, so no attribute value or user-controlled map key can leak.
-// Only Create and Update carry a diff; other operations report the empty slice.
+// changedAttributeNames returns the top-level schema attribute names that changed,
+// as a non-nil slice. It appends only static schema keys, so no attribute value or
+// map key can leak. Only Create and Update carry a diff; others return empty.
 func changedAttributeNames(d *schema.ResourceData, resourceSchema map[string]*schema.Schema, op telemetry.Operation) []string {
 	if d == nil || (op != telemetry.OperationCreate && op != telemetry.OperationUpdate) {
 		return []string{}
