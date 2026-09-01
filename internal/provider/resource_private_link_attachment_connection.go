@@ -20,16 +20,18 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 )
 
-var acceptedPrivateLinkAttachmentConnectionKinds = []string{paramAws, paramAzure, paramGcp}
+var acceptedPrivateLinkAttachmentConnectionCloudVariants = []string{paramAws, paramAzure, paramGcp}
 
 func privateLinkAttachmentConnectionResource() *schema.Resource {
 	return &schema.Resource{
@@ -53,14 +55,14 @@ func privateLinkAttachmentConnectionResource() *schema.Resource {
 			},
 			paramEnvironment:           environmentSchema(),
 			paramPrivateLinkAttachment: privateLinkAttachmentSchema(),
-			paramAws:                   awsPlattcSchema(),
-			paramAzure:                 azurePlattcSchema(),
-			paramGcp:                   gcpPlattcSchema(),
+			paramAws:                   awsPrivateLinkAttachmentConnectionSchema(),
+			paramAzure:                 azurePrivateLinkAttachmentConnectionSchema(),
+			paramGcp:                   gcpPrivateLinkAttachmentConnectionSchema(),
 		},
 	}
 }
 
-func awsPlattcSchema() *schema.Schema {
+func awsPrivateLinkAttachmentConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -77,11 +79,11 @@ func awsPlattcSchema() *schema.Schema {
 				},
 			},
 		},
-		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionKinds,
+		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionCloudVariants,
 	}
 }
 
-func azurePlattcSchema() *schema.Schema {
+func azurePrivateLinkAttachmentConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -98,11 +100,11 @@ func azurePlattcSchema() *schema.Schema {
 				},
 			},
 		},
-		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionKinds,
+		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionCloudVariants,
 	}
 }
 
-func gcpPlattcSchema() *schema.Schema {
+func gcpPrivateLinkAttachmentConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -119,82 +121,8 @@ func gcpPlattcSchema() *schema.Schema {
 				},
 			},
 		},
-		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionKinds,
+		ExactlyOneOf: acceptedPrivateLinkAttachmentConnectionCloudVariants,
 	}
-}
-
-func privateLinkAttachmentSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "The unique identifier for the private link attachment.",
-				},
-			},
-		},
-		Required:    true,
-		MinItems:    1,
-		MaxItems:    1,
-		ForceNew:    true,
-		Description: "The private_link_attachment to which this belongs.",
-	}
-}
-
-func privateLinkAttachmentConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	plattcId := d.Id()
-	if plattcId == "" {
-		return diag.Errorf("error reading Private Link Attachment Connection: Private Link Attachment Connection id is missing")
-	}
-
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-
-	if _, err := readPrivateLinkAttachmentConnectionAndSetAttributes(ctx, d, meta, plattcId, environmentId); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err)))
-	}
-
-	return nil
-}
-
-func readPrivateLinkAttachmentConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, plattcId string, environmentId string) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-	c := meta.(*Client)
-	plattc, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, plattcId, environmentId)
-	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing Private Link Attachment Connection %q in TF state because Private Link Attachment Connection could not be found on the server", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-			d.SetId("")
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	plattcJson, err := json.Marshal(plattc)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-	if _, err := setPrivateLinkAttachmentConnectionAttributes(d, plattc); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Private Link Attachment Connection %q", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-	return []*schema.ResourceData{d}, nil
-}
-
-func executePlattcRead(ctx context.Context, c *Client, plattcId string, environmentId string) (networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnection, *http.Response, error) {
-	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
-	return c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 }
 
 func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -254,24 +182,17 @@ func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.Resour
 	return privateLinkAttachmentConnectionRead(ctx, d, meta)
 }
 
-func privateLinkAttachmentConnectionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func privateLinkAttachmentConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	plattcId := d.Id()
+	if plattcId == "" {
+		return diag.Errorf("error reading Private Link Attachment Connection: Private Link Attachment Connection id is missing")
+	}
+
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	tflog.Debug(ctx, fmt.Sprintf("deleting Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-
-	c := meta.(*Client)
-	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
-	resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
-	if err != nil {
-		return diag.Errorf("error deleting Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp))
+	if _, err := readPrivateLinkAttachmentConnectionAndSetAttributes(ctx, d, meta, plattcId, environmentId); err != nil {
+		return diag.FromErr(fmt.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err)))
 	}
-
-	if err := waitForPrivateLinkAttachmentConnectionToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Private Link Attachment Connection %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Private Link Attachment Connection %q", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	return nil
 }
@@ -316,26 +237,63 @@ func privateLinkAttachmentConnectionUpdate(ctx context.Context, d *schema.Resour
 	return privateLinkAttachmentConnectionRead(ctx, d, meta)
 }
 
-func privateLinkAttachmentConnectionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing Private Link Attachment Connection %q", d.Id()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: d.Id()})
+func privateLinkAttachmentConnectionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	plattcId := d.Id()
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	envIDAndPlattcId := d.Id()
-	parts := strings.Split(envIDAndPlattcId, "/")
+	tflog.Debug(ctx, fmt.Sprintf("deleting Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Private Link Attachment Connection: invalid format: expected '<env ID>/<Private Link Attachment Connection ID>'")
+	c := meta.(*Client)
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
+	resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	if err != nil {
+		return diag.Errorf("error deleting Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp))
 	}
 
-	environmentId := parts[0]
-	plattcId := parts[1]
-	d.SetId(plattcId)
-
-	// Mark resource as new to avoid d.Set("") when getting 404
-	d.MarkNewResource()
-	if _, err := readPrivateLinkAttachmentConnectionAndSetAttributes(ctx, d, meta, plattcId, environmentId); err != nil {
-		return nil, fmt.Errorf("error importing Private Link Attachment Connection %q: %s", d.Id(), err)
+	if err := waitForPrivateLinkAttachmentConnectionToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+		return diag.Errorf("error waiting for Private Link Attachment Connection %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing Private Link Attachment Connection %q", d.Id()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: d.Id()})
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Private Link Attachment Connection %q", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
+	return nil
+}
+
+func executePrivateLinkAttachmentConnectionRead(ctx context.Context, c *Client, plattcId string, environmentId string) (networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnection, *http.Response, error) {
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
+	return c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+}
+
+func readPrivateLinkAttachmentConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, plattcId string, environmentId string) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
+	c := meta.(*Client)
+	plattc, resp, err := executePrivateLinkAttachmentConnectionRead(c.networkingPrivatelinkV1ApiContext(ctx), c, plattcId, environmentId)
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
+		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+		if isResourceNotFound && !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Private Link Attachment Connection %q in TF state because Private Link Attachment Connection could not be found on the server", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+			d.SetId("")
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	plattcJson, err := json.Marshal(plattc)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
+	if _, err := setPrivateLinkAttachmentConnectionAttributes(d, plattc); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Private Link Attachment Connection %q", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -368,4 +326,123 @@ func setPrivateLinkAttachmentConnectionAttributes(d *schema.ResourceData, plattc
 	d.SetId(plattc.GetId())
 
 	return d, nil
+}
+
+func privateLinkAttachmentConnectionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing Private Link Attachment Connection %q", d.Id()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: d.Id()})
+
+	envIDAndPlattcId := d.Id()
+	parts := strings.Split(envIDAndPlattcId, "/")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("error importing Private Link Attachment Connection: invalid format: expected '<env ID>/<Private Link Attachment Connection ID>'")
+	}
+
+	environmentId := parts[0]
+	plattcId := parts[1]
+	d.SetId(plattcId)
+
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	if _, err := readPrivateLinkAttachmentConnectionAndSetAttributes(ctx, d, meta, plattcId, environmentId); err != nil {
+		return nil, fmt.Errorf("error importing Private Link Attachment Connection %q: %s", d.Id(), err)
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Private Link Attachment Connection %q", d.Id()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
+}
+
+func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentConnectionId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		privateLinkAttachmentConnection, resp, err := executePrivateLinkAttachmentConnectionRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", privateLinkAttachmentConnectionId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q: current status is %q", privateLinkAttachmentConnectionId, stateReady, privateLinkAttachmentConnection.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
+		if privateLinkAttachmentConnection.Status.GetPhase() == stateProvisioning || privateLinkAttachmentConnection.Status.GetPhase() == stateReady {
+			return privateLinkAttachmentConnection, privateLinkAttachmentConnection.Status.GetPhase(), nil
+		} else if privateLinkAttachmentConnection.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("private Link Attachment Connection %q provisioning status is %q: %s", privateLinkAttachmentConnectionId, stateFailed, privateLinkAttachmentConnection.Status.GetErrorMessage())
+		}
+		// Private Link Attachment Connection is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("private Link Attachment Connection %q is an unexpected state %q: %s", privateLinkAttachmentConnectionId, privateLinkAttachmentConnection.Status.GetPhase(), privateLinkAttachmentConnection.Status.GetErrorMessage())
+	}
+}
+
+func waitForPrivateLinkAttachmentConnectionToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentConnectionId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      privateLinkAttachmentConnectionProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentConnectionId),
+		Timeout:      networkingAPICreateTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q", privateLinkAttachmentConnectionId, stateReady), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
+	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func privateLinkAttachmentConnectionDeleteStatus(ctx context.Context, c *Client, environmentId, plattcId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		plattc, resp, err := executePrivateLinkAttachmentConnectionRead(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Private Link Attachment Connection %q deletion process: Received %d status code when reading %q Plattc", plattcId, resp.StatusCode, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Attachment Connection %q deletion process: Failed when reading Plattc: %s: %s", plattcId, createDescriptiveError(err, resp), plattc.Status.GetErrorMessage()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Private Link Attachment Connection %q deletion process: private link attachment connection %d's status is %q", plattcId, resp.StatusCode, plattc.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+		return plattc, stateInProgress, nil
+	}
+}
+
+func waitForPrivateLinkAttachmentConnectionToBeDeleted(ctx context.Context, c *Client, environmentId, plattcId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      privateLinkAttachmentConnectionDeleteStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for private link attachment connection %q to be deleted", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func privateLinkAttachmentSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The unique identifier for the private link attachment.",
+				},
+			},
+		},
+		Required:    true,
+		MinItems:    1,
+		MaxItems:    1,
+		ForceNew:    true,
+		Description: "The private_link_attachment to which this belongs.",
+	}
 }
