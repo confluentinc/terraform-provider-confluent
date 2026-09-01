@@ -169,24 +169,6 @@ func waitForConnectorOffsetsUpdateToComplete(ctx context.Context, c *Client, env
 	return nil
 }
 
-func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateReady, stateWaitingForConnections},
-		Refresh:      privateLinkAttachmentProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentId),
-		Timeout:      networkingAPICreateTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q", privateLinkAttachmentId, stateWaitingForConnections), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -947,25 +929,6 @@ func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, 
 		}
 		// Connector offsets update is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("connector %q offsets update status is an unexpected state %q: %s", displayName, status.Status.GetPhase(), status.Status.GetMessage())
-	}
-}
-
-func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		privateLinkAttachment, resp, err := executePlattRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentId, environmentId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", privateLinkAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q: current status is %q", privateLinkAttachmentId, stateWaitingForConnections, privateLinkAttachment.Status.GetPhase()), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-		if privateLinkAttachment.Status.GetPhase() == stateProvisioning || privateLinkAttachment.Status.GetPhase() == stateReady || privateLinkAttachment.Status.GetPhase() == stateWaitingForConnections {
-			return privateLinkAttachment, privateLinkAttachment.Status.GetPhase(), nil
-		} else if privateLinkAttachment.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("private Link Attachment %q provisioning status is %q: %s", privateLinkAttachmentId, stateFailed, privateLinkAttachment.Status.GetErrorMessage())
-		}
-		// Private Link Attachment is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("private Link Attachment %q is an unexpected state %q: %s", privateLinkAttachmentId, privateLinkAttachment.Status.GetPhase(), privateLinkAttachment.Status.GetErrorMessage())
 	}
 }
 
