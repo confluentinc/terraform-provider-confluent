@@ -55,4 +55,4 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Schema Exporter Cluster Link Config, in the format `<Schema Registry cluster ID>/<Schema Exporter name>`, for example, `lsrc-abc123/my-exporter`.
-- `config` - (Map of String) The derived Cluster Link configuration that replicates the exporter's subject/context translation.
+- `config` - (Map of String) The derived Cluster Link configuration that replicates the Schema Exporter's subject/context translation.
