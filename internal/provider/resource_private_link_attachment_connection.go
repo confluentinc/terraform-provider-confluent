@@ -346,23 +346,21 @@ func setPrivateLinkAttachmentConnectionAttributes(d *schema.ResourceData, privat
 		return nil, createDescriptiveError(err)
 	}
 	oneOfCloud := spec.GetCloud()
-	status := privateLinkAttachmentConnection.GetStatus()
-	statusOneOfCloud := status.GetCloud()
 
 	switch {
-	case oneOfCloud.NetworkingV1AwsPrivateLinkAttachmentConnection != nil && statusOneOfCloud.NetworkingV1AwsPrivateLinkAttachmentConnectionStatus != nil:
+	case oneOfCloud.NetworkingV1AwsPrivateLinkAttachmentConnection != nil:
 		if err := d.Set(paramAws, []interface{}{map[string]interface{}{
 			paramAwsVpcEndpointId: oneOfCloud.NetworkingV1AwsPrivateLinkAttachmentConnection.GetVpcEndpointId(),
 		}}); err != nil {
 			return nil, createDescriptiveError(err)
 		}
-	case oneOfCloud.NetworkingV1AzurePrivateLinkAttachmentConnection != nil && statusOneOfCloud.NetworkingV1AzurePrivateLinkAttachmentConnectionStatus != nil:
+	case oneOfCloud.NetworkingV1AzurePrivateLinkAttachmentConnection != nil:
 		if err := d.Set(paramAzure, []interface{}{map[string]interface{}{
 			paramAzurePrivateEndpointResourceId: oneOfCloud.NetworkingV1AzurePrivateLinkAttachmentConnection.GetPrivateEndpointResourceId(),
 		}}); err != nil {
 			return nil, createDescriptiveError(err)
 		}
-	case oneOfCloud.NetworkingV1GcpPrivateLinkAttachmentConnection != nil && statusOneOfCloud.NetworkingV1GcpPrivateLinkAttachmentConnectionStatus != nil:
+	case oneOfCloud.NetworkingV1GcpPrivateLinkAttachmentConnection != nil:
 		if err := d.Set(paramGcp, []interface{}{map[string]interface{}{
 			paramGcpPrivateServiceConnectConnectionId: oneOfCloud.NetworkingV1GcpPrivateLinkAttachmentConnection.GetPrivateServiceConnectConnectionId(),
 		}}); err != nil {
