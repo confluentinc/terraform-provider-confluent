@@ -1,4 +1,4 @@
-// Copyright 2021 Confluent Inc. All Rights Reserved.
+// Copyright 2026 Confluent Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ func NewConfig(disabled bool) Config {
 }
 
 // Timer captures the start of an operation so the wrapper can record the
-// Usage.StartTime and Usage.Duration, timed from wrapper entry to just before
+// Usage.StartedAt and Usage.DurationMs, timed from wrapper entry to just before
 // the wrapped function returns.
 type Timer struct {
 	start time.Time
