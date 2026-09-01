@@ -44,7 +44,7 @@ The following arguments are supported:
 
 - `schema_registry_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Schema Registry cluster, for example, `lsrc-abc123`.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).
+- `rest_endpoint` - (Optional String) The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`.
 - `credentials` (Optional Configuration Block) supports the following:
   - `key` - (Required String) The Schema Registry API Key.
   - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
