@@ -22,6 +22,7 @@ func flinkMaterializedTableResource() *schema.Resource {
 		ReadContext:   materializedTableRead,
 		UpdateContext: materializedTableUpdate,
 		DeleteContext: materializedTableDelete,
+		CustomizeDiff: customizeMaterializedTableStartModeDiff,
 		Importer: &schema.ResourceImporter{
 			StateContext: materializedTableImport,
 		},
@@ -325,6 +326,12 @@ var flinkStartModeTimestampKinds = map[string]bool{
 	"RESUME_OR_FROM_TIMESTAMP": true,
 }
 
+// flinkStartModeNowKinds are the kinds that accept a time_interval.
+var flinkStartModeNowKinds = map[string]bool{
+	"FROM_NOW":           true,
+	"RESUME_OR_FROM_NOW": true,
+}
+
 // flinkIntervalTimeUnits lists the units supported by the API's
 // sql.v1.IntervalExpression schema. The API models this as an x-extensible-enum,
 // so this list must be extended whenever the API adds a new unit.
@@ -358,9 +365,17 @@ func startModeSchema() *schema.Schema {
 					ValidateFunc: validation.StringInSlice(flinkStartModeKinds, false),
 				},
 				paramStartModeTimestamp: {
-					Type:             schema.TypeString,
-					Optional:         true,
-					Computed:         true,
+					Type:     schema.TypeString,
+					Optional: true,
+					// Not Computed: the leaves must plan as empty when a kind omits
+					// them, so a kind switch clears the previous kind's sibling instead
+					// of carrying it forward in state. The parent start_mode block stays
+					// Computed to absorb a server-derived default when omitted entirely.
+					// Tradeoff: because the leaves are not Computed, if the backend ever
+					// echoed a sibling that does not belong to the configured kind (e.g. a
+					// time_interval on a FROM_TIMESTAMP table) it would surface as a diff
+					// rather than being absorbed. The API returns exactly the sibling that
+					// belongs to the kind, so this does not occur in practice.
 					Description:      "Absolute point in time to start processing from, as an RFC 3339 timestamp that includes a time offset (for example, `2026-04-01T00:00:00Z`). Required when `kind` is `FROM_TIMESTAMP` or `RESUME_OR_FROM_TIMESTAMP`; ignored otherwise.",
 					ValidateFunc:     validation.IsRFC3339Time,
 					DiffSuppressFunc: suppressFlinkTimestampDiff,
@@ -369,7 +384,6 @@ func startModeSchema() *schema.Schema {
 					Type:        schema.TypeList,
 					MaxItems:    1,
 					Optional:    true,
-					Computed:    true,
 					Description: "Lookback interval applied to the `FROM_NOW` semantics. Only meaningful when `kind` is `FROM_NOW` or `RESUME_OR_FROM_NOW`.",
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
@@ -1297,17 +1311,76 @@ func expandMaterializedTableStartMode(d *schema.ResourceData) (*flinkgatewayv1.S
 		startMode.SetTimestamp(parsed)
 	}
 
-	if timeInterval := expandFlinkIntervalExpression(m[paramStartModeTimeInterval]); timeInterval != nil {
+	timeInterval := expandFlinkIntervalExpression(m[paramStartModeTimeInterval])
+	if timeInterval != nil {
 		startMode.SetTimeInterval(*timeInterval)
 	}
 
-	// The API requires a timestamp for the two timestamp-based kinds; validate
-	// client-side so users get a clear error before the request is sent.
-	if flinkStartModeTimestampKinds[kind] && timestamp == "" {
-		return nil, fmt.Errorf("%q is required in the %q block when %q is %q", paramStartModeTimestamp, paramStartMode, paramStartModeKind, kind)
+	// Defense-in-depth: the same rules are enforced at plan time by
+	// customizeMaterializedTableStartModeDiff, but validate here too so any direct
+	// create/update path gets a clear error before the request is sent.
+	if err := validateStartModeKindSiblings(kind, timestamp, timeInterval != nil); err != nil {
+		return nil, err
 	}
 
 	return startMode, nil
+}
+
+// validateStartModeKindSiblings enforces that a start_mode block's optional
+// siblings are consistent with its kind: timestamp is required for (and valid only
+// for) the *_TIMESTAMP kinds, and time_interval is valid only for the *_NOW kinds.
+// A sibling that does not belong to the kind is dropped by the backend, so leaving
+// it in the configuration would produce a permanent diff (config keeps the value,
+// the server echoes it back empty); rejecting it up front avoids that.
+func validateStartModeKindSiblings(kind, timestamp string, hasTimeInterval bool) error {
+	if timestamp != "" && !flinkStartModeTimestampKinds[kind] {
+		return fmt.Errorf("%q may only be set in the %q block when %q is %q or %q", paramStartModeTimestamp, paramStartMode, paramStartModeKind, "FROM_TIMESTAMP", "RESUME_OR_FROM_TIMESTAMP")
+	}
+	if hasTimeInterval && !flinkStartModeNowKinds[kind] {
+		return fmt.Errorf("%q may only be set in the %q block when %q is %q or %q", paramStartModeTimeInterval, paramStartMode, paramStartModeKind, "FROM_NOW", "RESUME_OR_FROM_NOW")
+	}
+	if flinkStartModeTimestampKinds[kind] && timestamp == "" {
+		return fmt.Errorf("%q is required in the %q block when %q is %q", paramStartModeTimestamp, paramStartMode, paramStartModeKind, kind)
+	}
+	return nil
+}
+
+// customizeMaterializedTableStartModeDiff runs the start_mode kind/sibling
+// consistency check at plan time. The SDK's per-attribute ValidateFuncs cannot
+// express a cross-field rule, so this CustomizeDiff surfaces a misconfigured
+// sibling as a plan error instead of a permanent post-apply diff.
+func customizeMaterializedTableStartModeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	// Only validate a block the user is actually authoring. When the configuration
+	// omits start_mode, the Optional+Computed value carried forward from state is not
+	// ours to reject — it may legitimately hold a server-derived value that predates
+	// or does not match these config-time rules.
+	if !d.HasChange(paramStartMode) {
+		return nil
+	}
+	raw, ok := d.GetOk(paramStartMode)
+	if !ok || raw == nil {
+		return nil
+	}
+	list, ok := raw.([]interface{})
+	if !ok || len(list) == 0 || list[0] == nil {
+		return nil
+	}
+	// Cross-field rules need known values. If kind or timestamp is still "known after
+	// apply" (e.g. interpolated from another resource), GetOk reports it as empty and
+	// this check would misfire; defer to the apply-time check in
+	// expandMaterializedTableStartMode once the value is known.
+	if !d.NewValueKnown(fmt.Sprintf("%s.0.%s", paramStartMode, paramStartModeKind)) ||
+		!d.NewValueKnown(fmt.Sprintf("%s.0.%s", paramStartMode, paramStartModeTimestamp)) {
+		return nil
+	}
+	m := list[0].(map[string]interface{})
+	kind, _ := m[paramStartModeKind].(string)
+	timestamp, _ := m[paramStartModeTimestamp].(string)
+	hasTimeInterval := false
+	if ti, ok := m[paramStartModeTimeInterval].([]interface{}); ok && len(ti) > 0 {
+		hasTimeInterval = true
+	}
+	return validateStartModeKindSiblings(kind, timestamp, hasTimeInterval)
 }
 
 func expandFlinkIntervalExpression(raw interface{}) *flinkgatewayv1.SqlV1IntervalExpression {
@@ -1333,12 +1406,12 @@ func flattenMaterializedTableStartMode(startMode *flinkgatewayv1.SqlV1Materializ
 	if startMode == nil {
 		return []interface{}{}
 	}
-	// Emit empty values for the absent siblings explicitly. timestamp and
-	// time_interval are Computed, and omitting a Computed nested-list key from the
-	// d.Set map makes the SDK retain its prior state value. That leaks a stale
-	// sibling across a kind switch (e.g. FROM_NOW -> FROM_BEGINNING keeps the old
-	// time_interval) until the next refresh reconciles it. Setting them explicitly
-	// keeps state authoritative on the same apply.
+	// Emit empty values for the absent siblings explicitly rather than omitting the
+	// keys. Omitting a key from the d.Set map can let the SDK retain a prior state
+	// value, which would leak a stale sibling across a kind switch (this is what left
+	// the old time_interval in state when switching FROM_NOW -> FROM_BEGINNING).
+	// Setting them explicitly keeps state authoritative on the same apply. (The leaves
+	// are declared non-Computed for the same reason; see startModeSchema.)
 	block := map[string]interface{}{
 		paramStartModeKind:         startMode.GetKind(),
 		paramStartModeTimestamp:    "",
