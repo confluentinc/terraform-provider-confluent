@@ -30,10 +30,8 @@ type panicReporter struct{}
 
 func (panicReporter) Report(telemetry.Usage) { panic("reporter boom") }
 
-// TestWrapper_RecoversCrudPanic asserts a panic in a wrapped CRUD call is
-// converted to error diagnostics (not propagated), the process does not crash,
-// and exactly one crash event is reported with Error=true, no changed
-// attributes, and a stack trace.
+// TestWrapper_RecoversCrudPanic asserts a CRUD panic becomes error diagnostics
+// (no crash) and reports one crash event with Error=true and a stack trace.
 func TestWrapper_RecoversCrudPanic(t *testing.T) {
 	for _, tc := range []struct {
 		op    telemetry.Operation
@@ -196,9 +194,8 @@ func TestWrapper_StackFramesAreCapped(t *testing.T) {
 	}
 }
 
-// TestWrapper_RecoversPanicInReportPath asserts a panic while reporting (here a
-// panicking reporter) after a *successful* CRUD call is contained and never
-// reaches the caller, and the underlying successful result is preserved.
+// TestWrapper_RecoversPanicInReportPath asserts a panic in the reporter after a
+// successful call is contained, preserving the successful result.
 func TestWrapper_RecoversPanicInReportPath(t *testing.T) {
 	r := newTestResource() // CreateContext is a successful no-op
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(panicReporter{}))
@@ -218,12 +215,8 @@ func TestWrapper_RecoversPanicInReportPath(t *testing.T) {
 }
 
 // TestWrapper_CrashReportPanicIsContained asserts the two recovers are
-// independent: when the wrapped call panics AND the reporter also panics while
-// reporting the crash, both are contained — the call still returns clean error
-// diagnostics and nothing escapes. This is the "endpoint stubbed to fail at
-// panic time" case; the bounded-timeout behavior for a *hung* endpoint is the
-// reporter's own (TFCA-B5's transport), which replaces the no-op reporter used
-// on this path today.
+// independent: when both the wrapped call and the reporter panic, both are
+// contained and the call still returns clean error diagnostics.
 func TestWrapper_CrashReportPanicIsContained(t *testing.T) {
 	r := newTestResource()
 	r.CreateContext = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
@@ -245,12 +238,9 @@ func TestWrapper_CrashReportPanicIsContained(t *testing.T) {
 	}
 }
 
-// TestWrapper_PanicSkipsChangedAttributeCollection asserts the crash path does
-// not reflect over ResourceData: even when a real, change-bearing ResourceData
-// is supplied to a panicking Create, the emitted crash event carries no changed
-// attributes. This exercises the rec==nil guard specifically — unlike the nil-d
-// cases above, changedAttributeNames on this d WOULD return ["config","topic_name"]
-// if the guard were removed, so the test fails if the guard regresses.
+// TestWrapper_PanicSkipsChangedAttributeCollection asserts the crash path collects
+// no changed attributes even when a real, change-bearing ResourceData is supplied
+// to a panicking Create, so it never reflects over a possibly-torn ResourceData.
 func TestWrapper_PanicSkipsChangedAttributeCollection(t *testing.T) {
 	rec := &recordingReporter{}
 	// Schema modeled on confluent_kafka_topic: a TypeMap "config" plus a scalar.
@@ -291,11 +281,8 @@ func TestWrapper_PanicSkipsChangedAttributeCollection(t *testing.T) {
 	}
 }
 
-// TestReportSafely_ContainsPanics directly exercises reportSafely's recover: a
-// panic while BUILDING the payload and a panic while REPORTING are both
-// contained, so neither can crash the process the wrapper protects. The build
-// case is the payload-construction failure mode (e.g. reflecting over a torn
-// ResourceData) that the second recover exists for.
+// TestReportSafely_ContainsPanics asserts reportSafely contains a panic from
+// either building the payload or reporting it.
 func TestReportSafely_ContainsPanics(t *testing.T) {
 	func() {
 		defer func() {
@@ -321,8 +308,7 @@ func TestReportSafely_ContainsPanics(t *testing.T) {
 }
 
 // TestRunGuarded_ClassifiesReturnAndPanic asserts runGuarded distinguishes a
-// normal return from a panic, including the panic(nil) edge case (Go 1.21+ turns
-// it into a *runtime.PanicNilError, so it must still be classified as a panic).
+// normal return from a panic, including panic(nil) (still a panic on Go 1.21+).
 func TestRunGuarded_ClassifiesReturnAndPanic(t *testing.T) {
 	if rec, stack := runGuarded(func() {}); rec != nil || stack != nil {
 		t.Errorf("normal return: got rec=%v stack=%v, want nil/nil", rec, stack)
@@ -336,10 +322,8 @@ func TestRunGuarded_ClassifiesReturnAndPanic(t *testing.T) {
 }
 
 // TestWrapper_PanicErrorSurfacesStack asserts the operator-visible error from a
-// recovered panic carries the trimmed stack (CRUD diagnostics Detail and import
-// error). Before recovery, a panic crashed the provider and Terraform printed the
-// full stack; the stack must not vanish just because the telemetry reporter is a
-// no-op today. It also carries the panic value.
+// recovered panic carries the panic value and the trimmed stack, on both the CRUD
+// diagnostics detail and the import error.
 func TestWrapper_PanicErrorSurfacesStack(t *testing.T) {
 	r := newTestResource()
 	r.CreateContext = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
@@ -374,11 +358,8 @@ func TestWrapper_PanicErrorSurfacesStack(t *testing.T) {
 	}
 }
 
-// TestWrapper_HappyPathHasNoStackFrames locks the backward-compat invariant that
-// a successful operation never enters the panic-only path: the emitted Usage
-// carries no stack frames (so stack_frames stays omitted on the wire), and the
-// operator error machinery (panicDetail/trimmedStackFrames) runs only on a real
-// panic. Guards against a future change that populated a stack on success.
+// TestWrapper_HappyPathHasNoStackFrames asserts a successful operation emits a
+// Usage with no stack frames, so the panic-only path never runs on success.
 func TestWrapper_HappyPathHasNoStackFrames(t *testing.T) {
 	rec := &recordingReporter{}
 	r := newTestResource() // all CRUD/import entry points are successful no-ops
@@ -397,11 +378,9 @@ func TestWrapper_HappyPathHasNoStackFrames(t *testing.T) {
 	}
 }
 
-// TestShortenSourcePath locks the stack-frame redaction contract deterministically
-// (TestWrapper_StackFramesAreRedacted only checks a live host stack): an absolute
-// path is reduced to its last two segments so the username directory is stripped,
-// a path already short enough is left untouched, and — failing closed —
-// backslash-separated paths are redacted the same way rather than surviving whole.
+// TestShortenSourcePath asserts the redaction contract: an absolute path is reduced
+// to its last two segments (stripping the username), a short path is untouched, and
+// a backslash path is redacted the same way.
 func TestShortenSourcePath(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
 		{"/Users/cqin/go/src/x/internal/provider/resource_x.go:123", "provider/resource_x.go:123"},

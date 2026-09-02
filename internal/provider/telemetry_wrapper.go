@@ -34,18 +34,11 @@ import (
 // import entry points, once, with wrappers that build a telemetry.Usage and hand
 // it to a reporter.
 //
-// The wrappers are also the provider's only panic recovery (TFCA-B4): a panic in
-// a wrapped CRUD or import call is recovered and converted to an error result
-// (whose detail carries the trimmed stack, so the operator can still diagnose it
-// just as they could from the pre-recovery crash), so it no longer crashes the
-// provider process, and is reported as a crash event (Error=true, with the same
-// trimmed stack trace). Building and reporting the Usage runs
-// under its own recover, separate from the one guarding the inner call, so a
-// panic while assembling or enqueuing a report — including after a *successful*
-// call — is contained too. Reporting stays synchronous and simply hands the Usage
-// to the reporter (a no-op today); the bounded-worker transport that makes that
-// hand-off non-blocking (TFCA-B5) and the opt-out wiring (TFCA-B6) land
-// separately.
+// The wrappers are also the provider's only panic recovery: a panic in a wrapped
+// CRUD or import call is recovered and returned as an error (with the trimmed
+// stack in its detail) instead of crashing the process, and is reported as a
+// crash event. Building and reporting the Usage has its own recover, so a panic
+// while doing that is contained too.
 
 // telemetryReporter receives a populated Usage; Report should not block the caller.
 type telemetryReporter interface {
@@ -146,19 +139,15 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 
-		// Recover a panic from the wrapped CRUD call — the provider's only panic
-		// recovery. Without it a panic in any resource crashes the whole provider
-		// process. On panic we convert to error diagnostics and still report a
-		// crash event, rather than letting it propagate.
+		// Recover a panic from the CRUD call and return it as error diagnostics
+		// instead of letting it crash the process.
 		rec, stack := runGuarded(func() { diags = inner(ctx, d, meta) })
 		if rec != nil {
 			diags = panicDiagnostics(resourceType, op, rec, stack)
 		}
 
-		// Build and report the Usage under its own recover (reportSafely): the
-		// recover above only guards the inner call, so a panic while reflecting
-		// over ResourceData or formatting the payload here would otherwise escape
-		// and crash the very process this feature protects.
+		// Build and report the Usage under a separate recover, so a panic while
+		// building or sending it is also contained.
 		reportSafely(cfg, func() telemetry.Usage {
 			changed := []string{}
 			if rec == nil {
@@ -177,9 +166,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 
-		// Recover a panic on the import path on the same terms as the CRUD path:
-		// convert it to an error, discard any partial result, and still report a
-		// crash event.
+		// Recover an import panic as an error, discarding any partial result.
 		rec, stack := runGuarded(func() { imported, err = inner(ctx, d, meta) })
 		if rec != nil {
 			imported = nil
@@ -193,8 +180,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 	}
 }
 
-// buildUsage assembles a Usage from the process-scoped config and the
-// per-operation inputs. stack is non-empty only on the panic path, so a normal
+// buildUsage assembles a Usage. stack is set only on the panic path; a normal
 // operation omits stack_frames.
 func (c telemetryWrapConfig) buildUsage(resourceType string, op telemetry.Operation, seq int64, timer telemetry.Timer, changed []string, errored bool, stack []string) telemetry.Usage {
 	return telemetry.Usage{
@@ -214,10 +200,8 @@ func (c telemetryWrapConfig) buildUsage(resourceType string, op telemetry.Operat
 	}
 }
 
-// runGuarded runs fn, recovering any panic. It returns the recovered value (nil
-// if fn returned normally) and, on panic, a trimmed stack trace. The stack is
-// captured inside the recovering defer, while the panic is still unwinding, so it
-// reflects the panicking call site rather than just this recovery point.
+// runGuarded runs fn and recovers any panic, returning the recovered value (nil
+// if fn returned normally) and a trimmed stack trace captured at the panic site.
 func runGuarded(fn func()) (rec interface{}, stack []string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -229,17 +213,15 @@ func runGuarded(fn func()) (rec interface{}, stack []string) {
 	return
 }
 
-// reportSafely builds and reports a Usage, recovering (and swallowing) any panic
-// from the build or the enqueue. Telemetry must never crash the process it is
-// observing, so a failure here is dropped, not propagated.
+// reportSafely builds and reports a Usage, swallowing any panic so telemetry can
+// never crash the process it observes.
 func reportSafely(cfg telemetryWrapConfig, build func() telemetry.Usage) {
 	defer func() { _ = recover() }()
 	cfg.report(build())
 }
 
-// panicDiagnostics converts a recovered panic into error diagnostics returned in
-// place of the wrapped CRUD call's result. The stack is included in the Detail
-// (see panicDetail) so the operator keeps a diagnosable trace.
+// panicDiagnostics converts a recovered panic into error diagnostics, with the
+// stack in the detail (see panicDetail).
 func panicDiagnostics(resourceType string, op telemetry.Operation, rec interface{}, stack []string) diag.Diagnostics {
 	return diag.Diagnostics{{
 		Severity: diag.Error,
@@ -253,12 +235,8 @@ func panicError(resourceType string, op telemetry.Operation, rec interface{}, st
 	return fmt.Errorf("the Confluent provider recovered from a panic during %s of %s: %s", strings.ToLower(string(op)), resourceType, panicDetail(rec, stack))
 }
 
-// panicDetail renders the recovered panic value with its trimmed stack for the
-// operator-visible error. Before this wrapper existed, an uncaught panic crashed
-// the provider and Terraform Core printed the full stack to the user; surfacing
-// the (already path-redacted) trimmed stack here keeps a recovered panic just as
-// diagnosable — and just as present in a bug report — without the crash, and
-// without relying on the telemetry reporter (a no-op until TFCA-B5).
+// panicDetail renders the panic value and its trimmed stack for the operator's
+// error, so a recovered panic stays as diagnosable as the crash it replaces.
 func panicDetail(rec interface{}, stack []string) string {
 	if len(stack) == 0 {
 		return fmt.Sprintf("%v", rec)
@@ -266,15 +244,12 @@ func panicDetail(rec interface{}, stack []string) string {
 	return fmt.Sprintf("%v\n\n%s", rec, strings.Join(stack, "\n"))
 }
 
-// maxStackFrames caps how many frames a crash payload carries, so a deep stack
-// can't bloat a report.
+// maxStackFrames caps how many frames a crash report carries.
 const maxStackFrames = 50
 
-// trimmedStackFrames captures the current goroutine's stack and reduces it to
-// file:line frames with local absolute paths stripped, mirroring the CLI's
-// panic-report redaction. It keeps only lines that reference a .go source
-// location and shortens each to its last two path segments, so no user's
-// absolute filesystem path (e.g. /Users/<name>/...) reaches the wire.
+// trimmedStackFrames captures the current stack and reduces it to file:line
+// frames, stripping absolute paths so no local path (e.g. /Users/<name>/...) is
+// exposed.
 func trimmedStackFrames() []string {
 	lines := strings.Split(string(debug.Stack()), "\n")
 	frames := make([]string, 0, len(lines))
@@ -283,10 +258,8 @@ func trimmedStackFrames() []string {
 		if !strings.Contains(loc, ".go:") {
 			continue
 		}
-		// A stack location line looks like "/abs/path/pkg/file.go:123 +0x1f".
-		// Drop the trailing " +0x.." program-counter offset specifically, rather
-		// than cutting at the first space, so a build path containing a space
-		// (e.g. "/Users/Jane Doe/...") is not truncated mid-path.
+		// Drop the trailing " +0x.." offset only (not everything after the first
+		// space), so a path containing a space is not truncated.
 		if off := strings.LastIndex(loc, " +0x"); off >= 0 {
 			loc = loc[:off]
 		}
@@ -299,13 +272,8 @@ func trimmedStackFrames() []string {
 }
 
 // shortenSourcePath reduces "/abs/path/pkg/file.go:123" to "pkg/file.go:123",
-// removing absolute local paths while keeping enough to locate the frame.
-//
-// Backslash separators are normalized to "/" first so the redaction fails
-// closed regardless of path style: Go emits "/"-separated paths in stack traces
-// even on Windows, but relying on that would let a hypothetical
-// "C:\Users\<name>\...\file.go" frame survive whole (leaking the username)
-// instead of being shortened.
+// dropping the absolute path while keeping enough to locate the frame. Backslashes
+// are normalized to "/" first so a Windows-style path is redacted the same way.
 func shortenSourcePath(loc string) string {
 	loc = strings.ReplaceAll(loc, "\\", "/")
 	segs := strings.Split(loc, "/")
