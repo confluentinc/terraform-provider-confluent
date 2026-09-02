@@ -400,19 +400,27 @@ func TestWrapper_HappyPathHasNoStackFrames(t *testing.T) {
 // TestShortenSourcePath locks the stack-frame redaction contract deterministically
 // (TestWrapper_StackFramesAreRedacted only checks a live host stack): an absolute
 // path is reduced to its last two segments so the username directory is stripped,
-// and a path already short enough is left untouched.
+// a path already short enough is left untouched, and — failing closed —
+// backslash-separated paths are redacted the same way rather than surviving whole.
 func TestShortenSourcePath(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
 		{"/Users/cqin/go/src/x/internal/provider/resource_x.go:123", "provider/resource_x.go:123"},
 		{"/home/jenkins/go/pkg/mod/github.com/foo/bar/baz.go:9", "bar/baz.go:9"},
 		{"provider/resource_x.go:1", "provider/resource_x.go:1"},
 		{"file.go:1", "file.go:1"},
+		{`C:\Users\jane\proj\pkg\main.go:10`, "pkg/main.go:10"}, // fail closed: username stripped
 	} {
-		if got := shortenSourcePath(tc.in); got != tc.want {
+		got := shortenSourcePath(tc.in)
+		if got != tc.want {
 			t.Errorf("shortenSourcePath(%q) = %q, want %q", tc.in, got, tc.want)
 		}
-		if strings.Contains(shortenSourcePath(tc.in), "/Users/") || strings.Contains(shortenSourcePath(tc.in), "/home/") {
-			t.Errorf("shortenSourcePath(%q) leaked a home/user path segment", tc.in)
+		// Structural, separator-agnostic guarantee: at most two segments survive,
+		// so no deep path (and thus no username directory) can leak.
+		if strings.Count(got, "/") > 1 {
+			t.Errorf("shortenSourcePath(%q) = %q kept >2 segments; redaction did not shorten", tc.in, got)
+		}
+		if strings.Contains(got, "Users") || strings.Contains(got, "jane") || strings.Contains(got, "cqin") {
+			t.Errorf("shortenSourcePath(%q) = %q leaked a user path segment", tc.in, got)
 		}
 	}
 }

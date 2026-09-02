@@ -300,7 +300,14 @@ func trimmedStackFrames() []string {
 
 // shortenSourcePath reduces "/abs/path/pkg/file.go:123" to "pkg/file.go:123",
 // removing absolute local paths while keeping enough to locate the frame.
+//
+// Backslash separators are normalized to "/" first so the redaction fails
+// closed regardless of path style: Go emits "/"-separated paths in stack traces
+// even on Windows, but relying on that would let a hypothetical
+// "C:\Users\<name>\...\file.go" frame survive whole (leaking the username)
+// instead of being shortened.
 func shortenSourcePath(loc string) string {
+	loc = strings.ReplaceAll(loc, "\\", "/")
 	segs := strings.Split(loc, "/")
 	if len(segs) > 2 {
 		segs = segs[len(segs)-2:]
