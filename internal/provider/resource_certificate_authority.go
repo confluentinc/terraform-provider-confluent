@@ -256,10 +256,14 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	updateCertificateAuthorityRequest.SetDisplayName(d.Get(paramDisplayName).(string))
 	updateCertificateAuthorityRequest.SetDescription(d.Get(paramDescription).(string))
 	updateCertificateAuthorityRequest.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
-	updateCertificateAuthorityRequest.SetCrlUrl(d.Get(paramCrlUrl).(string))
+	if _, ok := d.GetOk(paramCrlUrl); ok {
+		updateCertificateAuthorityRequest.SetCrlUrl(d.Get(paramCrlUrl).(string))
+	}
 	updateCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(d.Get(paramRequireCrlOnClientCertificate).(bool))
 	updateCertificateAuthorityRequest.SetCertificateChain(d.Get(paramCertificateChain).(string))
-	updateCertificateAuthorityRequest.SetCrlChain(d.Get(paramCrlChain).(string))
+	if _, ok := d.GetOk(paramCrlChain); ok {
+		updateCertificateAuthorityRequest.SetCrlChain(d.Get(paramCrlChain).(string))
+	}
 
 	updateCertificateAuthorityRequestJson, err := json.Marshal(updateCertificateAuthorityRequest)
 	if err != nil {
