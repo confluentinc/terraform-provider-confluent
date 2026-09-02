@@ -700,7 +700,7 @@ func TestAccAccessPoint_InvalidImportFormat(t *testing.T) {
 				ResourceName:  accessPointResourceLabel,
 				ImportState:   true,
 				ImportStateId: "invalid-format",
-				ExpectError:   regexp.MustCompile(`error importing Access Point: invalid format: expected '<env ID>/<Access Point ID>'`),
+				ExpectError:   regexp.MustCompile(`error importing access point: invalid format: expected '<environment ID>/<access point ID>'`),
 			},
 		},
 	})

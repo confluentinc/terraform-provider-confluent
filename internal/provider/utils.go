@@ -1090,6 +1090,17 @@ func suppressSameValueIgnoringCase(k, old, new string, d *schema.ResourceData) b
 	return strings.EqualFold(old, new)
 }
 
+// suppressAllGoogleApisEquivalence suppresses the diff between the two equivalent forms of the global
+// Google APIs endpoint target — "ALL_GOOGLE_APIS" and "all-google-apis" — which the API and a user's
+// config may spell differently. Referenced from the generated access_point resource's
+// gcp_egress_private_service_connect_endpoint.private_service_connect_endpoint_target schema via the
+// registry's diff_suppress_overrides.
+func suppressAllGoogleApisEquivalence(k, old, new string, d *schema.ResourceData) bool {
+	normalizedOld := strings.ReplaceAll(strings.ToLower(old), "_", "-")
+	normalizedNew := strings.ReplaceAll(strings.ToLower(new), "_", "-")
+	return normalizedOld == allGoogleApisNormalized && normalizedNew == allGoogleApisNormalized
+}
+
 func ptr(s string) *string {
 	return &s
 }
