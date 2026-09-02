@@ -171,7 +171,7 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      datasourceConfigId(mockServerUrl),
-				ExpectError: regexp.MustCompile("error reading ksqlDB cluster"),
+				ExpectError: regexp.MustCompile("error reading ksql cluster"),
 			},
 		},
 	})

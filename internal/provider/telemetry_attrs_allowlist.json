@@ -1,0 +1,626 @@
+{
+  "confluent_access_point": [
+    "aws_egress_private_link_endpoint",
+    "aws_ingress_private_link_endpoint",
+    "aws_private_network_interface",
+    "azure_egress_private_link_endpoint",
+    "azure_ingress_private_link_endpoint",
+    "display_name",
+    "environment",
+    "gateway",
+    "gcp_egress_private_service_connect_endpoint",
+    "gcp_ingress_private_service_connect_endpoint"
+  ],
+  "confluent_api_key": [
+    "description",
+    "disable_wait_for_ready",
+    "display_name",
+    "managed_resource",
+    "owner",
+    "secret"
+  ],
+  "confluent_business_metadata": [
+    "attribute_definition",
+    "credentials",
+    "description",
+    "name",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "version"
+  ],
+  "confluent_business_metadata_binding": [
+    "attributes",
+    "business_metadata_name",
+    "credentials",
+    "entity_name",
+    "entity_type",
+    "rest_endpoint",
+    "schema_registry_cluster"
+  ],
+  "confluent_byok_key": [
+    "aws",
+    "azure",
+    "gcp"
+  ],
+  "confluent_catalog_entity_attributes": [
+    "attributes",
+    "credentials",
+    "entity_name",
+    "entity_type",
+    "rest_endpoint",
+    "schema_registry_cluster"
+  ],
+  "confluent_catalog_integration": [
+    "aws_glue",
+    "credentials",
+    "display_name",
+    "environment",
+    "kafka_cluster",
+    "snowflake",
+    "suspended",
+    "unity"
+  ],
+  "confluent_certificate_authority": [
+    "certificate_chain",
+    "certificate_chain_filename",
+    "crl_chain",
+    "crl_source",
+    "crl_updated_at",
+    "crl_url",
+    "description",
+    "display_name",
+    "expiration_dates",
+    "fingerprints",
+    "require_crl_on_client_certificate",
+    "serial_numbers"
+  ],
+  "confluent_certificate_pool": [
+    "certificate_authority",
+    "description",
+    "display_name",
+    "external_identifier",
+    "filter"
+  ],
+  "confluent_cluster_link": [
+    "cluster_link_id",
+    "config",
+    "connection_mode",
+    "destination_kafka_cluster",
+    "link_mode",
+    "link_name",
+    "local_kafka_cluster",
+    "remote_kafka_cluster",
+    "source_kafka_cluster"
+  ],
+  "confluent_connect_artifact": [
+    "artifact_file",
+    "cloud",
+    "content_format",
+    "description",
+    "display_name",
+    "environment",
+    "status"
+  ],
+  "confluent_connector": [
+    "config_nonsensitive",
+    "config_sensitive",
+    "environment",
+    "kafka_cluster",
+    "offsets",
+    "status"
+  ],
+  "confluent_custom_connector_plugin": [
+    "cloud",
+    "connector_class",
+    "connector_type",
+    "description",
+    "display_name",
+    "documentation_link",
+    "filename",
+    "sensitive_config_properties"
+  ],
+  "confluent_custom_connector_plugin_version": [
+    "api_version",
+    "cloud",
+    "connector_class",
+    "documentation_link",
+    "environment",
+    "filename",
+    "kind",
+    "plugin_id",
+    "sensitive_config_properties",
+    "version"
+  ],
+  "confluent_dns_forwarder": [
+    "display_name",
+    "domains",
+    "environment",
+    "forward_via_gcp_dns_zones",
+    "forward_via_ip",
+    "gateway"
+  ],
+  "confluent_dns_record": [
+    "display_name",
+    "domain",
+    "environment",
+    "gateway",
+    "private_link_access_point"
+  ],
+  "confluent_environment": [
+    "display_name",
+    "resource_name",
+    "stream_governance"
+  ],
+  "confluent_flink_artifact": [
+    "api_version",
+    "artifact_file",
+    "class",
+    "cloud",
+    "content_format",
+    "description",
+    "display_name",
+    "documentation_link",
+    "environment",
+    "kind",
+    "region",
+    "runtime_language",
+    "versions"
+  ],
+  "confluent_flink_compute_pool": [
+    "api_version",
+    "cloud",
+    "default_pool",
+    "display_name",
+    "environment",
+    "kind",
+    "max_cfu",
+    "region",
+    "resource_name"
+  ],
+  "confluent_flink_compute_pool_config": [
+    "api_version",
+    "default_compute_pool_enabled",
+    "default_max_cfu",
+    "kind"
+  ],
+  "confluent_flink_connection": [
+    "api_key",
+    "api_version",
+    "aws_access_key",
+    "aws_secret_key",
+    "aws_session_token",
+    "compute_pool",
+    "credentials",
+    "display_name",
+    "endpoint",
+    "environment",
+    "kind",
+    "organization",
+    "password",
+    "principal",
+    "rest_endpoint",
+    "service_key",
+    "type",
+    "username"
+  ],
+  "confluent_flink_materialized_table": [
+    "columns",
+    "compute_pool",
+    "constraints",
+    "credentials",
+    "display_name",
+    "distribution",
+    "environment",
+    "kafka_cluster",
+    "organization",
+    "principal",
+    "query",
+    "rest_endpoint",
+    "session_options",
+    "stopped",
+    "table_options",
+    "watermark"
+  ],
+  "confluent_flink_statement": [
+    "compute_pool",
+    "credentials",
+    "environment",
+    "latest_offsets",
+    "latest_offsets_timestamp",
+    "organization",
+    "principal",
+    "properties",
+    "properties_sensitive",
+    "rest_endpoint",
+    "statement",
+    "statement_name",
+    "stopped"
+  ],
+  "confluent_gateway": [
+    "aws_egress_private_link_gateway",
+    "aws_ingress_private_link_gateway",
+    "aws_private_network_interface_gateway",
+    "azure_egress_private_link_gateway",
+    "azure_ingress_private_link_gateway",
+    "display_name",
+    "environment",
+    "gcp_ingress_private_service_connect_gateway"
+  ],
+  "confluent_group_mapping": [
+    "description",
+    "display_name",
+    "filter"
+  ],
+  "confluent_identity_pool": [
+    "description",
+    "display_name",
+    "filter",
+    "identity_claim",
+    "identity_provider"
+  ],
+  "confluent_identity_provider": [
+    "description",
+    "display_name",
+    "identity_claim",
+    "issuer",
+    "jwks_uri"
+  ],
+  "confluent_invitation": [
+    "accepted_at",
+    "allow_deletion",
+    "auth_type",
+    "creator",
+    "email",
+    "expires_at",
+    "status",
+    "user"
+  ],
+  "confluent_ip_filter": [
+    "filter_name",
+    "ip_groups",
+    "operation_groups",
+    "resource_group",
+    "resource_scope"
+  ],
+  "confluent_ip_group": [
+    "cidr_blocks",
+    "group_name"
+  ],
+  "confluent_kafka_acl": [
+    "credentials",
+    "host",
+    "kafka_cluster",
+    "operation",
+    "pattern_type",
+    "permission",
+    "principal",
+    "resource_name",
+    "resource_type",
+    "rest_endpoint"
+  ],
+  "confluent_kafka_client_quota": [
+    "description",
+    "display_name",
+    "environment",
+    "kafka_cluster",
+    "principals",
+    "throughput"
+  ],
+  "confluent_kafka_cluster": [
+    "api_version",
+    "availability",
+    "basic",
+    "bootstrap_endpoint",
+    "byok_key",
+    "cloud",
+    "dedicated",
+    "deletion_protection",
+    "display_name",
+    "endpoints",
+    "enterprise",
+    "environment",
+    "freight",
+    "kind",
+    "network",
+    "rbac_crn",
+    "region",
+    "rest_endpoint",
+    "standard"
+  ],
+  "confluent_kafka_cluster_config": [
+    "config",
+    "credentials",
+    "kafka_cluster",
+    "rest_endpoint"
+  ],
+  "confluent_kafka_mirror_topic": [
+    "cluster_link",
+    "kafka_cluster",
+    "mirror_topic_name",
+    "source_kafka_topic",
+    "status"
+  ],
+  "confluent_kafka_topic": [
+    "config",
+    "credentials",
+    "kafka_cluster",
+    "partitions_count",
+    "rest_endpoint",
+    "topic_name"
+  ],
+  "confluent_ksql_cluster": [
+    "api_version",
+    "credential_identity",
+    "csu",
+    "display_name",
+    "environment",
+    "kafka_cluster",
+    "kind",
+    "resource_name",
+    "rest_endpoint",
+    "storage",
+    "topic_prefix",
+    "use_detailed_processing_log"
+  ],
+  "confluent_network": [
+    "aws",
+    "azure",
+    "cidr",
+    "cloud",
+    "connection_types",
+    "display_name",
+    "dns_config",
+    "dns_domain",
+    "endpoint_suffix",
+    "environment",
+    "gateway",
+    "gcp",
+    "region",
+    "reserved_cidr",
+    "resource_name",
+    "zonal_subdomains",
+    "zone_info",
+    "zones"
+  ],
+  "confluent_network_link_endpoint": [
+    "description",
+    "display_name",
+    "environment",
+    "network",
+    "network_link_service",
+    "resource_name"
+  ],
+  "confluent_network_link_service": [
+    "accept",
+    "description",
+    "display_name",
+    "environment",
+    "network",
+    "resource_name"
+  ],
+  "confluent_peering": [
+    "aws",
+    "azure",
+    "display_name",
+    "environment",
+    "gcp",
+    "network"
+  ],
+  "confluent_plugin": [
+    "api_version",
+    "cloud",
+    "description",
+    "display_name",
+    "environment",
+    "kind",
+    "runtime_language"
+  ],
+  "confluent_private_link_access": [
+    "aws",
+    "azure",
+    "display_name",
+    "environment",
+    "gcp",
+    "network"
+  ],
+  "confluent_private_link_attachment": [
+    "aws",
+    "azure",
+    "cloud",
+    "display_name",
+    "dns_domain",
+    "environment",
+    "gcp",
+    "region",
+    "resource_name"
+  ],
+  "confluent_private_link_attachment_connection": [
+    "aws",
+    "azure",
+    "display_name",
+    "environment",
+    "gcp",
+    "private_link_attachment",
+    "resource_name"
+  ],
+  "confluent_provider_integration": [
+    "aws",
+    "display_name",
+    "environment",
+    "id",
+    "usages"
+  ],
+  "confluent_provider_integration_authorization": [
+    "azure",
+    "environment",
+    "gcp",
+    "id",
+    "provider_integration_id"
+  ],
+  "confluent_provider_integration_setup": [
+    "cloud",
+    "display_name",
+    "environment",
+    "id",
+    "status",
+    "usages"
+  ],
+  "confluent_role_binding": [
+    "crn_pattern",
+    "disable_wait_for_ready",
+    "principal",
+    "role_name"
+  ],
+  "confluent_rtce_topic": [
+    "api_version",
+    "cloud",
+    "description",
+    "environment",
+    "kafka_cluster",
+    "kind",
+    "region",
+    "resource_name",
+    "topic_name"
+  ],
+  "confluent_schema": [
+    "credentials",
+    "format",
+    "hard_delete",
+    "metadata",
+    "recreate_on_update",
+    "rest_endpoint",
+    "ruleset",
+    "schema",
+    "schema_identifier",
+    "schema_reference",
+    "schema_registry_cluster",
+    "skip_validation_during_plan",
+    "subject_name",
+    "version"
+  ],
+  "confluent_schema_exporter": [
+    "config",
+    "context",
+    "context_type",
+    "credentials",
+    "destination_schema_registry_cluster",
+    "name",
+    "reset_on_update",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "status",
+    "subject_rename_format",
+    "subjects"
+  ],
+  "confluent_schema_registry_cluster_config": [
+    "compatibility_group",
+    "compatibility_level",
+    "credentials",
+    "normalize",
+    "rest_endpoint",
+    "schema_registry_cluster"
+  ],
+  "confluent_schema_registry_cluster_mode": [
+    "credentials",
+    "force",
+    "mode",
+    "rest_endpoint",
+    "schema_registry_cluster"
+  ],
+  "confluent_schema_registry_dek": [
+    "algorithm",
+    "credentials",
+    "encrypted_key_material",
+    "hard_delete",
+    "kek_name",
+    "key_material",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "subject_name",
+    "version"
+  ],
+  "confluent_schema_registry_kek": [
+    "credentials",
+    "doc",
+    "hard_delete",
+    "kms_key_id",
+    "kms_type",
+    "name",
+    "properties",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "shared"
+  ],
+  "confluent_service_account": [
+    "api_version",
+    "description",
+    "display_name",
+    "kind"
+  ],
+  "confluent_subject_config": [
+    "alias",
+    "compatibility_group",
+    "compatibility_level",
+    "credentials",
+    "normalize",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "subject_name"
+  ],
+  "confluent_subject_mode": [
+    "credentials",
+    "force",
+    "mode",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "subject_name"
+  ],
+  "confluent_tableflow_topic": [
+    "azure_data_lake_storage_gen_2",
+    "byob_aws",
+    "credentials",
+    "data_retention_ms",
+    "display_name",
+    "enable_compaction",
+    "enable_partitioning",
+    "environment",
+    "error_handling",
+    "kafka_cluster",
+    "managed_storage",
+    "metadata_column_naming_scheme",
+    "record_failure_strategy",
+    "retention_ms",
+    "suspended",
+    "table_formats",
+    "table_path",
+    "write_mode"
+  ],
+  "confluent_tag": [
+    "credentials",
+    "description",
+    "entity_types",
+    "name",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "version"
+  ],
+  "confluent_tag_binding": [
+    "credentials",
+    "disable_wait_for_ready",
+    "entity_name",
+    "entity_type",
+    "rest_endpoint",
+    "schema_registry_cluster",
+    "tag_name"
+  ],
+  "confluent_tf_importer": [
+    "output_path",
+    "resources"
+  ],
+  "confluent_transit_gateway_attachment": [
+    "aws",
+    "display_name",
+    "environment",
+    "network"
+  ]
+}

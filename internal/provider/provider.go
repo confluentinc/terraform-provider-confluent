@@ -324,7 +324,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_group_mapping":                      groupMappingDataSource(),
-				"confluent_ksql_cluster":                       ksqlDataSource(),
+				"confluent_ksql_cluster":                       ksqlClusterDataSource(),
 				"confluent_flink_artifact":                     flinkArtifactDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_compute_pool_config":          flinkComputePoolConfigDataSource(),
@@ -393,7 +393,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_identity_provider":                  identityProviderResource(),
 				"confluent_group_mapping":                      groupMappingResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
-				"confluent_ksql_cluster":                       ksqlResource(),
+				"confluent_ksql_cluster":                       ksqlClusterResource(),
 				"confluent_flink_artifact":                     artifactResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_flink_compute_pool_config":          flinkComputePoolConfigResource(),
@@ -444,6 +444,15 @@ func New(version, userAgent string) func() *schema.Provider {
 				// cli-tfgen:tf-resources
 			},
 		}
+
+		// Wrap every managed resource's CRUD and import entry points with
+		// telemetry, once ResourcesMap is complete. terraformVersion is read
+		// lazily because Core sets it during ConfigureProvider, after this point.
+		wrapResourcesMapForTelemetry(provider.ResourcesMap, telemetryWrapConfig{
+			reporter:         noopTelemetryReporter{},
+			providerVersion:  version,
+			terraformVersion: func() string { return provider.TerraformVersion },
+		})
 
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 			return providerConfigure(ctx, d, provider, version, userAgent)

@@ -103,14 +103,17 @@ func TestAccPrivateLinkAttachmentConnectionAws(t *testing.T) {
 			http.StatusNoContent,
 		))
 
-	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
-	InScenario(privateLinkAttachmentConnectionAwsResourceScenarioName).
-	WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenDeleted).
-	WillReturn(
-		"",
-		contentTypeJSONHeader,
-		http.StatusNotFound,
-	))*/
+	// The generated delete polls Read until the connection is gone, so the scenario has to
+	// answer 404 once DELETE has moved it to HasBeenDeleted. This stub was present but
+	// commented out, and pointed at networkLinkEndpointReadUrlPath — another resource's path.
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAwsReadUrlPath)).
+		InScenario(privateLinkAttachmentConnectionAwsResourceScenarioName).
+		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
