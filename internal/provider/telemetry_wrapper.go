@@ -35,9 +35,11 @@ import (
 // it to a reporter.
 //
 // The wrappers are also the provider's only panic recovery (TFCA-B4): a panic in
-// a wrapped CRUD or import call is recovered and converted to an error result, so
-// it no longer crashes the provider process, and is reported as a crash event
-// (Error=true, with a trimmed stack trace). Building and reporting the Usage runs
+// a wrapped CRUD or import call is recovered and converted to an error result
+// (whose detail carries the trimmed stack, so the operator can still diagnose it
+// just as they could from the pre-recovery crash), so it no longer crashes the
+// provider process, and is reported as a crash event (Error=true, with the same
+// trimmed stack trace). Building and reporting the Usage runs
 // under its own recover, separate from the one guarding the inner call, so a
 // panic while assembling or enqueuing a report — including after a *successful*
 // call — is contained too. Reporting stays synchronous and simply hands the Usage
@@ -150,7 +152,7 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 		// crash event, rather than letting it propagate.
 		rec, stack := runGuarded(func() { diags = inner(ctx, d, meta) })
 		if rec != nil {
-			diags = panicDiagnostics(resourceType, op, rec)
+			diags = panicDiagnostics(resourceType, op, rec, stack)
 		}
 
 		// Build and report the Usage under its own recover (reportSafely): the
@@ -181,7 +183,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 		rec, stack := runGuarded(func() { imported, err = inner(ctx, d, meta) })
 		if rec != nil {
 			imported = nil
-			err = panicError(resourceType, telemetry.OperationImport, rec)
+			err = panicError(resourceType, telemetry.OperationImport, rec, stack)
 		}
 
 		reportSafely(cfg, func() telemetry.Usage {
@@ -236,18 +238,32 @@ func reportSafely(cfg telemetryWrapConfig, build func() telemetry.Usage) {
 }
 
 // panicDiagnostics converts a recovered panic into error diagnostics returned in
-// place of the wrapped CRUD call's result.
-func panicDiagnostics(resourceType string, op telemetry.Operation, rec interface{}) diag.Diagnostics {
+// place of the wrapped CRUD call's result. The stack is included in the Detail
+// (see panicDetail) so the operator keeps a diagnosable trace.
+func panicDiagnostics(resourceType string, op telemetry.Operation, rec interface{}, stack []string) diag.Diagnostics {
 	return diag.Diagnostics{{
 		Severity: diag.Error,
 		Summary:  fmt.Sprintf("the Confluent provider recovered from a panic during %s of %s", strings.ToLower(string(op)), resourceType),
-		Detail:   fmt.Sprintf("%v", rec),
+		Detail:   panicDetail(rec, stack),
 	}}
 }
 
 // panicError is the import-path equivalent of panicDiagnostics.
-func panicError(resourceType string, op telemetry.Operation, rec interface{}) error {
-	return fmt.Errorf("the Confluent provider recovered from a panic during %s of %s: %v", strings.ToLower(string(op)), resourceType, rec)
+func panicError(resourceType string, op telemetry.Operation, rec interface{}, stack []string) error {
+	return fmt.Errorf("the Confluent provider recovered from a panic during %s of %s: %s", strings.ToLower(string(op)), resourceType, panicDetail(rec, stack))
+}
+
+// panicDetail renders the recovered panic value with its trimmed stack for the
+// operator-visible error. Before this wrapper existed, an uncaught panic crashed
+// the provider and Terraform Core printed the full stack to the user; surfacing
+// the (already path-redacted) trimmed stack here keeps a recovered panic just as
+// diagnosable — and just as present in a bug report — without the crash, and
+// without relying on the telemetry reporter (a no-op until TFCA-B5).
+func panicDetail(rec interface{}, stack []string) string {
+	if len(stack) == 0 {
+		return fmt.Sprintf("%v", rec)
+	}
+	return fmt.Sprintf("%v\n\n%s", rec, strings.Join(stack, "\n"))
 }
 
 // maxStackFrames caps how many frames a crash payload carries, so a deep stack

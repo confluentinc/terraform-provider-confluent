@@ -334,3 +334,42 @@ func TestRunGuarded_ClassifiesReturnAndPanic(t *testing.T) {
 		t.Errorf("panic(nil) must still be classified as a panic (rec != nil)")
 	}
 }
+
+// TestWrapper_PanicErrorSurfacesStack asserts the operator-visible error from a
+// recovered panic carries the trimmed stack (CRUD diagnostics Detail and import
+// error). Before recovery, a panic crashed the provider and Terraform printed the
+// full stack; the stack must not vanish just because the telemetry reporter is a
+// no-op today. It also carries the panic value.
+func TestWrapper_PanicErrorSurfacesStack(t *testing.T) {
+	r := newTestResource()
+	r.CreateContext = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
+		panic("kaboom-create")
+	}
+	r.Importer.StateContext = func(context.Context, *schema.ResourceData, interface{}) ([]*schema.ResourceData, error) {
+		panic("kaboom-import")
+	}
+	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(&recordingReporter{}))
+
+	diags := r.CreateContext(context.Background(), nil, nil)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostics from a recovered panic, got %+v", diags)
+	}
+	detail := diags[0].Detail
+	if !strings.Contains(detail, "kaboom-create") {
+		t.Errorf("CRUD panic Detail should include the panic value, got %q", detail)
+	}
+	if !strings.Contains(detail, ".go:") {
+		t.Errorf("CRUD panic Detail should include a stack frame (file:line), got %q", detail)
+	}
+	if strings.Contains(detail, "/Users/") {
+		t.Errorf("CRUD panic Detail leaked an absolute local path: %q", detail)
+	}
+
+	_, err := r.Importer.StateContext(context.Background(), nil, nil)
+	if err == nil {
+		t.Fatal("expected an error from a recovered import panic")
+	}
+	if !strings.Contains(err.Error(), "kaboom-import") || !strings.Contains(err.Error(), ".go:") {
+		t.Errorf("import panic error should include the panic value and a stack frame, got %v", err)
+	}
+}
