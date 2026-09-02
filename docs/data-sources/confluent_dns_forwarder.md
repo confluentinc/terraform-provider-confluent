@@ -21,7 +21,7 @@ provider "confluent" {
 }
 
 data "confluent_dns_forwarder" "example" {
-  id = "dns-abc123"
+  id = "dnsf-abc123"
   environment {
     id = "env-xyz456"
   }
@@ -37,7 +37,7 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the DNS Forwarder, for example, `dns-abc123`.
+- `id` - (Required String) The ID of the DNS Forwarder, for example, `dnsf-abc123`.
 - `environment` - (Required Configuration Block) Supports the following:
     - `id` - (Required String) The ID of the Environment that the DNS Forwarder belongs to, for example, `env-xyz456`.
 
@@ -53,3 +53,7 @@ In addition to the preceding arguments, the following attributes are exported:
     - `dns_server_ips` - (Set of Strings) List of IP addresses of the DNS server
 - `forward_via_gcp_dns_zones` - (Configuration Block) Supports the following:
     - `domain_mappings` - (String) Mapping of domain names to GCP DNS Zones and Project ID.
+
+## Getting Started
+The following end-to-end example might help to get started with `confluent_dns_forwarder` data source:
+* [dns-forwarder](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dns-forwarder): creates a `confluent_dns_forwarder` resource that forwards a domain via GCP DNS zones for a GCP Peering network, using a `confluent_gateway` data source to look up the network's gateway.

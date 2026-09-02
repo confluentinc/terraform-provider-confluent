@@ -29,7 +29,7 @@ import (
 
 const (
 	dnsForwarderDataSourceScenarioName = "confluent_dns_forwarder Data Source Lifecycle"
-	dnsForwarderId                     = "dlz-f3a90de"
+	dnsForwarderId                     = "dnsf-abc123"
 )
 
 func TestAccDataSourceNetworkingForwardViaIp(t *testing.T) {
