@@ -373,3 +373,46 @@ func TestWrapper_PanicErrorSurfacesStack(t *testing.T) {
 		t.Errorf("import panic error should include the panic value and a stack frame, got %v", err)
 	}
 }
+
+// TestWrapper_HappyPathHasNoStackFrames locks the backward-compat invariant that
+// a successful operation never enters the panic-only path: the emitted Usage
+// carries no stack frames (so stack_frames stays omitted on the wire), and the
+// operator error machinery (panicDetail/trimmedStackFrames) runs only on a real
+// panic. Guards against a future change that populated a stack on success.
+func TestWrapper_HappyPathHasNoStackFrames(t *testing.T) {
+	rec := &recordingReporter{}
+	r := newTestResource() // all CRUD/import entry points are successful no-ops
+	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(rec))
+
+	_ = r.CreateContext(context.Background(), nil, nil)
+	_, _ = r.Importer.StateContext(context.Background(), nil, nil)
+
+	for _, u := range rec.snapshot() {
+		if u.StackFrames != nil {
+			t.Errorf("op %s: happy path must not carry stack frames, got %#v", u.Operation, u.StackFrames)
+		}
+		if u.Error {
+			t.Errorf("op %s: happy path must not be flagged as an error", u.Operation)
+		}
+	}
+}
+
+// TestShortenSourcePath locks the stack-frame redaction contract deterministically
+// (TestWrapper_StackFramesAreRedacted only checks a live host stack): an absolute
+// path is reduced to its last two segments so the username directory is stripped,
+// and a path already short enough is left untouched.
+func TestShortenSourcePath(t *testing.T) {
+	for _, tc := range []struct{ in, want string }{
+		{"/Users/cqin/go/src/x/internal/provider/resource_x.go:123", "provider/resource_x.go:123"},
+		{"/home/jenkins/go/pkg/mod/github.com/foo/bar/baz.go:9", "bar/baz.go:9"},
+		{"provider/resource_x.go:1", "provider/resource_x.go:1"},
+		{"file.go:1", "file.go:1"},
+	} {
+		if got := shortenSourcePath(tc.in); got != tc.want {
+			t.Errorf("shortenSourcePath(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+		if strings.Contains(shortenSourcePath(tc.in), "/Users/") || strings.Contains(shortenSourcePath(tc.in), "/home/") {
+			t.Errorf("shortenSourcePath(%q) leaked a home/user path segment", tc.in)
+		}
+	}
+}
