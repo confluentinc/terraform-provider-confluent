@@ -52,7 +52,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `forward_via_ip` - (Configuration Block) Supports the following:
     - `dns_server_ips` - (Set of Strings) List of IP addresses of the DNS server
 - `forward_via_gcp_dns_zones` - (Configuration Block) Supports the following:
-    - `domain_mappings` - (String) Mapping of domain names to GCP DNS Zones and Project ID.
+    - `domain_mappings` - (Map of String) Mapping of domain names to GCP DNS Zones and Project ID.
 
 ## Getting Started
 The following end-to-end example might help to get started with `confluent_dns_forwarder` data source:
