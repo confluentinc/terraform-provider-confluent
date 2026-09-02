@@ -445,6 +445,15 @@ func New(version, userAgent string) func() *schema.Provider {
 			},
 		}
 
+		// Wrap every managed resource's CRUD and import entry points with
+		// telemetry, once ResourcesMap is complete. terraformVersion is read
+		// lazily because Core sets it during ConfigureProvider, after this point.
+		wrapResourcesMapForTelemetry(provider.ResourcesMap, telemetryWrapConfig{
+			reporter:         noopTelemetryReporter{},
+			providerVersion:  version,
+			terraformVersion: func() string { return provider.TerraformVersion },
+		})
+
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 			return providerConfigure(ctx, d, provider, version, userAgent)
 		}
