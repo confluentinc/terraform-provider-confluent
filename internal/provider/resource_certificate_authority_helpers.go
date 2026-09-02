@@ -24,9 +24,10 @@ import (
 
 // certificateAuthorityCustomizeDiff reconciles the CRL-derived computed fields
 // (crl_source, crl_updated_at, and crl_url when the backend supplies it) whenever a
-// change would trigger a backend CRL update, and clears them when CRL validation is
-// turned off. Referenced by name via terraform.customize_diff in
-// cli-terraform-generator's registry.yaml -- kept hand-written because it is
+// change would trigger a backend CRL update. When CRL validation is turned off, it
+// clears crl_source and crl_url; crl_updated_at is deliberately left as-is (the
+// backend's last-known value), not reset. Referenced by name via terraform.customize_diff
+// in cli-terraform-generator's registry.yaml -- kept hand-written because it is
 // cross-field diff logic the spec cannot express.
 func certificateAuthorityCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	triggersBackendCrlUpdate := d.HasChange(paramRequireCrlOnClientCertificate) ||
