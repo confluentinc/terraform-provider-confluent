@@ -278,6 +278,7 @@ const (
 	paramAzurePrivateEndpointResourceId                  = "private_endpoint_resource_id"
 	paramAzurePrivateLinkServiceAlias                    = "private_link_service_alias"
 	paramAzurePrivateLinkServiceResourceId               = "private_link_service_resource_id"
+	paramAzurePrivateLinkServiceResourceIds              = "private_link_service_resource_ids"
 	paramAzureStorage                                    = "azure_data_lake_storage_gen_2"
 	paramAzureTenantId                                   = "tenant_id"
 	paramBasicAuthCredentialsSourceValue                 = "USER_INFO"
