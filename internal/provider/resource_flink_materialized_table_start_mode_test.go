@@ -1,11 +1,14 @@
 package provider
 
 import (
+	"context"
+	"strings"
 	"testing"
 	"time"
 
 	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func startModeResourceData(t *testing.T, startMode []interface{}) *schema.ResourceData {
@@ -15,6 +18,143 @@ func startModeResourceData(t *testing.T, startMode []interface{}) *schema.Resour
 		raw[paramStartMode] = startMode
 	}
 	return schema.TestResourceDataRaw(t, flinkMaterializedTableResource().Schema, raw)
+}
+
+// TestStartModeSchemaComputedShape locks in the schema shape that prevents the
+// kind-switch stale-sibling leak. The leaf fields must NOT be Computed: if they
+// were, Terraform would carry a previous kind's value forward as the planned
+// value when a new kind omits it (e.g. switching FROM_TIMESTAMP ->
+// RESUME_OR_FROM_BEGINNING would keep the old timestamp in state for a cycle).
+// The parent start_mode block must stay Computed so an omitted block still
+// absorbs the server-derived default without a perpetual diff.
+func TestStartModeSchemaComputedShape(t *testing.T) {
+	startMode := flinkMaterializedTableResource().Schema[paramStartMode]
+	if !startMode.Computed {
+		t.Errorf("start_mode must stay Computed for the server-derived-default backward-compat case")
+	}
+	leaves := startMode.Elem.(*schema.Resource).Schema
+	if leaves[paramStartModeTimestamp].Computed {
+		t.Errorf("start_mode.timestamp must not be Computed (a Computed leaf leaks a stale value across a kind switch)")
+	}
+	if leaves[paramStartModeTimeInterval].Computed {
+		t.Errorf("start_mode.time_interval must not be Computed (a Computed leaf leaks a stale value across a kind switch)")
+	}
+}
+
+func TestValidateStartModeKindSiblings(t *testing.T) {
+	tests := []struct {
+		name            string
+		kind            string
+		timestamp       string
+		hasTimeInterval bool
+		errContains     string // "" means expect no error
+	}{
+		{name: "kind only ok", kind: "FROM_BEGINNING"},
+		{name: "resume kind only ok", kind: "RESUME_OR_FROM_BEGINNING"},
+		{name: "from_now with interval ok", kind: "FROM_NOW", hasTimeInterval: true},
+		{name: "resume_or_from_now with interval ok", kind: "RESUME_OR_FROM_NOW", hasTimeInterval: true},
+		{name: "from_now without interval ok", kind: "FROM_NOW"},
+		{name: "from_timestamp with timestamp ok", kind: "FROM_TIMESTAMP", timestamp: "2026-04-01T00:00:00Z"},
+		{name: "resume_or_from_timestamp with timestamp ok", kind: "RESUME_OR_FROM_TIMESTAMP", timestamp: "2026-04-01T00:00:00Z"},
+
+		// Off-kind timestamp must be rejected (the misconfiguration footgun), for every non-timestamp kind.
+		{name: "timestamp on from_now errors", kind: "FROM_NOW", timestamp: "2026-04-01T00:00:00Z", errContains: `"timestamp" may only be set`},
+		{name: "timestamp on resume_or_from_now errors", kind: "RESUME_OR_FROM_NOW", timestamp: "2026-04-01T00:00:00Z", errContains: `"timestamp" may only be set`},
+		{name: "timestamp on from_beginning errors", kind: "FROM_BEGINNING", timestamp: "2026-04-01T00:00:00Z", errContains: `"timestamp" may only be set`},
+
+		// Off-kind time_interval must be rejected for every non-*_NOW kind.
+		{name: "time_interval on from_timestamp errors", kind: "FROM_TIMESTAMP", timestamp: "2026-04-01T00:00:00Z", hasTimeInterval: true, errContains: `"time_interval" may only be set`},
+		{name: "time_interval on resume_or_from_timestamp errors", kind: "RESUME_OR_FROM_TIMESTAMP", timestamp: "2026-04-01T00:00:00Z", hasTimeInterval: true, errContains: `"time_interval" may only be set`},
+		{name: "time_interval on from_beginning errors", kind: "FROM_BEGINNING", hasTimeInterval: true, errContains: `"time_interval" may only be set`},
+
+		// Missing required timestamp for the *_TIMESTAMP kinds.
+		{name: "from_timestamp missing timestamp errors", kind: "FROM_TIMESTAMP", errContains: `"timestamp" is required`},
+		{name: "resume_or_from_timestamp missing timestamp errors", kind: "RESUME_OR_FROM_TIMESTAMP", errContains: `"timestamp" is required`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateStartModeKindSiblings(tc.kind, tc.timestamp, tc.hasTimeInterval)
+			if tc.errContains == "" {
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("expected an error containing %q, got nil", tc.errContains)
+			}
+			if !strings.Contains(err.Error(), tc.errContains) {
+				t.Fatalf("error %q does not contain %q", err.Error(), tc.errContains)
+			}
+		})
+	}
+}
+
+// TestCustomizeMaterializedTableStartModeDiffSkipsUnknown proves the plan-time
+// CustomizeDiff does NOT reject a start_mode whose kind or timestamp is unknown
+// ("known after apply", e.g. interpolated from another resource) — the cross-field
+// check is deferred to apply time once the value is known. Without the NewValueKnown
+// guard, GetOk collapses the unknown to "" and the validation misfires.
+func TestCustomizeMaterializedTableStartModeDiffSkipsUnknown(t *testing.T) {
+	// The unknown-value sentinel the SDK uses for "known after apply".
+	const unknown = "74D93920-ED26-11E3-AC10-0800200C9A66"
+	res := flinkMaterializedTableResource()
+
+	cases := []struct {
+		name      string
+		startMode map[string]interface{}
+	}{
+		{
+			name: "unknown timestamp on FROM_TIMESTAMP",
+			startMode: map[string]interface{}{
+				paramStartModeKind:      "FROM_TIMESTAMP",
+				paramStartModeTimestamp: unknown,
+			},
+		},
+		{
+			name: "unknown kind with a timestamp",
+			startMode: map[string]interface{}{
+				paramStartModeKind:      unknown,
+				paramStartModeTimestamp: "2026-04-01T00:00:00Z",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rc := terraform.NewResourceConfigRaw(map[string]interface{}{
+				paramDisplayName: "t",
+				paramStartMode:   []interface{}{tc.startMode},
+			})
+			if _, err := res.Diff(context.Background(), nil, rc, nil); err != nil {
+				t.Fatalf("plan errored on an unknown start_mode value (should defer to apply): %s", err)
+			}
+		})
+	}
+}
+
+// TestCustomizeMaterializedTableStartModeDiffSkipsCarriedForward proves the plan-time
+// CustomizeDiff does NOT reject a start_mode value carried forward from state when the
+// configuration omits the block. The parent is Optional+Computed, so a server-derived
+// (or otherwise unauthored) value — even one whose siblings don't match its kind — must
+// not turn a would-be no-op plan into a hard error. The HasChange gate handles this.
+func TestCustomizeMaterializedTableStartModeDiffSkipsCarriedForward(t *testing.T) {
+	res := flinkMaterializedTableResource()
+	// Prior state holds an off-kind sibling (a time_interval on a FROM_TIMESTAMP table).
+	state := &terraform.InstanceState{
+		Attributes: map[string]string{
+			"start_mode.#":                           "1",
+			"start_mode.0.kind":                      "FROM_TIMESTAMP",
+			"start_mode.0.timestamp":                 "2026-04-01T00:00:00Z",
+			"start_mode.0.time_interval.#":           "1",
+			"start_mode.0.time_interval.0.interval":  "2",
+			"start_mode.0.time_interval.0.time_unit": "HOURS",
+		},
+	}
+	// Config omits start_mode entirely.
+	rc := terraform.NewResourceConfigRaw(map[string]interface{}{paramDisplayName: "t"})
+	if _, err := res.Diff(context.Background(), state, rc, nil); err != nil {
+		t.Fatalf("plan errored on a carried-forward start_mode the user did not author: %s", err)
+	}
 }
 
 func TestExpandMaterializedTableStartMode(t *testing.T) {
