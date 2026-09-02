@@ -253,27 +253,13 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	updateCertificateAuthorityRequest := certificateauthorityv2.NewIamV2UpdateCertRequest()
-	if d.HasChange(paramDisplayName) {
-		updateCertificateAuthorityRequest.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
-	if d.HasChange(paramDescription) {
-		updateCertificateAuthorityRequest.SetDescription(d.Get(paramDescription).(string))
-	}
-	if d.HasChange(paramCertificateChainFilename) {
-		updateCertificateAuthorityRequest.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
-	}
-	if d.HasChange(paramCrlUrl) {
-		updateCertificateAuthorityRequest.SetCrlUrl(d.Get(paramCrlUrl).(string))
-	}
-	if d.HasChange(paramRequireCrlOnClientCertificate) {
-		updateCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(d.Get(paramRequireCrlOnClientCertificate).(bool))
-	}
-	if d.HasChange(paramCertificateChain) {
-		updateCertificateAuthorityRequest.SetCertificateChain(d.Get(paramCertificateChain).(string))
-	}
-	if d.HasChange(paramCrlChain) {
-		updateCertificateAuthorityRequest.SetCrlChain(d.Get(paramCrlChain).(string))
-	}
+	updateCertificateAuthorityRequest.SetDisplayName(d.Get(paramDisplayName).(string))
+	updateCertificateAuthorityRequest.SetDescription(d.Get(paramDescription).(string))
+	updateCertificateAuthorityRequest.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
+	updateCertificateAuthorityRequest.SetCrlUrl(d.Get(paramCrlUrl).(string))
+	updateCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(d.Get(paramRequireCrlOnClientCertificate).(bool))
+	updateCertificateAuthorityRequest.SetCertificateChain(d.Get(paramCertificateChain).(string))
+	updateCertificateAuthorityRequest.SetCrlChain(d.Get(paramCrlChain).(string))
 
 	updateCertificateAuthorityRequestJson, err := json.Marshal(updateCertificateAuthorityRequest)
 	if err != nil {
