@@ -236,16 +236,30 @@ func panicError(resourceType string, op telemetry.Operation, rec interface{}, st
 }
 
 // panicDetail renders the panic value and its trimmed stack for the operator's
-// error, so a recovered panic stays as diagnosable as the crash it replaces.
+// error, so a recovered panic stays as diagnosable as the crash it replaces. It
+// shows at most maxDetailFrames frames: the top frames already include the panic
+// origin, and a longer trace only buries it in the terraform output. The fuller
+// trace (up to maxStackFrames) still goes to the crash telemetry for triage.
 func panicDetail(rec interface{}, stack []string) string {
 	if len(stack) == 0 {
 		return fmt.Sprintf("%v", rec)
 	}
-	return fmt.Sprintf("%v\n\n%s", rec, strings.Join(stack, "\n"))
+	shown, suffix := stack, ""
+	if len(shown) > maxDetailFrames {
+		suffix = fmt.Sprintf("\n... (showing top %d of %d stack frames)", maxDetailFrames, len(shown))
+		shown = shown[:maxDetailFrames]
+	}
+	return fmt.Sprintf("%v\n\n%s%s", rec, strings.Join(shown, "\n"), suffix)
 }
 
-// maxStackFrames caps how many frames a crash report carries.
+// maxStackFrames caps how many frames a crash report carries to the backend.
 const maxStackFrames = 50
+
+// maxDetailFrames caps how many frames the operator-facing error Detail shows.
+// It is deliberately smaller than maxStackFrames: the crash telemetry keeps the
+// fuller trace for backend triage/dedup, while the operator sees a readable
+// slice whose top frames already include the panic origin.
+const maxDetailFrames = 15
 
 // trimmedStackFrames captures the current stack and reduces it to file:line
 // frames, stripping absolute paths so no local path (e.g. /Users/<name>/...) is

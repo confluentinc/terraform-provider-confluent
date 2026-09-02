@@ -194,6 +194,47 @@ func TestWrapper_StackFramesAreCapped(t *testing.T) {
 	}
 }
 
+// TestWrapper_PanicDetailCappedShorterThanPayload asserts the operator-facing
+// error Detail is truncated to maxDetailFrames (with a marker) while the crash
+// telemetry payload keeps the fuller trace: the two audiences get different
+// depths on purpose, and the Detail cap must not shrink the payload.
+func TestWrapper_PanicDetailCappedShorterThanPayload(t *testing.T) {
+	rec := &recordingReporter{}
+	r := newTestResource()
+	var recurse func(int)
+	recurse = func(n int) {
+		if n == 0 {
+			panic("deep kaboom")
+		}
+		recurse(n - 1)
+	}
+	r.CreateContext = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
+		recurse(maxStackFrames * 4) // deeper than both caps
+		return nil
+	}
+	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(rec))
+
+	diags := r.CreateContext(context.Background(), nil, nil)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostics from a recovered panic, got %+v", diags)
+	}
+	detail := diags[0].Detail
+
+	// The Detail shows exactly maxDetailFrames file:line frames plus a truncation
+	// marker (each frame carries exactly one ".go:").
+	if got := strings.Count(detail, ".go:"); got != maxDetailFrames {
+		t.Errorf("Detail shows %d frames, want %d", got, maxDetailFrames)
+	}
+	if !strings.Contains(detail, "showing top") {
+		t.Errorf("Detail should mark that it was truncated, got %q", detail)
+	}
+
+	// The backend payload keeps strictly more frames than the Detail shows.
+	if payload := len(rec.snapshot()[0].StackFrames); payload <= maxDetailFrames {
+		t.Errorf("crash payload has %d frames, want > %d (Detail cap must not shrink the payload)", payload, maxDetailFrames)
+	}
+}
+
 // TestWrapper_RecoversPanicInReportPath asserts a panic in the reporter after a
 // successful call is contained, preserving the successful result.
 func TestWrapper_RecoversPanicInReportPath(t *testing.T) {
