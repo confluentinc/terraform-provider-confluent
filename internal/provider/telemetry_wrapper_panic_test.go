@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -400,6 +401,58 @@ func TestShortenSourcePath(t *testing.T) {
 		}
 		if strings.Contains(got, "Users") || strings.Contains(got, "jane") || strings.Contains(got, "cqin") {
 			t.Errorf("shortenSourcePath(%q) = %q leaked a user path segment", tc.in, got)
+		}
+	}
+}
+
+// TestPanicDetail_CapsFramesForOperator asserts the operator-facing error shows at
+// most maxDetailFrames frames (with a truncation marker) even though the full stack
+// is still reported to telemetry. It keeps the human-readable error short while the
+// panic origin, near the top of the stack, stays visible.
+func TestPanicDetail_CapsFramesForOperator(t *testing.T) {
+	stack := make([]string, maxStackFrames) // deeper than the detail cap
+	for i := range stack {
+		stack[i] = fmt.Sprintf("pkg/file.go:%d", i)
+	}
+	detail := panicDetail("boom", stack)
+
+	if !strings.Contains(detail, "boom") {
+		t.Errorf("detail should include the panic value, got %q", detail)
+	}
+	// The top maxDetailFrames frames are shown; the next one is not.
+	if !strings.Contains(detail, fmt.Sprintf("pkg/file.go:%d", maxDetailFrames-1)) {
+		t.Errorf("detail should include the top %d frames, got %q", maxDetailFrames, detail)
+	}
+	if strings.Contains(detail, fmt.Sprintf("pkg/file.go:%d", maxDetailFrames)) {
+		t.Errorf("detail should not include frames beyond the top %d, got %q", maxDetailFrames, detail)
+	}
+	// A truncation marker names how many of how many frames are shown.
+	if !strings.Contains(detail, fmt.Sprintf("showing top %d of %d frames", maxDetailFrames, len(stack))) {
+		t.Errorf("detail should carry a truncation marker, got %q", detail)
+	}
+	// The detail body carries exactly the capped number of frame lines.
+	frames := 0
+	for _, ln := range strings.Split(detail, "\n") {
+		if strings.Contains(ln, "pkg/file.go:") {
+			frames++
+		}
+	}
+	if frames != maxDetailFrames {
+		t.Errorf("detail shows %d frames, want %d", frames, maxDetailFrames)
+	}
+}
+
+// TestPanicDetail_ShortStackNotTruncated asserts a stack at or under the cap is
+// shown in full, with no truncation marker.
+func TestPanicDetail_ShortStackNotTruncated(t *testing.T) {
+	stack := []string{"pkg/a.go:1", "pkg/b.go:2"}
+	detail := panicDetail("boom", stack)
+	if strings.Contains(detail, "showing top") {
+		t.Errorf("a stack under the cap should not be truncated, got %q", detail)
+	}
+	for _, f := range stack {
+		if !strings.Contains(detail, f) {
+			t.Errorf("detail should include frame %q, got %q", f, detail)
 		}
 	}
 }
