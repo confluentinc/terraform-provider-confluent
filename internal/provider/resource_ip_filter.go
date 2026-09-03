@@ -205,7 +205,7 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	updateIpFilterRequest := iamipfilteringv2.NewIamV2IpFilter()
 	updateIpFilterRequest.SetFilterName(d.Get(paramFilterName).(string))
 	updateIpFilterRequest.SetResourceGroup(d.Get(paramResourceGroup).(string))
-	if _, ok := d.GetOk(paramResourceScope); ok {
+	if _, ok := d.GetOk(paramResourceScope); ok || d.HasChange(paramResourceScope) {
 		updateIpFilterRequest.SetResourceScope(d.Get(paramResourceScope).(string))
 	}
 	if _, ok := d.GetOk(paramOperationGroups); ok {
