@@ -45,20 +45,33 @@ func computedGatewaySchema() *schema.Schema {
 	}
 }
 
-// networkResourceCustomizeDiff suppresses a spurious diff on zones when the old and new lists
-// hold the same set of elements in a different order -- the API derives zones_info from the
-// user-supplied zones list and may return it reordered. Referenced by name via
-// terraform.customize_diff; kept hand-written because it is cross-field diff logic the spec
-// cannot express.
+// networkResourceCustomizeDiff is the resource-level CustomizeDiff for confluent_network,
+// referenced by name via terraform.customize_diff; kept hand-written because it is cross-field
+// logic the spec cannot express.
 //
 // Renamed from the hand-written setNetworkDiff, which was wired as
 // customdiff.Sequence(setNetworkDiff); with a single function that wrapper is a no-op, so the
-// behavior is unchanged.
+// suppression behavior is unchanged.
+//
+// Order matters: the zones reorder is suppressed BEFORE validation runs. Until it is,
+// HasChange(paramZones) reports a change on a network that is not being replaced, which would
+// make validateNetworkOnCreateOrReplace re-validate existing infrastructure -- on precisely the
+// drift suppressNetworkZonesReorder exists to absorb. SetNew writes through the same newWriter
+// that HasChange reads, so once suppressed the change is gone for the validator too.
 func networkResourceCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	if err := validateNetworkOnCreateOrReplace(diff); err != nil {
+	if err := suppressNetworkZonesReorder(diff); err != nil {
 		return err
 	}
+	return validateNetworkOnCreateOrReplace(diff)
+}
 
+// suppressNetworkZonesReorder suppresses a spurious diff on zones when the old and new lists hold
+// the same set of elements in a different order -- the API derives zones_info from the
+// user-supplied zones list and may return it reordered.
+//
+// Was the body of networkResourceCustomizeDiff; the logic is unchanged, extracted so its early
+// return no longer skips validation.
+func suppressNetworkZonesReorder(diff *schema.ResourceDiff) error {
 	if !diff.HasChange(paramZones) {
 		return nil
 	}
@@ -94,23 +107,32 @@ var acceptedNetworkConnectionTypes = []string{connectionTypePeering, connectionT
 // Generated CRUD does not carry them, and neither is expressible in the OpenAPI spec, so they
 // belong in CustomizeDiff -- the one hook the generator hands back to the provider for exactly this.
 //
-// Runs when Terraform is about to CREATE a network: either a brand-new resource (empty Id), or an
-// existing one being replaced. cloud, connection_types and zones are all ForceNew, so a change to
-// any of them means the next apply calls Create -- which is precisely where the hand-written checks
-// ran. Checking only the empty-Id case would skip the replacement path and let an invalid
-// combination through on exactly the edit most likely to introduce one.
-//
-// It deliberately does NOT run on a plan that leaves those three fields alone. The hand-written
-// checks never re-validated an existing network, so a resource that was imported, or created
-// through the CLI or API, keeps planning cleanly -- rejecting it now would be a plan-time failure
-// on working infrastructure that the published provider never produced.
+// Runs when Terraform is about to CREATE a network -- which an empty Id identifies on its own, for
+// both a brand-new resource and an existing one being replaced. When the first diff pass requires
+// replacement, helper/schema nils out the state, re-diffs, and re-runs CustomizeDiff against that
+// nil state (schema.go, the `if result.RequiresNew()` block), so the replacement plan reaches this
+// func a second time with Id() == "". Testing the ForceNew fields for changes instead would be both
+// redundant and wrong: on the FIRST pass an existing network still has its Id, and a zones list the
+// API merely reordered reads as a change -- which would re-validate working infrastructure that the
+// published provider plans cleanly. TestNetworkCustomizeDiffSkipsValidationOnZonesReorder and
+// TestNetworkCustomizeDiffValidatesOnForceNewReplacement lock in both halves.
 //
 // The trade against the published behavior is direction, not strictness: these fire at plan instead
 // of at apply, so a bad config is caught before anything is created.
 func validateNetworkOnCreateOrReplace(diff *schema.ResourceDiff) error {
-	isCreate := diff.Id() == ""
-	isReplace := diff.HasChange(paramCloud) || diff.HasChange(paramConnectionTypes) || diff.HasChange(paramZones)
-	if !isCreate && !isReplace {
+	if diff.Id() != "" {
+		return nil
+	}
+
+	// An unknown value reads back as the zero value ("" for a string, an empty list for a list) with
+	// no way to tell it apart from a real empty, so cross-checking one here rejects a valid config at
+	// plan time. Terraform re-plans each resource with its values resolved immediately before applying
+	// it, so these checks still run before the API call; in the worst case the API rejects the request,
+	// which is what the hand-written resource did. This mirrors the SDK's own rule -- helper/schema
+	// guards ConflictsWith and friends with isWhollyKnown for the same reason.
+	if !diff.NewValueKnown(paramCloud) ||
+		!networkDiffListKnown(diff, paramConnectionTypes) ||
+		!networkDiffListKnown(diff, paramZones) {
 		return nil
 	}
 
@@ -126,6 +148,24 @@ func validateNetworkOnCreateOrReplace(diff *schema.ResourceDiff) error {
 	}
 
 	return nil
+}
+
+// networkDiffListKnown reports whether a list attribute is fully known at diff time.
+//
+// Both levels have to be checked. ResourceDiff.NewValueKnown on a list reflects only the element
+// count: readListField propagates Computed from the "#" count and not from the elements, so a list
+// of known length holding an unknown element (connection_types = [some_resource.x.y]) reports known
+// while that element reads back as "".
+func networkDiffListKnown(diff *schema.ResourceDiff, key string) bool {
+	if !diff.NewValueKnown(key) {
+		return false
+	}
+	for i := range diff.Get(key).([]interface{}) {
+		if !diff.NewValueKnown(fmt.Sprintf("%s.%d", key, i)) {
+			return false
+		}
+	}
+	return true
 }
 
 // validateNetworkZones is the hand-written validateZones, moved out of resource_network.go before
