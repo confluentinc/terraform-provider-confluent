@@ -198,16 +198,13 @@ func setIpFilterAttributes(d *schema.ResourceData, ipFilter iamipfilteringv2.Iam
 }
 
 func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramFilterName, paramResourceGroup, paramResourceScope, paramOperationGroups, paramIPGroups) {
-		return diag.Errorf("error updating ip filter %q: only %q, %q, %q, %q, %q can be updated", d.Id(), paramFilterName, paramResourceGroup, paramResourceScope, paramOperationGroups, paramIPGroups)
+	if d.HasChangesExcept(paramFilterName, paramResourceGroup, paramOperationGroups, paramIPGroups) {
+		return diag.Errorf("error updating ip filter %q: only %q, %q, %q, %q can be updated", d.Id(), paramFilterName, paramResourceGroup, paramOperationGroups, paramIPGroups)
 	}
 
 	updateIpFilterRequest := iamipfilteringv2.NewIamV2IpFilter()
 	updateIpFilterRequest.SetFilterName(d.Get(paramFilterName).(string))
 	updateIpFilterRequest.SetResourceGroup(d.Get(paramResourceGroup).(string))
-	if _, ok := d.GetOk(paramResourceScope); ok {
-		updateIpFilterRequest.SetResourceScope(d.Get(paramResourceScope).(string))
-	}
 	if _, ok := d.GetOk(paramOperationGroups); ok {
 		updateIpFilterRequest.SetOperationGroups(convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List()))
 	}
