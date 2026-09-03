@@ -371,6 +371,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_tag_binding":                        tagBindingDataSource(),
 				"confluent_business_metadata":                  businessMetadataDataSource(),
 				"confluent_business_metadata_binding":          businessMetadataBindingDataSource(),
+				"confluent_dns_forwarder":                      dnsForwarderDataSource(),
 				"confluent_rtce_topic":                         rtceTopicDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
