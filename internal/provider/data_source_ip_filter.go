@@ -43,7 +43,7 @@ func ipFilterDataSource() *schema.Resource {
 			paramResourceGroup: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Scope of resources covered by this IP filter. Available resource groups include \"management\" and \"multiple\".",
+				Description: "Scope of resources covered by this IP filter. This property is required, and must be set to one of two values: * \"management\": the filter covers the resource management APIs. `operation_groups` must not be set. * \"multiple\": the filter covers the operation groups listed in `operation_groups`, which must contain at least one operation group.",
 			},
 			paramResourceScope: {
 				Type:        schema.TypeString,
@@ -54,7 +54,7 @@ func ipFilterDataSource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
-				Description: "Scope of resources covered by this IP filter. Resource group must be set to 'multiple' in order to use this property.During update operations, note that the operation groups passed in will replace the list of existing operation groups (passing in an empty list will remove all operation groups) from the filter (in line with the behavior for ip_groups).",
+				Description: "The operation groups covered by this IP filter. This property is required when `resource_group` is set to \"multiple\" (at least one operation group must be provided) and must not be set when `resource_group` is \"management\". See [Operation group identifiers](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html#operation-group-identifiers) for the list of valid operation groups. During update operations, the operation groups passed in will replace the existing operation groups. Omit this property to leave the operation groups unchanged. Passing an empty list is not supported.",
 			},
 			paramIPGroups: {
 				Type:        schema.TypeSet,
