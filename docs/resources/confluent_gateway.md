@@ -35,7 +35,7 @@ resource "confluent_gateway" "main" {
 
 The following arguments are supported:
 
-- `display_name` - (Optional String) The name of the Gateway.
+- `display_name` - (Required String) The name of the Gateway.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Gateway belongs to, for example, `env-abc123`.
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
@@ -44,7 +44,7 @@ The following arguments are supported:
   - `region` - (Required String) AWS region of the Ingress Private Link Gateway, for example, `us-east-1`.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Private Network Interface Gateway.
-  - `zones` - (Required List of Strings) AWS availability zone ids of the Private Network Interface Gateway.
+  - `zones` - (Required Set of Strings) AWS availability zone ids of the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Gateway, for example, `eastus`.
 - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
