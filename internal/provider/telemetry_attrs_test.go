@@ -79,8 +79,12 @@ func TestResourceAttributeAllowlist_CoversAllManagedResourcesAndNamesOnly(t *tes
 		t.Errorf("allowlist covers %d resources, want %d (update the pin if resources changed)", len(allowlist), wantManagedResources)
 	}
 
-	// A resource whose constructor is not named xResource() must still be
-	// covered, because the generator walks the runtime map, not source text.
+	// Coverage must not depend on the xResource() naming convention, because the
+	// generator walks the runtime map, not source text. confluent_rtce_topic was
+	// the last constructor not following it (rtceTopic(), renamed to
+	// rtceTopicResource() when its codegen marker was stamped); the assertion is
+	// kept because nothing enforces the convention and the next exception would
+	// otherwise go unnoticed.
 	if _, ok := allowlist["confluent_rtce_topic"]; !ok {
 		t.Errorf("confluent_rtce_topic missing — the generator must walk the runtime ResourcesMap, not a naming convention")
 	}
