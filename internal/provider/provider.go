@@ -441,7 +441,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
-				"confluent_rtce_topic":                         rtceTopic(),
+				"confluent_rtce_topic":                         rtceTopicResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
