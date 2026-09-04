@@ -137,7 +137,7 @@ func customConnectorPluginVersionCreate(ctx context.Context, d *schema.ResourceD
 	spec := ccpmv1.NewCcpmV1CustomConnectPluginVersionSpec()
 
 	// Set required attributes
-	connectorClassesList := d.Get(paramConnectorClass).([]interface{})
+	connectorClassesList := d.Get(paramConnectorClass).(*schema.Set).List()
 	connectorClassesObjs := make([]ccpmv1.CcpmV1ConnectorClass, 0, len(connectorClassesList))
 	for _, connectorClassesItem := range connectorClassesList {
 		connectorClassesBlock := connectorClassesItem.(map[string]interface{})
@@ -355,6 +355,12 @@ func customConnectorPluginVersionImport(ctx context.Context, d *schema.ResourceD
 	if err := d.Set(paramPluginId, pluginId); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramCloud, getEnv("IMPORT_CLOUD", "")); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramFilename, getEnv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_VERSION_FILENAME", "")); err != nil {
+		return nil, err
+	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -469,7 +475,7 @@ func waitForCustomConnectorPluginVersionToBeDeleted(ctx context.Context, c *Clie
 }
 func connectorClassesSchema() *schema.Schema {
 	return &schema.Schema{
-		Type: schema.TypeList,
+		Type: schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramConnectorClassName: {
