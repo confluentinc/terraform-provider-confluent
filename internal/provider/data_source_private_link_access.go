@@ -121,7 +121,7 @@ func privateLinkAccessDataSourceRead(ctx context.Context, d *schema.ResourceData
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	if environmentId == "" {
-		return diag.Errorf("error reading private link access: environment Id is missing")
+		return diag.Errorf("error reading private link access: environment ID is missing")
 	}
 
 	if privateLinkAccessId != "" {
@@ -141,7 +141,7 @@ func privateLinkAccessDataSourceReadUsingDisplayName(ctx context.Context, d *sch
 		return diag.Errorf("error reading private link access %q: %s", displayName, createDescriptiveError(err))
 	}
 	if hasMultiplePrivateLinkAccessesWithDisplayName(privateLinkAccesses, displayName) {
-		return diag.Errorf("error reading private link access: there are multiple private link accesss with %q=%q", paramDisplayName, displayName)
+		return diag.Errorf("error reading private link access: there are multiple private link accesses with %q=%q", paramDisplayName, displayName)
 	}
 	for _, privateLinkAccess := range privateLinkAccesses {
 		spec := privateLinkAccess.GetSpec()
@@ -188,7 +188,7 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 }
 
 // loadPrivateLinkAccesses paginates through every page of the List endpoint and returns all
-// private link accesss.
+// private link accesses.
 //
 // Emitted because terraform.emit_list_all_helper is set, which happens for either of two
 // reasons: a caller outside this file needs it (importers.go is the usual one), or a
@@ -203,7 +203,7 @@ func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId strin
 	for !allAreCollected {
 		pageList, resp, err := executeListPrivateLinkAccesses(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading private link accesss: %s", createDescriptiveError(err, resp))
+			return nil, fmt.Errorf("error reading private link accesses: %s", createDescriptiveError(err, resp))
 		}
 		privateLinkAccesses = append(privateLinkAccesses, pageList.GetData()...)
 
@@ -217,7 +217,7 @@ func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId strin
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading private link accesss: %s", createDescriptiveError(err, resp))
+					return nil, fmt.Errorf("error reading private link accesses: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
