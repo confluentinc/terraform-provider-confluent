@@ -542,8 +542,8 @@ func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, 
 	return nil
 }
 
-func waitForAccessPointToBeDeleted(ctx context.Context, c *Client, environmentId, accessPointId string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
+func waitForAccessPointToBeDeleted(ctx context.Context, c *Client, environmentId, accessPointId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
