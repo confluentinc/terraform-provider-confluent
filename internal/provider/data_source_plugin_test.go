@@ -57,7 +57,7 @@ func TestAccDataSourcePlugin(t *testing.T) {
 		))
 
 	listPluginsResponse, _ := os.ReadFile("../testdata/plugin/list_plugins.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins")).
+	listPluginsStub := wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins")).
 		WithQueryParam("environment", wiremock.EqualTo(pluginEnvironment)).
 		WithQueryParam("page_size", wiremock.EqualTo("99")).
 		InScenario(pluginDataSourceScenarioName).
@@ -66,7 +66,8 @@ func TestAccDataSourcePlugin(t *testing.T) {
 			string(listPluginsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)
+	_ = wiremockClient.StubFor(listPluginsStub)
 
 	fullPluginDataSourceLabel := "data.confluent_plugin.main"
 
@@ -102,6 +103,20 @@ func TestAccDataSourcePlugin(t *testing.T) {
 			},
 		},
 	})
+
+	// Both steps assert the same attribute values -- deliberately, since both lookups resolve the
+	// same plugin -- so an identical set of Check funcs cannot by itself prove the second step took
+	// the display_name branch rather than re-reading by id. This does: the by-id branch never calls
+	// the collection endpoint, so a non-zero count is only reachable through
+	// pluginDataSourceReadUsingDisplayName. The exact count is Terraform's plan/refresh/apply
+	// cadence and is not worth pinning.
+	listRequests, err := wiremockClient.GetCountRequests(listPluginsStub.Request())
+	if err != nil {
+		t.Fatalf("could not count GET /ccpm/v1/plugins requests: %s", err)
+	}
+	if listRequests == 0 {
+		t.Fatalf("expected at least one GET /ccpm/v1/plugins request, so the display_name lookup is actually exercised, but found none")
+	}
 }
 
 func testAccCheckDataSourcePluginConfigUsingId(mockServerUrl string) string {
