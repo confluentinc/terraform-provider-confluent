@@ -37,12 +37,9 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Optional String) The ID of the Plugin, for example, `ccp-abc123`.
-- `display_name` - (Optional String) Display name of Custom Connect Plugin.
+- `id` - (Required String) The ID of the Plugin, for example, `ccp-abc123`.
 - `environment` - (Required Configuration Block) Supports the following:
     - `id` - (Required String) The ID of the Environment that the Plugin belongs to, for example, `env-xyz456`.
-
--> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
@@ -50,6 +47,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `cloud` - (String) Cloud provider where the Custom Connect Plugin archive is uploaded.
 - `description` - (String) Description of Custom Connect Plugin.
+- `display_name` - (String) Display name of Custom Connect Plugin.
 - `runtime_language` - (String) Runtime language of Custom Connect Plugin.
 - `api_version` - (String) API Version defines the schema version of this representation of a resource.
 - `kind` - (String) Kind defines the object this REST resource represents.

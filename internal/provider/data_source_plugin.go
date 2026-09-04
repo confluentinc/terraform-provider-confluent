@@ -20,13 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 )
 
 func pluginDataSource() *schema.Resource {
@@ -34,11 +31,9 @@ func pluginDataSource() *schema.Resource {
 		ReadContext: pluginDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The ID of the plugin.",
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ID of the plugin.",
 			},
 			paramEnvironment: environmentDataSourceSchema(),
 			paramCloud: {
@@ -52,11 +47,9 @@ func pluginDataSource() *schema.Resource {
 				Description: "Description of Custom Connect Plugin.",
 			},
 			paramDisplayName: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "Display name of Custom Connect Plugin.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Display name of Custom Connect Plugin.",
 			},
 			paramRuntimeLanguage: {
 				Type:        schema.TypeString,
@@ -79,56 +72,7 @@ func pluginDataSource() *schema.Resource {
 
 func pluginDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	pluginId := d.Get(paramId).(string)
-	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if environmentId == "" {
-		return diag.Errorf("error reading plugin: environment ID is missing")
-	}
-
-	if pluginId != "" {
-		return pluginDataSourceReadUsingId(ctx, d, meta, environmentId, pluginId)
-	} else if displayName != "" {
-		return pluginDataSourceReadUsingDisplayName(ctx, d, meta, environmentId, displayName)
-	}
-	return diag.Errorf("error reading plugin: exactly one of %q or %q must be specified but they're both empty", paramId, paramDisplayName)
-}
-
-func pluginDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId string, displayName string) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading plugin %q=%q", paramDisplayName, displayName))
-
-	c := meta.(*Client)
-	plugins, err := loadPlugins(ctx, c, environmentId)
-	if err != nil {
-		return diag.Errorf("error reading plugin %q: %s", displayName, createDescriptiveError(err))
-	}
-	if hasMultiplePluginsWithDisplayName(plugins, displayName) {
-		return diag.Errorf("error reading plugin: there are multiple plugins with %q=%q", paramDisplayName, displayName)
-	}
-	for _, plugin := range plugins {
-		spec := plugin.GetSpec()
-		if spec.GetDisplayName() == displayName {
-			if _, err := setPluginAttributes(d, plugin); err != nil {
-				return diag.FromErr(createDescriptiveError(err))
-			}
-			return nil
-		}
-	}
-
-	return diag.Errorf("error reading plugin: plugin with %q=%q was not found", paramDisplayName, displayName)
-}
-
-func hasMultiplePluginsWithDisplayName(plugins []ccpmv1.CcpmV1CustomConnectPlugin, displayName string) bool {
-	count := 0
-	for _, plugin := range plugins {
-		spec := plugin.GetSpec()
-		if spec.GetDisplayName() == displayName {
-			count += 1
-		}
-	}
-	return count > 1
-}
-
-func pluginDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId string, pluginId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading plugin %q=%q", paramId, pluginId), map[string]interface{}{pluginLoggingKey: pluginId})
 
 	c := meta.(*Client)
@@ -146,52 +90,4 @@ func pluginDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
-}
-
-// loadPlugins paginates through every page of the List endpoint and returns all
-// plugins.
-//
-// Emitted because terraform.emit_list_all_helper is set, which happens for either of two
-// reasons: a caller outside this file needs it (importers.go is the usual one), or a
-// display_name lookup has to scan client-side, because the SDK's List request either has no
-// DisplayName(...) filter method or could not be checked for one (no --sdk-path given).
-// Which reason applies is not derivable here, so grep for callers before removing it.
-func loadPlugins(ctx context.Context, c *Client, environmentId string) ([]ccpmv1.CcpmV1CustomConnectPlugin, error) {
-	plugins := make([]ccpmv1.CcpmV1CustomConnectPlugin, 0)
-
-	allAreCollected := false
-	pageToken := ""
-	for !allAreCollected {
-		pageList, resp, err := executeListPlugins(ctx, c, environmentId, pageToken)
-		if err != nil {
-			return nil, fmt.Errorf("error reading plugins: %s", createDescriptiveError(err, resp))
-		}
-		plugins = append(plugins, pageList.GetData()...)
-
-		// nextPageUrlStringNullable is nil for the last page
-		nextPageUrlStringNullable := pageList.GetMetadata().Next
-
-		if nextPageUrlStringNullable.IsSet() {
-			nextPageUrlString := *nextPageUrlStringNullable.Get()
-			if nextPageUrlString == "" {
-				allAreCollected = true
-			} else {
-				pageToken, err = extractPageToken(nextPageUrlString)
-				if err != nil {
-					return nil, fmt.Errorf("error reading plugins: %s", createDescriptiveError(err, resp))
-				}
-			}
-		} else {
-			allAreCollected = true
-		}
-	}
-	return plugins, nil
-}
-
-func executeListPlugins(ctx context.Context, c *Client, environmentId string, pageToken string) (ccpmv1.CcpmV1CustomConnectPluginList, *http.Response, error) {
-	if pageToken != "" {
-		return c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.ListCcpmV1CustomConnectPlugins(c.ccpmV1ApiContext(ctx)).Environment(environmentId).PageSize(listPluginsPageSize).PageToken(pageToken).Execute()
-	} else {
-		return c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.ListCcpmV1CustomConnectPlugins(c.ccpmV1ApiContext(ctx)).Environment(environmentId).PageSize(listPluginsPageSize).Execute()
-	}
 }

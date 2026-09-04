@@ -25,9 +25,9 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-// TestAccDataSourcePlugin exercises both lookup branches of the confluent_plugin data source:
-// by id (GET /ccpm/v1/plugins/{id}) and by display_name, which has no server-side filter and so
-// paginates the collection and scans it client-side.
+// TestAccDataSourcePlugin covers the confluent_plugin data source, which resolves a plugin by id
+// within an environment. It reuses the resource's own fixture rather than a synthetic one, so the
+// values asserted here are the same ones TestAccPlugin asserts against a real API shape.
 func TestAccDataSourcePlugin(t *testing.T) {
 	ctx := context.Background()
 
@@ -46,7 +46,7 @@ func TestAccDataSourcePlugin(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readPluginResponse, _ := os.ReadFile("../testdata/plugin/read_created_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ccpm/v1/plugins/%s", pluginId))).
+	readPluginStub := wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ccpm/v1/plugins/%s", pluginId))).
 		WithQueryParam("environment", wiremock.EqualTo(pluginEnvironment)).
 		InScenario(pluginDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -54,20 +54,8 @@ func TestAccDataSourcePlugin(t *testing.T) {
 			string(readPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-
-	listPluginsResponse, _ := os.ReadFile("../testdata/plugin/list_plugins.json")
-	listPluginsStub := wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins")).
-		WithQueryParam("environment", wiremock.EqualTo(pluginEnvironment)).
-		WithQueryParam("page_size", wiremock.EqualTo("99")).
-		InScenario(pluginDataSourceScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillReturn(
-			string(listPluginsResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listPluginsStub)
+	_ = wiremockClient.StubFor(readPluginStub)
 
 	fullPluginDataSourceLabel := "data.confluent_plugin.main"
 
@@ -76,20 +64,7 @@ func TestAccDataSourcePlugin(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourcePluginConfigUsingId(mockServerUrl),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "id", pluginId),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "display_name", "plugin-name"),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "description", "plugin-description"),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "cloud", "AWS"),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "runtime_language", "JAVA"),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "environment.0.id", pluginEnvironment),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "api_version", "ccpm/v1"),
-					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "kind", "CustomConnectPlugin"),
-				),
-			},
-			{
-				Config: testAccCheckDataSourcePluginConfigUsingDisplayName(mockServerUrl),
+				Config: testAccCheckDataSourcePluginConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "id", pluginId),
 					resource.TestCheckResourceAttr(fullPluginDataSourceLabel, "display_name", "plugin-name"),
@@ -104,22 +79,19 @@ func TestAccDataSourcePlugin(t *testing.T) {
 		},
 	})
 
-	// Both steps assert the same attribute values -- deliberately, since both lookups resolve the
-	// same plugin -- so an identical set of Check funcs cannot by itself prove the second step took
-	// the display_name branch rather than re-reading by id. This does: the by-id branch never calls
-	// the collection endpoint, so a non-zero count is only reachable through
-	// pluginDataSourceReadUsingDisplayName. The exact count is Terraform's plan/refresh/apply
-	// cadence and is not worth pinning.
-	listRequests, err := wiremockClient.GetCountRequests(listPluginsStub.Request())
+	// The environment is a query parameter rather than part of the path, so a read that dropped it
+	// would still hit /ccpm/v1/plugins/{id} and pass every assertion above. Only the stub's
+	// WithQueryParam makes that a miss, and only counting the stub turns the miss into a failure.
+	readRequests, err := wiremockClient.GetCountRequests(readPluginStub.Request())
 	if err != nil {
-		t.Fatalf("could not count GET /ccpm/v1/plugins requests: %s", err)
+		t.Fatalf("could not count GET /ccpm/v1/plugins/%s requests: %s", pluginId, err)
 	}
-	if listRequests == 0 {
-		t.Fatalf("expected at least one GET /ccpm/v1/plugins request, so the display_name lookup is actually exercised, but found none")
+	if readRequests == 0 {
+		t.Fatalf("expected at least one environment-scoped GET /ccpm/v1/plugins/%s request, but found none", pluginId)
 	}
 }
 
-func testAccCheckDataSourcePluginConfigUsingId(mockServerUrl string) string {
+func testAccCheckDataSourcePluginConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -131,18 +103,4 @@ func testAccCheckDataSourcePluginConfigUsingId(mockServerUrl string) string {
 		}
 	}
 	`, mockServerUrl, pluginId, pluginEnvironment)
-}
-
-func testAccCheckDataSourcePluginConfigUsingDisplayName(mockServerUrl string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
-		endpoint = "%s"
-	}
-	data "confluent_plugin" "main" {
-		display_name = "plugin-name"
-		environment {
-			id = "%s"
-		}
-	}
-	`, mockServerUrl, pluginEnvironment)
 }
