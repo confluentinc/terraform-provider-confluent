@@ -203,6 +203,7 @@ const (
 	listNetworkLinkServicesPageSize                      = 99
 	listNetworksPageSize                                 = 99
 	listPeeringsPageSize                                 = 99
+	listPluginsPageSize                                  = 99
 	listPrivateLinkAccessesPageSize                      = 99
 	listProviderIntegrationsPageSize                     = 99
 	listSchemaRegistryClustersPageSize                   = 99
