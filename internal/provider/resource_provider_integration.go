@@ -104,10 +104,10 @@ func awsProviderIntegrationSchema() *schema.Schema {
 func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	createProviderIntegrationRequest := providerintegrationv1.NewPimV1Integration()
-	// provider is outside this resource's Terraform surface, but the SDK constructor applies the
-	// spec default (AWS), so clear it: the field is then omitted from the request and
-	// the server applies its own default.
-	createProviderIntegrationRequest.Provider = nil
+	// provider is outside this resource's Terraform surface, so no configuration reaches it, but
+	// the request must still carry this exact value: the spec default (AWS) is not what
+	// the published provider sent.
+	createProviderIntegrationRequest.SetProvider("aws")
 
 	// Set regular attributes
 	createProviderIntegrationRequest.SetDisplayName(d.Get(paramDisplayName).(string))
