@@ -22,6 +22,7 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 )
 
@@ -155,6 +156,12 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col123"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp123"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_NOW"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", ""),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.interval", "2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.0.time_unit", "HOURS"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -222,6 +229,10 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col1234"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp1234"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.kind", "FROM_TIMESTAMP"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.timestamp", "2026-04-01T00:00:00Z"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "start_mode.0.time_interval.#", "0"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "true"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
@@ -270,6 +281,12 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId), flinkComputePoolUpdatedIdTest),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramPrincipal, paramId), flinkPrincipalUpdatedIdTest),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramRestEndpoint, mockTestServerUrl),
+					// Regression guard (PR #1171): switching kind FROM_NOW -> FROM_TIMESTAMP must send the
+					// new timestamp and must NOT leak the previous kind's time_interval into the update
+					// request body. This asserts the outgoing PUT body via the wiremock request journal,
+					// because the resource-level plan self-heals on refresh and cannot observe the body
+					// (a Computed time_interval leaf would be carried forward and sent here).
+					verifyMaterializedTableUpdateStartModeBody(wiremockClient),
 				),
 			},
 			{
@@ -317,6 +334,13 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	  }
       stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  start_mode {
+	    kind = "FROM_NOW"
+	    time_interval {
+	      interval  = 2
+	      time_unit = "HOURS"
+	    }
+	  }
 	  watermark {
 	    column     = "col123"
 	    expression = "exp123"
@@ -451,6 +475,10 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	  }
       stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
+	  start_mode {
+	    kind      = "FROM_TIMESTAMP"
+	    timestamp = "2026-04-01T00:00:00Z"
+	  }
 	  watermark {
 	    column     = "col1234"
 	    expression = "exp1234"
@@ -528,6 +556,39 @@ func testAccCheckMaterializedTableExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+// verifyMaterializedTableUpdateStartModeBody asserts, via the wiremock request journal, that the
+// FROM_NOW -> FROM_TIMESTAMP update PUT sent the new timestamp and did NOT leak the previous kind's
+// time_interval into the request body. It is the behavioral guard for the kind-switch stale-sibling
+// fix (PR #1171): flatten emitting empty siblings fixes state, and non-Computed leaves stop the
+// stale sibling from being carried forward and sent on update. `time_interval` is `omitempty`, so a
+// correctly-cleared sibling is absent from the body and the JSONPath matches zero requests.
+func verifyMaterializedTableUpdateStartModeBody(wiremockClient *wiremock.Client) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		putWithTimestamp := wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+			WithBodyPattern(wiremock.MatchingJsonPath("$.spec.start_mode.timestamp"))
+		putWithTimeInterval := wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+			WithBodyPattern(wiremock.MatchingJsonPath("$.spec.start_mode.time_interval"))
+
+		timestampPuts, err := wiremockClient.GetCountRequests(putWithTimestamp.Request())
+		if err != nil {
+			return err
+		}
+		if timestampPuts < 1 {
+			return fmt.Errorf("expected the FROM_NOW->FROM_TIMESTAMP update to PUT spec.start_mode.timestamp at least once, got %d", timestampPuts)
+		}
+
+		timeIntervalPuts, err := wiremockClient.GetCountRequests(putWithTimeInterval.Request())
+		if err != nil {
+			return err
+		}
+		if timeIntervalPuts != 0 {
+			return fmt.Errorf("kind switch FROM_NOW->FROM_TIMESTAMP leaked a stale time_interval into %d update request body(ies); want 0", timeIntervalPuts)
+		}
+		return nil
+	}
+}
+
 func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error {
 	testClient := testAccProvider.Meta().(*Client)
 	c := testClient.flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
@@ -675,8 +736,367 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
 
-// TestAccFlinkMaterializedTableCompletedPhase locks in that a bounded table reaching the terminal
-// COMPLETED phase is accepted as a successful create (COMPLETED is valid, like confluent_flink_statement).
+// TestAccFlinkMaterializedTableServerDerivedStartMode locks in the backward-compatibility
+// fix for start_mode. The config omits `start_mode` entirely, but the server echoes a
+// default (`RESUME_OR_FROM_BEGINNING`) on read. Because `start_mode` is Optional+Computed,
+// the echoed value must land in state without the second PlanOnly step showing a diff.
+// Before marking start_mode Computed, that second step would report a perpetual removal diff.
+func TestAccFlinkMaterializedTableServerDerivedStartMode(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Server-Derived Start Mode"
+	const displayName = "table_start_mode_default"
+	readPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, displayName)
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_server_derived_start_mode.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				// The config omits `start_mode` entirely; the server response supplies a default.
+				Config: testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, displayName),
+					// The server-derived start mode must land in state even though the config omitted it.
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.#", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "start_mode.0.kind", "RESUME_OR_FROM_BEGINNING"),
+				),
+			},
+			{
+				// Re-planning the same config (still omitting `start_mode`) must be a no-op.
+				// Without start_mode being Optional+Computed, this produces a perpetual diff and fails.
+				Config:             testAccCheckMaterializedTableServerDerivedStartModeConfig(mockTestServerUrl, resourceLabel, displayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableServerDerivedStartModeConfig(mockServerUrl, resourceLabel, displayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  # NOTE: no start_mode block on purpose - Confluent Cloud echoes back a default start mode.
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
+// TestAccFlinkMaterializedTableStartModeOffKindSiblingRejected proves that
+// customizeMaterializedTableStartModeDiff rejects, at PLAN time (before any API
+// call), a start_mode sibling that does not belong to its kind — e.g. a timestamp
+// on a FROM_NOW kind. Without this the backend silently drops the stray field and
+// the config would produce a permanent diff.
+func TestAccFlinkMaterializedTableStartModeOffKindSiblingRejected(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckMaterializedTableOffKindStartModeConfig(mockTestServerUrl, "test"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`"timestamp" may only be set in the "start_mode" block when "kind" is`),
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableOffKindStartModeConfig(mockServerUrl, resourceLabel string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "table_off_kind_start_mode"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id FROM orders;"
+	  # Misconfiguration: timestamp is only valid for the *_TIMESTAMP kinds.
+	  start_mode {
+	    kind      = "FROM_NOW"
+	    timestamp = "2026-04-01T00:00:00Z"
+	  }
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkMaterializedTableDatabase)
+}
+
+// TestAccFlinkMaterializedTableStartModeReverseKindSwitch is the reverse-direction
+// companion to the FROM_NOW->FROM_TIMESTAMP request-body guard in
+// TestAccFlinkMaterializedTable. It creates a table with FROM_TIMESTAMP, switches it
+// to FROM_NOW, and asserts via the wiremock request journal that the update PUT body
+// carries the new time_interval and does NOT leak the previous kind's timestamp.
+func TestAccFlinkMaterializedTableStartModeReverseKindSwitch(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Reverse Kind Switch"
+	const displayName = "table_reverse_switch"
+	readPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, displayName)
+
+	fromTimestamp, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_start_mode_from_timestamp.json")
+	fromNow, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_start_mode_from_now.json")
+
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(fromTimestamp), contentTypeJSONHeader, http.StatusCreated))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(fromTimestamp), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenUpdated).
+		WillReturn(string(fromNow), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
+		WillReturn(string(fromNow), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeleted, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeleted), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMaterializedTableReverseSwitchConfig(mockTestServerUrl, resourceLabel, displayName, `
+	  start_mode {
+	    kind      = "FROM_TIMESTAMP"
+	    timestamp = "2026-04-01T00:00:00Z"
+	  }`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullLabel),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.kind", "FROM_TIMESTAMP"),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.timestamp", "2026-04-01T00:00:00Z"),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.time_interval.#", "0"),
+				),
+			},
+			{
+				Config: testAccCheckMaterializedTableReverseSwitchConfig(mockTestServerUrl, resourceLabel, displayName, `
+	  start_mode {
+	    kind = "FROM_NOW"
+	    time_interval {
+	      interval  = 2
+	      time_unit = "HOURS"
+	    }
+	  }`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullLabel),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.kind", "FROM_NOW"),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.timestamp", ""),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.time_interval.0.interval", "2"),
+					resource.TestCheckResourceAttr(fullLabel, "start_mode.0.time_interval.0.time_unit", "HOURS"),
+					verifyMaterializedTableReverseSwitchBody(wiremockClient, readPath),
+				),
+			},
+		},
+	})
+}
+
+// verifyMaterializedTableReverseSwitchBody asserts the FROM_TIMESTAMP->FROM_NOW update
+// PUT sent the new time_interval and did NOT leak the previous kind's timestamp.
+func verifyMaterializedTableReverseSwitchBody(wiremockClient *wiremock.Client, readPath string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		putWithTimeInterval := wiremock.Put(wiremock.URLPathEqualTo(readPath)).
+			WithBodyPattern(wiremock.MatchingJsonPath("$.spec.start_mode.time_interval"))
+		putWithTimestamp := wiremock.Put(wiremock.URLPathEqualTo(readPath)).
+			WithBodyPattern(wiremock.MatchingJsonPath("$.spec.start_mode.timestamp"))
+
+		intervalPuts, err := wiremockClient.GetCountRequests(putWithTimeInterval.Request())
+		if err != nil {
+			return err
+		}
+		if intervalPuts < 1 {
+			return fmt.Errorf("expected the FROM_TIMESTAMP->FROM_NOW update to PUT spec.start_mode.time_interval at least once, got %d", intervalPuts)
+		}
+
+		timestampPuts, err := wiremockClient.GetCountRequests(putWithTimestamp.Request())
+		if err != nil {
+			return err
+		}
+		if timestampPuts != 0 {
+			return fmt.Errorf("kind switch FROM_TIMESTAMP->FROM_NOW leaked a stale timestamp into %d update request body(ies); want 0", timestampPuts)
+		}
+		return nil
+	}
+}
+
+func testAccCheckMaterializedTableReverseSwitchConfig(mockServerUrl, resourceLabel, displayName, startModeBlock string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+%s
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase, startModeBlock)
+}
+
 func TestAccFlinkMaterializedTableCompletedPhase(t *testing.T) {
 	ctx := context.Background()
 
