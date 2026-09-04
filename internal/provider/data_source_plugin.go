@@ -82,7 +82,7 @@ func pluginDataSourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	if environmentId == "" {
-		return diag.Errorf("error reading plugin: environment Id is missing")
+		return diag.Errorf("error reading plugin: environment ID is missing")
 	}
 
 	if pluginId != "" {
