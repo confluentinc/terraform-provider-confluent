@@ -197,7 +197,7 @@ const (
 	listGroupMappingsPageSize                            = 99
 	listIdentityPoolsPageSize                            = 99
 	listIdentityProvidersPageSize                        = 99
-	listIPAddressesPageSize                              = 99
+	listIpAddressesPageSize                              = 99
 	listKafkaClustersPageSize                            = 99
 	listKsqlClustersPageSize                             = 99
 	listNetworkLinkServicesPageSize                      = 99
