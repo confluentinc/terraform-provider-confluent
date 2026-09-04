@@ -56,7 +56,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `region` - (Required String) AWS region of the Peering Gateway.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Private Network Interface Gateway.
-  - `zones` - (Required List of Strings) AWS availability zone ids of the Private Network Interface Gateway.
+  - `zones` - (Required Set of Strings) AWS availability zone ids of the Private Network Interface Gateway.
   - `account` - (Required String) The AWS account ID associated with the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Egress Private Link Gateway.
