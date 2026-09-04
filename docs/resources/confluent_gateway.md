@@ -44,7 +44,7 @@ The following arguments are supported:
   - `region` - (Required String) AWS region of the Ingress Private Link Gateway, for example, `us-east-1`.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Private Network Interface Gateway.
-  - `zones` - (Required Set of Strings) AWS availability zone ids of the Private Network Interface Gateway.
+  - `zones` - (Required List of Strings) AWS availability zone ids of the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Gateway, for example, `eastus`.
 - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
