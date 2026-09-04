@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -495,6 +496,72 @@ func setServerManagedOptionsMap(d *schema.ResourceData, key string, serverOption
 	return d.Set(key, managedOptions)
 }
 
+// flinkSqlTypeToString normalizes a column's SQL type as returned by the Flink Gateway
+// API into the plain string the column_*_type schema attributes expect. The Gateway
+// represents parameter-less types (e.g. INT) as a JSON string, but represents
+// parameterized types (e.g. VARCHAR, DECIMAL) as a JSON object describing the type's
+// shape, e.g. {"type":"VARCHAR","length":2147483647,"nullable":false}. The SDK models
+// the field as `interface{}` to accommodate both shapes, so setting it directly on a
+// string-typed schema field panics inside the SDK's ResourceData.Set (INC-12957).
+func flinkSqlTypeToString(rawType interface{}) string {
+	switch v := rawType.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	case map[string]interface{}:
+		return formatFlinkLogicalType(v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+// formatFlinkLogicalType renders a Flink logical type descriptor, e.g.
+// {"type":"VARCHAR","length":2147483647,"nullable":false}, as its summary string, e.g.
+// "VARCHAR(2147483647) NOT NULL".
+func formatFlinkLogicalType(logicalType map[string]interface{}) string {
+	baseType, ok := logicalType["type"].(string)
+	if !ok || baseType == "" {
+		return ""
+	}
+
+	var b strings.Builder
+	b.WriteString(baseType)
+	if params := flinkLogicalTypeParams(logicalType); params != "" {
+		fmt.Fprintf(&b, "(%s)", params)
+	}
+	if nullable, ok := logicalType["nullable"].(bool); ok && !nullable {
+		b.WriteString(" NOT NULL")
+	}
+	return b.String()
+}
+
+// flinkLogicalTypeParams renders the parenthesized parameters of a parameterized SQL
+// type, e.g. the "2147483647" in VARCHAR(2147483647) or the "10, 2" in DECIMAL(10, 2).
+func flinkLogicalTypeParams(logicalType map[string]interface{}) string {
+	numericField := func(key string) (string, bool) {
+		v, ok := logicalType[key].(float64)
+		if !ok {
+			return "", false
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64), true
+	}
+
+	if length, ok := numericField("length"); ok {
+		return length
+	}
+	precision, hasPrecision := numericField("precision")
+	scale, hasScale := numericField("scale")
+	switch {
+	case hasPrecision && hasScale:
+		return precision + ", " + scale
+	case hasPrecision:
+		return precision
+	default:
+		return ""
+	}
+}
+
 func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
@@ -588,7 +655,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnComputed] = []map[string]interface{}{
 					{
 						paramComputedName:       computedCol.Name,
-						paramComputedType:       computedCol.Type,
+						paramComputedType:       flinkSqlTypeToString(computedCol.Type),
 						paramComputedComment:    computedCol.Comment,
 						paramComputedKind:       computedCol.Kind,
 						paramComputedExpression: computedCol.Expression,
@@ -604,7 +671,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnPhysical] = []map[string]interface{}{
 					{
 						paramPhysicalName:    physicalCol.Name,
-						paramPhysicalType:    physicalCol.Type,
+						paramPhysicalType:    flinkSqlTypeToString(physicalCol.Type),
 						paramPhysicalComment: physicalCol.Comment,
 						paramPhysicalKind:    physicalCol.Kind,
 					},
@@ -623,7 +690,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 				m[paramColumnMetadata] = []map[string]interface{}{
 					{
 						paramMetadataName:    metadataCol.Name,
-						paramMetadataType:    metadataCol.Type,
+						paramMetadataType:    flinkSqlTypeToString(metadataCol.Type),
 						paramMetadataComment: metadataCol.Comment,
 						paramMetadataKind:    metadataCol.Kind,
 						paramMetadataKey:     metadataCol.MetadataKey,
