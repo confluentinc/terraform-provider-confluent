@@ -27,6 +27,25 @@ import (
 	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
+// networkDataSourceSchema previously lived in data_source_peering.go, which this file borrowed it
+// from. That data source is now generated, and the generated templates render the network block
+// inline rather than through a shared helper, so the declaration moved here to its only remaining
+// caller. It stays byte-identical to the version it replaces.
+func networkDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
 func transitGatewayAttachmentDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: transitGatewayAttachmentDataSourceRead,
