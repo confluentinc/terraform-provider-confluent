@@ -33,7 +33,6 @@ const (
 	awsPrivateLinkAccessKind                  = "AwsPrivateLinkAccess"
 	awsPrivateNetworkInterface                = "AwsPrivateNetworkInterface"
 	awsPrivateNetworkInterfaceGatewaySpecKind = "AwsPrivateNetworkInterfaceGatewaySpec"
-	awsTransitGatewayAttachmentKind           = "AwsTransitGatewayAttachment"
 	azureEgressPrivateLinkEndpoint            = "AzureEgressPrivateLinkEndpoint"
 	azureIngressPrivateLinkEndpoint           = "AzureIngressPrivateLinkEndpoint"
 	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
