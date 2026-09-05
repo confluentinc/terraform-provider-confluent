@@ -35,7 +35,7 @@ resource "confluent_gateway" "main" {
 
 The following arguments are supported:
 
-- `display_name` - (Optional String) The name of the Gateway.
+- `display_name` - (Required String) The name of the Gateway.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Gateway belongs to, for example, `env-abc123`.
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
