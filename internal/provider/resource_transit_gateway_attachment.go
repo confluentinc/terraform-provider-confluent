@@ -83,14 +83,14 @@ func awsTransitGatewayAttachmentSchema() *schema.Schema {
 					Required:     true,
 					ForceNew:     true,
 					ValidateFunc: validation.StringMatch(regexp.MustCompile("^tgw-"), "AWS Transit Gateway ID must start with 'tgw-'."),
-					Description:  "The ID of the AWS Transit Gateway that you want Confluent CLoud to be attached to.",
+					Description:  "The ID of the AWS Transit Gateway that you want Confluent Cloud to be attached to.",
 				},
 				paramRoutes: {
 					Type:        schema.TypeList,
 					Elem:        &schema.Schema{Type: schema.TypeString},
-					MinItems:    1,
 					Required:    true,
 					ForceNew:    true,
+					MinItems:    1,
 					Description: "List of destination routes.",
 				},
 				paramTransitGatewayAttachmentId: {

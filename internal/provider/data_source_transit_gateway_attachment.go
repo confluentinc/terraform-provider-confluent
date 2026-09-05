@@ -79,7 +79,7 @@ func awsTransitGatewayAttachmentDataSourceSchema() *schema.Schema {
 				paramTransitGatewayId: {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Description: "The ID of the AWS Transit Gateway that you want Confluent CLoud to be attached to.",
+					Description: "The ID of the AWS Transit Gateway that you want Confluent Cloud to be attached to.",
 				},
 				paramRoutes: {
 					Type:        schema.TypeList,
