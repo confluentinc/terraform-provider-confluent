@@ -78,6 +78,7 @@ func TestAccDataSubjectCompatibilityLevelSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_policy", testSubjectCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "%", strconv.Itoa(testNumberOfSubjectCompatibilityLevelDataSourceAttributes)),
