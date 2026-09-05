@@ -57,7 +57,7 @@ You can import a Custom Connector Plugin by using a Plugin ID, in the format `<E
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_plugin.main env-123/ccpm-abc123xyz
+$ terraform import confluent_plugin.main env-123/ccp-abc123xyz
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
