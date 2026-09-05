@@ -560,8 +560,8 @@ func waitForAccessPointToBeDeleted(ctx context.Context, c *Client, environmentId
 	return nil
 }
 
-func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
+func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
