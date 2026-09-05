@@ -33,6 +33,12 @@ import (
 var paramAwsRamResourceShareArn = fmt.Sprintf("%s.0.%s", paramAws, paramRamResourceShareArn)
 var paramAwsTransitGatewayId = fmt.Sprintf("%s.0.%s", paramAws, paramTransitGatewayId)
 
+// paramAwsRoutes previously lived in resource_peering.go, which this file borrowed it from.
+// That resource is now generated, and the generated oneOf templates address variant fields
+// inline rather than through package-level flattened-key vars, so the declaration moved here to
+// its only remaining caller.
+var paramAwsRoutes = fmt.Sprintf("%s.0.%s", paramAws, paramRoutes)
+
 func transitGatewayAttachmentResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: transitGatewayAttachmentCreate,
