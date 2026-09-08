@@ -283,7 +283,7 @@ func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta int
 	importId := d.Id()
 	parts := strings.Split(importId, "/")
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("error importing Connect artifact: invalid format: expected '<environment ID>/<Cloud ID>/<Connect artifact ID>'")
+		return nil, fmt.Errorf("error importing Connect artifact: invalid format: expected '<environment ID>/<Cloud>/<Connect artifact ID>'")
 	}
 	environmentId := parts[0]
 	cloudId := parts[1]
@@ -324,19 +324,21 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 		}
 
 		currentPhase := connectArtifact.Status.GetPhase()
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect artifact %q provisioning status to become one of %v: current status is %q", connectArtifactId, []string{stateWaitingForProcessing, stateProcessing, stateReady}, currentPhase), map[string]interface{}{connectArtifactLoggingKey: connectArtifactId})
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect artifact %q provisioning status to become one of %v: current status is %q", connectArtifactId, []string{stateProvisioned, stateReady}, currentPhase), map[string]interface{}{connectArtifactLoggingKey: connectArtifactId})
 
 		// Check for pending states (still provisioning)
 		switch currentPhase {
 		case stateProvisioning:
 			return connectArtifact, currentPhase, nil
+		case stateWaitingForProcessing:
+			return connectArtifact, currentPhase, nil
+		case stateProcessing:
+			return connectArtifact, currentPhase, nil
 		}
 
 		// Check for target states (provisioning complete)
 		switch currentPhase {
-		case stateWaitingForProcessing:
-			return connectArtifact, currentPhase, nil
-		case stateProcessing:
+		case stateProvisioned:
 			return connectArtifact, currentPhase, nil
 		case stateReady:
 			return connectArtifact, currentPhase, nil
@@ -357,15 +359,15 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId string, cloudId string, connectArtifactId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateWaitingForProcessing, stateProcessing, stateReady},
+		Pending:      []string{stateProvisioning, stateWaitingForProcessing, stateProcessing},
+		Target:       []string{stateProvisioned, stateReady},
 		Refresh:      connectArtifactProvisionStatus(ctx, c, environmentId, cloudId, connectArtifactId),
 		Timeout:      camV1APICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect artifact %q provisioning status to become one of %v", connectArtifactId, []string{stateWaitingForProcessing, stateProcessing, stateReady}), map[string]interface{}{connectArtifactLoggingKey: connectArtifactId})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect artifact %q provisioning status to become one of %v", connectArtifactId, []string{stateProvisioned, stateReady}), map[string]interface{}{connectArtifactLoggingKey: connectArtifactId})
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return err
 	}
