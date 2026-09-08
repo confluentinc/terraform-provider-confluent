@@ -74,7 +74,7 @@ func TestResourceAttributeAllowlist_CoversAllManagedResourcesAndNamesOnly(t *tes
 	}
 
 	// v1 scope pin — bump when resources are intentionally added/removed.
-	const wantManagedResources = 64
+	const wantManagedResources = 65
 	if len(allowlist) != wantManagedResources {
 		t.Errorf("allowlist covers %d resources, want %d (update the pin if resources changed)", len(allowlist), wantManagedResources)
 	}
