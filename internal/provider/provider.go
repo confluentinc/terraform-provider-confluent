@@ -379,6 +379,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 				"confluent_notifications_integration":          integrationDataSource(),
+				"confluent_notifications_subscription":         subscriptionDataSource(),
 				// cli-tfgen:tf-datasources
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -447,6 +448,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                         rtceTopicResource(),
 				"confluent_notifications_integration":          integrationResource(),
+				"confluent_notifications_subscription":         subscriptionResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
