@@ -379,6 +379,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                 schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                 schemaRegistryDekDataSource(),
 				"confluent_notifications_integration":           integrationDataSource(),
+				"confluent_notifications_notification_type":     notificationTypeDataSource(),
 				"confluent_notifications_resource_preference":   resourcePreferenceDataSource(),
 				"confluent_notifications_resource_subscription": resourceSubscriptionDataSource(),
 				"confluent_notifications_subscription":          subscriptionDataSource(),
