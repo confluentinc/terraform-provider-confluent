@@ -117,6 +117,22 @@ resource "confluent_role_binding" "subject-with-abc-prefix-example-rb" {
   crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=abc*"
 }
 
+resource "confluent_role_binding" "subject-with-special-characters-example-rb" {
+  principal = "User:${confluent_service_account.test.id}"
+  role_name = "DeveloperRead"
+  // A subject name that contains special characters, like "/", must be URL encoded.
+  // This results in ".../subject=grxevents%2Fprivate%2Fbilling".
+  crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=${urlencode("grxevents/private/billing")}"
+}
+
+resource "confluent_role_binding" "subject-with-special-characters-prefix-example-rb" {
+  principal = "User:${confluent_service_account.test.id}"
+  role_name = "DeveloperRead"
+  // Note that the trailing "*" wildcard is intentionally kept outside of urlencode().
+  // This results in ".../subject=grxevents%2Fprivate%2Fbilling*".
+  crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=${urlencode("grxevents/private/billing")}*"
+}
+
 resource "confluent_role_binding" "kek-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "DeveloperRead"
@@ -142,6 +158,9 @@ The following arguments are supported:
 - `principal` - (Required String) A principal User to bind the role to, for example, "User:u-111aaa" for binding to a user "u-111aaa", or "User:sa-111aaa" for binding to a service account "sa-111aaa".
 - `role_name` - (Required String) A name of the role to bind to the principal. See [Confluent Cloud RBAC Roles](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#ccloud-rbac-roles) for a full list of supported role names.
 - `crn_pattern` - (Required String) A [Confluent Resource Name (CRN)](https://docs.confluent.io/cloud/current/api.html#section/Identifiers-and-URLs/Confluent-Resource-Names-(CRNs)) that specifies the scope and resource patterns necessary for the role to bind.
+
+-> **Note:** A CRN is a URI, so a resource name that contains special characters must be URL encoded. For example, a Schema Registry subject named `grxevents/private/billing` must appear in `crn_pattern` as `subject=grxevents%2Fprivate%2Fbilling`. You can use Terraform's [`urlencode()`](https://developer.hashicorp.com/terraform/language/functions/urlencode) function instead of encoding the name yourself, which is particularly useful when the resource name comes from a variable or another resource rather than a hardcoded string, see [this example](#example-of-using-urlencode) for more details.
+
 - `disable_wait_for_ready` - (Optional Boolean) An optional flag to disable wait-for-readiness on create. Must be unset when importing. Defaults to `false`.
 
 !> **Warning:** When `disable_wait_for_ready = true` is used, Terraform skips waiting for role bindings to fully propagate. This can lead to a situation where Terraform attempts to create resources before the service account has the necessary permissions—resulting in HTTP 403 Forbidden errors.
@@ -217,3 +236,33 @@ resource "confluent_kafka_topic" "orders" {
   }
 }
 ```
+
+## Example of using urlencode
+
+A CRN is a URI, so a resource name that contains special characters must be URL encoded in `crn_pattern`. Terraform's [`urlencode()`](https://developer.hashicorp.com/terraform/language/functions/urlencode) function performs the encoding for you, so you do not have to hardcode the encoded form. This is particularly useful when the resource name is defined through a variable or another resource rather than a hardcoded string.
+
+For example, to bind the `DeveloperRead` role to a Schema Registry subject named `grxevents/private/billing`:
+
+```terraform
+resource "confluent_role_binding" "subject-with-special-characters" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=${urlencode("grxevents/private/billing")}"
+}
+```
+
+The preceding configuration sets `crn_pattern` to `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/schema-registry=lsrc-abc123/subject=grxevents%2Fprivate%2Fbilling`.
+
+To bind the role to every subject that starts with `grxevents/private/billing` instead, append the `*` wildcard after the encoded subject name:
+
+```terraform
+resource "confluent_role_binding" "subject-with-special-characters-prefix" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=${urlencode("grxevents/private/billing")}*"
+}
+```
+
+!> **Warning:** Apply `urlencode()` to the resource name only, and keep the trailing `*` wildcard outside of the function. `urlencode()` percent encodes `*` as `%2A`, so `urlencode("grxevents/private/billing*")` returns `grxevents%2Fprivate%2Fbilling%2A`, where `*` is a literal character of the subject name instead of a wildcard. A percent encoded `*` may also cause Terraform to display a permanent difference for `crn_pattern` and plan a replacement on every run, see [#285](https://github.com/confluentinc/terraform-provider-confluent/issues/285) for more details.
+
+-> **Note:** `urlencode()` encodes a space as `+` rather than as `%20`. If a resource name contains spaces, and you need the `%20` form, you can use `replace(urlencode("my subject"), "+", "%20")` instead.

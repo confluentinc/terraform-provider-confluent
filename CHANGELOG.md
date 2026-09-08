@@ -1,3 +1,19 @@
+## 2.85.0 (August 28th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.84.0...v2.85.0)
+
+**Bug fixes:**
+* Fixed a bug where creating the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) failed with an "unexpected state" error for a table whose query reaches the terminal `COMPLETED` phase.
+
+## 2.84.0 (August 27th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.83.0...v2.84.0)
+
+**Bug fixes:**
+* Fixed a bug where rotating the API key/secret in the `credentials` block failed with an error requiring resource replacement for the `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration), `confluent_flink_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection), `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table), `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement), `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic), and `confluent_tag` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag).
+* Fixed a bug where updating the `confluent_tag` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag) cleared the tag definition's entity types on the backend.
+* Fixed a bug where the underlying API error detail was dropped from error messages caused by an invalid API key.
+
 ## 2.83.0 (August 12th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.82.0...v2.83.0)

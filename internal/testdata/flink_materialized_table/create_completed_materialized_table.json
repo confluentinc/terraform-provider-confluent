@@ -1,0 +1,24 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table_completed",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc-01",
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "stopped": false,
+    "table_options": {},
+    "session_options": {},
+    "query": "SELECT customer_id, product_id FROM examples.marketplace.orders LIMIT 10;"
+  },
+  "status": {
+    "phase": "COMPLETED",
+    "detail": "Materialized table has completed.",
+    "warnings": [],
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table_completed AS SELECT customer_id, product_id FROM examples.marketplace.orders LIMIT 10;",
+    "scaling_status": {},
+    "version": 1
+  }
+}

@@ -65,10 +65,23 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionAzureResourceScenarioName).
+		WillSetStateTo(scenarioStatePrivateLinkAttachmentConnectionAzureHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	// The generated delete polls Read until the connection is gone, so the scenario has to
+	// answer 404 once DELETE has moved it to HasBeenDeleted. Without this the destroy step
+	// polls to the 5h delete timeout.
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
+		InScenario(privateLinkAttachmentConnectionAzureResourceScenarioName).
+		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAzureHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{

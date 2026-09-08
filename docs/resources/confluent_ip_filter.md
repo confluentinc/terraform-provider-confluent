@@ -24,12 +24,14 @@ resource "confluent_ip_filter" "management-filter" {
 }
 
 resource "confluent_ip_filter" "multiple-filter" {
-  filter_name      = "Management, Schema, Flink API Rules"
+  filter_name      = "Management, Schema, Flink, Kafka, and ksqlDB API Rules"
   resource_group   = "multiple"
   operation_groups = [
     "MANAGEMENT",
     "SCHEMA",
-    "FLINK"
+    "FLINK",
+    "KAFKA_DATA",
+    "KSQL"
   ]
   ip_groups = [confluent_ip_group.example.id]
 }
@@ -43,7 +45,7 @@ The following arguments are supported:
 - `filter_name` - (Required String) A human-readable name for an IP Filter. Can contain any unicode letter or number, the ASCII space character, or any of the following special characters: `[`, `]`, `|`, `&`, `+`, `-`, `_`, `/`, `.`, `,`.
 - `resource_group` - (Required String) Scope of resources covered by this IP Filter. Available resource groups include `"management"` and `"multiple"`.
 - `resource_scope` - (Optional String) A CRN that specifies the scope of the IP Filter, specifically the organization or environment. Without specifying this property, the IP Filter would apply to the whole organization. For example, `"crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"` or `data.confluent_organization.resource_name`.
-- `operation_groups` - (Optional List of Strings) Scope of resources covered by this IP Filter. Resource group must be set to 'multiple' in order to use this property. During update operations, note that the operation groups passed in will replace the list of existing operation groups (passing in an empty list will remove all operation groups) from the filter (in line with the behavior for `ip_groups` attribute).
+- `operation_groups` - (Optional List of Strings) Scope of resources covered by this IP Filter. Resource group must be set to 'multiple' in order to use this property. Available operation groups include `"MANAGEMENT"`, `"SCHEMA"`, `"CATALOG"`, `"KAFKA_DISCOVERY"`, `"KAFKA_MANAGEMENT"`, `"LOGS"`, `"METRICS"`, `"FLINK"`, `"KAFKA_DATA"`, and `"KSQL"`. IP Filtering doesn't support the `"CATALOG"`, `"LOGS"`, or `"METRICS"` operation groups. For more details, see [Operation Groups](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html#operation-group-identifiers). During update operations, note that the operation groups passed in will replace the list of existing operation groups (passing in an empty list will remove all operation groups) from the filter (in line with the behavior for `ip_groups` attribute).
 - `ip_groups` - (Required List of Strings) A list of IP Groups.
 
 ## Attributes Reference

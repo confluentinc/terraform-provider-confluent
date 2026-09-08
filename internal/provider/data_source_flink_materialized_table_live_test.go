@@ -27,11 +27,18 @@ import (
 )
 
 func TestAccDataSourceFlinkMaterializedTableLive(t *testing.T) {
-	t.Parallel()
+	// TODO(INC-12957): remove once confluentinc/terraform-provider-confluent#1178 or
+	// #1180 merges. See the identical guard in resource_flink_materialized_table_live_test.go
+	// for the full explanation. This (and the TF_ACC_PROD guard below) must run before
+	// t.Parallel(), which blocks until the parallel phase starts — skipping first avoids
+	// waiting on a parallel slot for a test that's going to skip anyway.
+	t.Skip("Skipping due to INC-12957 (confluent_flink_materialized_table column type panic); re-enable once confluentinc/terraform-provider-confluent#1178 or #1180 merges")
 
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
 	}
+
+	t.Parallel()
 
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")

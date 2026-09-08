@@ -101,7 +101,7 @@ func tableflowTopicResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				Description:  "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\".",
+				Description:  "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\". If not set, new Google Cloud topics default to \"PORTABLE\" and topics on other clouds default to \"DEFAULT\".",
 				ValidateFunc: validation.StringInSlice(acceptedMetadataColumnNamingSchemes, false),
 			},
 			paramWriteMode: {

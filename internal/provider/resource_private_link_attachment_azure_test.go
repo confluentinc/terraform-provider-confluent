@@ -65,10 +65,20 @@ func TestAccPrivateLinkAttachmentAzure(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentAzureReadUrlPath)).
 		InScenario(privateLinkAttachmentAzureResourceScenarioName).
+		WillSetStateTo(scenarioStatePrivateLinkAttachmentAzureHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAzureReadUrlPath)).
+		InScenario(privateLinkAttachmentAzureResourceScenarioName).
+		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentAzureHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
