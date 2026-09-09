@@ -46,7 +46,7 @@ func providerIntegrationSetupResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(0, 60),
+				ValidateFunc: validation.StringIsNotEmpty,
 				Description:  "Display name of Provider Integration.",
 			},
 			paramCloud: {
