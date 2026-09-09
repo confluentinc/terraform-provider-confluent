@@ -9,6 +9,7 @@
     "updated_at": "2022-03-23T06:49:17.727825Z"
   },
   "spec": {
+    "expires_at": "2026-12-31",
     "description": "temp description",
     "display_name": "CI Cloud API Key",
     "owner": {

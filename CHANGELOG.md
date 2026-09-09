@@ -1,3 +1,8 @@
+## 2.86.0 (Unreleased)
+
+**New features:**
+* Added the `expires_at` attribute to the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to set an optional expiration date for an API Key.
+
 ## 2.85.0 (August 28th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.84.0...v2.85.0)
