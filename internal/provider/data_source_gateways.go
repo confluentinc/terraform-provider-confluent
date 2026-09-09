@@ -124,16 +124,20 @@ func gatewaysSchema() *schema.Schema {
 					Computed:    true,
 					Description: "A name for the Gateway.",
 				},
-				paramAwsEgressPrivateLinkGateway:           awsEgressPrivateLinkGatewayDataSourceSchema(),
-				paramAwsIngressPrivateLinkGateway:          awsIngressPrivateLinkGatewayDataSourceSchema(),
-				paramAwsPeeringGateway:                     awsPeeringGatewaySpecDataSourceSchema(),
-				paramAwsPrivateNetworkInterfaceGateway:     awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
-				paramAzureEgressPrivateLinkGateway:           azureEgressPrivateLinkGatewayDataSourceSchema(),
-				paramAzureIngressPrivateLinkGateway:          azureIngressPrivateLinkGatewayDataSourceSchema(),
-				paramAzurePeeringGateway:                     azurePeeringGatewaySpecDataSourceSchema(),
-				paramGcpEgressPrivateServiceConnectGateway:   gcpEgressPrivateServiceConnectGatewayDataSourceSchema(),
-				paramGcpIngressPrivateServiceConnectGateway:  gcpIngressPrivateServiceConnectGatewayDataSourceSchema(),
-				paramGcpPeeringGateway:                       gcpPeeringGatewaySpecDataSourceSchema(),
+				// These ten helpers now live in the generated data_source_gateway.go. Calling them
+				// rather than keeping a copy here keeps confluent_gateways' per-gateway shape and
+				// confluent_gateway's identical by construction -- two schemas that must agree
+				// are exactly the pair that drifts once they are declared twice.
+				paramAwsEgressPrivateLinkGateway:            awsEgressPrivateLinkGatewayGatewayDataSourceSchema(),
+				paramAwsIngressPrivateLinkGateway:           awsIngressPrivateLinkGatewayGatewayDataSourceSchema(),
+				paramAwsPeeringGateway:                      awsPeeringGatewayGatewayDataSourceSchema(),
+				paramAwsPrivateNetworkInterfaceGateway:      awsPrivateNetworkInterfaceGatewayGatewayDataSourceSchema(),
+				paramAzureEgressPrivateLinkGateway:          azureEgressPrivateLinkGatewayGatewayDataSourceSchema(),
+				paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewayGatewayDataSourceSchema(),
+				paramAzurePeeringGateway:                    azurePeeringGatewayGatewayDataSourceSchema(),
+				paramGcpEgressPrivateServiceConnectGateway:  gcpEgressPrivateServiceConnectGatewayGatewayDataSourceSchema(),
+				paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewayGatewayDataSourceSchema(),
+				paramGcpPeeringGateway:                      gcpPeeringGatewayGatewayDataSourceSchema(),
 			},
 		},
 	}
