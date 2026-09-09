@@ -1,9 +1,9 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.12
+go 1.26.7
 
 require (
-	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
+	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.9
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1

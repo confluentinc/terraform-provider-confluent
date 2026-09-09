@@ -60,6 +60,23 @@ func apiKeyResource() *schema.Resource {
 				Description:  "A free-form description of the API key.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramExpiresAt: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "The date on which this API key expires, as an ISO 8601 UTC date (for example, \"2026-12-31\"). The key remains valid through the end of this date. If not set, the API key never expires.",
+				ValidateFunc: func(i interface{}, k string) ([]string, []error) {
+					v, ok := i.(string)
+					if !ok {
+						return nil, []error{fmt.Errorf("expected type of %q to be string", k)}
+					}
+					if _, err := time.Parse("2006-01-02", v); err != nil {
+						return nil, []error{fmt.Errorf("%q must be a UTC date in YYYY-MM-DD format (for example, \"2026-12-31\"), got: %q", k, v)}
+					}
+					return nil, nil
+				},
+			},
 			paramOwner: apiKeyOwnerSchema(),
 			// The API Key resource represents Cloud API Key if paramResource is not set
 			paramResource: apiKeyResourceSchema(),
@@ -95,7 +112,10 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	spec := apikeysv2.NewIamV2ApiKeySpec()
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetOwner(apikeysv2.ObjectReference{Id: ownerId, Kind: &ownerKind})
+	if expiration, ok := d.GetOk(paramExpiresAt); ok {
+		spec.SetExpiresAt(expiration.(string))
+	}
+	spec.SetOwner(apikeysv2.TypedGlobalObjectReference{Id: ownerId, Kind: &ownerKind})
 
 	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, ksqlDB, Tableflow, and Global).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
@@ -108,21 +128,23 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		resourceId := extractStringValueFromBlock(d, paramResource, paramId)
 		resourceKind := extractStringValueFromBlock(d, paramResource, paramKind)
 		apiVersion := extractStringValueFromBlock(d, paramResource, paramApiVersion)
-		spec.SetResource(apikeysv2.ObjectReference{Id: resourceId, Kind: &resourceKind})
+		resource := apikeysv2.TypedEnvScopedObjectReference{Id: resourceId, Kind: &resourceKind}
 
 		if apiVersion == fcpmApiVersion {
-			spec.Resource.SetApiVersion(fcpmApiVersion)
+			resource.SetApiVersion(fcpmApiVersion)
 		}
 		if apiVersion == tableflowApiVersion {
-			spec.Resource.SetApiVersion(tableflowApiVersion)
+			resource.SetApiVersion(tableflowApiVersion)
 		}
 		if apiVersion == globalApiVersion {
-			spec.Resource.SetApiVersion(globalApiVersion)
+			resource.SetApiVersion(globalApiVersion)
 		}
+		spec.SetResource(resource)
 
 		if isFlinkApiKey(apikeysv2.IamV2ApiKey{Spec: spec}) {
-			spec.Resource.SetId(resourceId)
-			spec.Resource.SetEnvironment(environmentId)
+			resource.SetId(resourceId)
+			resource.SetEnvironment(environmentId)
+			spec.SetResource(resource)
 		}
 	}
 
@@ -271,13 +293,16 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeysv2.IamV2ApiKey) (
 	if err := d.Set(paramDescription, apiKey.Spec.GetDescription()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
+	if err := d.Set(paramExpiresAt, apiKey.Spec.GetExpiresAt()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
 	if err := setOwner(apiKey, d); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	// Check whether the API Key is a resource-specific API key (Kafka, Schema Registry, ksqlDB, Tableflow, and Global).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
-	resourceKind := strings.ToLower(apiKey.Spec.Resource.GetKind())
+	resourceKind := strings.ToLower(apiKey.Spec.Resource.Get().GetKind())
 	isResourceSpecificApiKey := resourceKind != cloudKindInLowercase
 	if isResourceSpecificApiKey {
 		environmentId := extractStringValueFromNestedBlock(d, paramResource, paramEnvironment, paramId)
@@ -304,35 +329,36 @@ func setOwner(apiKey apikeysv2.IamV2ApiKey, d *schema.ResourceData) error {
 }
 
 func setManagedResource(apiKey apikeysv2.IamV2ApiKey, environmentId string, d *schema.ResourceData) error {
+	resource := apiKey.Spec.GetResource()
 	// Have to be careful here in case Schema Registry and ksqlDB don't use paramEnvironment
-	kind := apiKey.Spec.Resource.GetKind()
+	kind := resource.GetKind()
 	// Hack for API Key Mgmt API that temporarily returns schemaRegistryKind / ksqlDbKind instead of clusterKind
 	if kind == schemaRegistryKind || kind == ksqlDbKind {
-		apiKey.Spec.Resource.SetKind(clusterKind)
+		resource.SetKind(clusterKind)
 	}
 
 	if isFlinkApiKey(apiKey) {
 		// Override Flink API Key's resource ID to be "<cloud>.<region>" and not "<envID>.<cloud>.<region>"
-		cloud, regionName, err := extractCloudAndRegionName(apiKey.Spec.Resource.GetId())
+		cloud, regionName, err := extractCloudAndRegionName(resource.GetId())
 		if err != nil {
 			return fmt.Errorf("error parsing Flink API Key %q attribute in %q block: %s", paramId, paramResource, createDescriptiveError(err))
 		}
-		apiKey.Spec.Resource.SetId(fmt.Sprintf("%s.%s", cloud, regionName))
+		resource.SetId(fmt.Sprintf("%s.%s", cloud, regionName))
 	}
 	if environmentId != "" {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
-			paramId:         apiKey.Spec.Resource.GetId(),
-			paramKind:       apiKey.Spec.Resource.GetKind(),
-			paramApiVersion: apiKey.Spec.Resource.GetApiVersion(),
+			paramId:         resource.GetId(),
+			paramKind:       resource.GetKind(),
+			paramApiVersion: resource.GetApiVersion(),
 			paramEnvironment: []interface{}{map[string]interface{}{
 				paramId: environmentId,
 			}},
 		}})
 	} else {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
-			paramId:         apiKey.Spec.Resource.GetId(),
-			paramKind:       apiKey.Spec.Resource.GetKind(),
-			paramApiVersion: apiKey.Spec.Resource.GetApiVersion(),
+			paramId:         resource.GetId(),
+			paramKind:       resource.GetKind(),
+			paramApiVersion: resource.GetApiVersion(),
 		}})
 	}
 }
@@ -466,31 +492,31 @@ func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environment
 }
 
 func isKafkaApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
-	return apiKey.Spec.Resource.GetKind() == clusterKind && apiKey.Spec.Resource.GetApiVersion() == cmkApiVersion
+	return apiKey.Spec.Resource.Get().GetKind() == clusterKind && apiKey.Spec.Resource.Get().GetApiVersion() == cmkApiVersion
 }
 
 func isSchemaRegistryApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
 	// and api_version="srcm/v2"
-	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) &&
-		(apiKey.Spec.Resource.GetApiVersion() == srcmV3ApiVersion || apiKey.Spec.Resource.GetApiVersion() == srcmV2ApiVersion)
+	return (apiKey.Spec.Resource.Get().GetKind() == clusterKind || apiKey.Spec.Resource.Get().GetKind() == schemaRegistryKind) &&
+		(apiKey.Spec.Resource.Get().GetApiVersion() == srcmV3ApiVersion || apiKey.Spec.Resource.Get().GetApiVersion() == srcmV2ApiVersion)
 }
 
 func isFlinkApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
-	return apiKey.Spec.Resource.GetKind() == regionKind && apiKey.Spec.Resource.GetApiVersion() == fcpmApiVersion
+	return apiKey.Spec.Resource.Get().GetKind() == regionKind && apiKey.Spec.Resource.Get().GetApiVersion() == fcpmApiVersion
 }
 
 func isKsqlDbClusterApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns ksqlDbKind instead of clusterKind
-	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == ksqlDbKind) && apiKey.Spec.Resource.GetApiVersion() == ksqldbcmApiVersion
+	return (apiKey.Spec.Resource.Get().GetKind() == clusterKind || apiKey.Spec.Resource.Get().GetKind() == ksqlDbKind) && apiKey.Spec.Resource.Get().GetApiVersion() == ksqldbcmApiVersion
 }
 
 func isTableflowApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
-	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
+	return apiKey.Spec.Resource.Get().GetKind() == tableflowKind && apiKey.Spec.Resource.Get().GetId() == tableflowKindInLowercase
 }
 
 func isGlobalApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
-	return apiKey.Spec.Resource.GetKind() == globalKind && apiKey.Spec.Resource.GetId() == globalKindInLowercase
+	return apiKey.Spec.Resource.Get().GetKind() == globalKind && apiKey.Spec.Resource.Get().GetId() == globalKindInLowercase
 }
 
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
@@ -501,7 +527,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2
 
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
-			clusterId := createdApiKey.Spec.Resource.GetId()
+			clusterId := createdApiKey.Spec.Resource.Get().GetId()
 			restEndpoint, err := fetchHttpEndpointOfKafkaCluster(ctx, c, environmentId, clusterId)
 			if err != nil {
 				return fmt.Errorf("error fetching Kafka Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
