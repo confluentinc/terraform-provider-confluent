@@ -196,6 +196,28 @@ func TestTransport_NoRetryOnFailure(t *testing.T) {
 	}
 }
 
+// TestTransport_RecoversPosterPanic asserts a panicking Post is contained on the
+// worker goroutine — it must never crash the process this telemetry path exists to
+// protect — and that the worker survives to deliver the next event. Without the
+// recover in deliver, the unrecovered panic would abort the whole process.
+func TestTransport_RecoversPosterPanic(t *testing.T) {
+	var n atomic.Int64
+	fp := newFakePoster(func(context.Context, Usage) error {
+		if n.Add(1) == 1 {
+			panic("post boom") // first delivery panics on the worker goroutine
+		}
+		return nil // later deliveries succeed
+	})
+	// One worker, so "the worker survived" is only observable if the panic didn't
+	// kill it: the second event can only be delivered by the same recovered worker.
+	tr := newTransport(fp, context.Background(), 1, 4, time.Minute)
+	defer tr.Close()
+
+	tr.Report(sampleUsage()) // Post panics; deliver must recover
+	tr.Report(sampleUsage()) // must still be delivered by the surviving worker
+	waitSignals(t, fp.entered, 2, 2*time.Second)
+}
+
 // TestNewTransport_UsesDefaults pins the production constructor to the documented
 // pool size, queue depth, and per-report timeout. Without this, a regression in
 // the constants — e.g. defaultWorkers dropping to 0, which would silently

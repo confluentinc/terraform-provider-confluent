@@ -16,6 +16,7 @@ package telemetry
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -149,6 +150,19 @@ func (t *Transport) worker() {
 }
 
 func (t *Transport) deliver(u Usage) {
+	// A panicking Poster.Post runs on this worker goroutine, outside the CRUD
+	// wrapper's recover; unrecovered it would crash the whole provider process —
+	// the failure this telemetry path must never cause. Recover, log, and drop
+	// like any other failed send, and let the worker keep running.
+	defer func() {
+		if r := recover(); r != nil {
+			tflog.Debug(t.logCtx, "dropped client-analytics event: report panicked", map[string]interface{}{
+				"resource_type": u.ResourceType,
+				"operation":     string(u.Operation),
+				"panic":         fmt.Sprint(r),
+			})
+		}
+	}()
 	ctx, cancel := context.WithTimeout(t.logCtx, t.timeout)
 	defer cancel()
 	if err := t.poster.Post(ctx, u); err != nil {
