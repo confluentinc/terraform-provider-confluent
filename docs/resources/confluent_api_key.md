@@ -196,6 +196,7 @@ The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the API Key.
 - `description` - (Optional String) A free-form description of the API Account.
+- `expires_at` - (Optional String) The date on which the API Key expires, as an ISO 8601 UTC date (for example, `2026-12-31`). The API Key remains valid through the end of this date. If not set, the API Key never expires. Changing this attribute forces creation of a new API Key.
 - `disable_wait_for_ready` - (Optional Boolean) An optional flag to disable wait-for-readiness on create. Its primary use case is for Cluster API Keys for private networking options when readiness check fails. Must be unset when importing. Defaults to `false`.
 - `owner` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the owner that the API Key belongs to, for example, `sa-abc123` or `u-abc123`.
