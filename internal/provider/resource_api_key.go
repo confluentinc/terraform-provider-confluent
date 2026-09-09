@@ -66,6 +66,16 @@ func apiKeyResource() *schema.Resource {
 				Computed:    true,
 				ForceNew:    true,
 				Description: "The date on which this API key expires, as an ISO 8601 UTC date (for example, \"2026-12-31\"). The key remains valid through the end of this date. If not set, the API key never expires.",
+				ValidateFunc: func(i interface{}, k string) ([]string, []error) {
+					v, ok := i.(string)
+					if !ok {
+						return nil, []error{fmt.Errorf("expected type of %q to be string", k)}
+					}
+					if _, err := time.Parse("2006-01-02", v); err != nil {
+						return nil, []error{fmt.Errorf("%q must be a UTC date in YYYY-MM-DD format (for example, \"2026-12-31\"), got: %q", k, v)}
+					}
+					return nil, nil
+				},
 			},
 			paramOwner: apiKeyOwnerSchema(),
 			// The API Key resource represents Cloud API Key if paramResource is not set
