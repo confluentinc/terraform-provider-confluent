@@ -195,6 +195,56 @@ func TestWrapper_StackFramesAreCapped(t *testing.T) {
 	}
 }
 
+// TestWrapper_PanicDetailAndPayloadDiverge asserts the two caps diverge in a
+// single recovered panic: the telemetry payload keeps the full stack (more than
+// the operator cap, up to maxStackFrames) while the operator-facing Detail is
+// trimmed to maxDetailFrames with a marker. Asserted together here because the
+// unit tests only cover each cap separately — a regression that over-truncated
+// the payload down to the detail cap would otherwise pass.
+func TestWrapper_PanicDetailAndPayloadDiverge(t *testing.T) {
+	rec := &recordingReporter{}
+	r := newTestResource()
+	var recurse func(int)
+	recurse = func(n int) {
+		if n == 0 {
+			panic("deep kaboom")
+		}
+		recurse(n - 1)
+	}
+	r.CreateContext = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics {
+		recurse(maxStackFrames * 4) // far deeper than either cap
+		return nil
+	}
+	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(rec))
+
+	diags := r.CreateContext(context.Background(), nil, nil)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostics from a recovered panic, got %+v", diags)
+	}
+
+	// Payload keeps more than the operator sees, still bounded by maxStackFrames.
+	payload := rec.snapshot()[0].StackFrames
+	if len(payload) <= maxDetailFrames || len(payload) > maxStackFrames {
+		t.Errorf("payload StackFrames = %d, want in (%d, %d]", len(payload), maxDetailFrames, maxStackFrames)
+	}
+
+	// Operator Detail shows exactly maxDetailFrames frames plus a truncation
+	// marker citing the full payload frame count.
+	detail := diags[0].Detail
+	shown := 0
+	for _, ln := range strings.Split(detail, "\n") {
+		if strings.Contains(ln, ".go:") {
+			shown++
+		}
+	}
+	if shown != maxDetailFrames {
+		t.Errorf("operator Detail shows %d frames, want %d", shown, maxDetailFrames)
+	}
+	if !strings.Contains(detail, fmt.Sprintf("showing top %d of %d frames", maxDetailFrames, len(payload))) {
+		t.Errorf("Detail should carry a truncation marker for the full %d-frame payload, got %q", len(payload), detail)
+	}
+}
+
 // TestWrapper_RecoversPanicInReportPath asserts a panic in the reporter after a
 // successful call is contained, preserving the successful result.
 func TestWrapper_RecoversPanicInReportPath(t *testing.T) {

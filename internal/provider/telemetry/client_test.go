@@ -205,3 +205,36 @@ func TestSDKPoster_NilChangedAttributesSerializesAsEmpty(t *testing.T) {
 		t.Errorf("changed_attributes = %v (type %T), want [] (not null)", ca, ca)
 	}
 }
+
+// TestSDKPoster_MapsStackFrames asserts a non-empty StackFrames (the panic-only
+// field) serializes as a JSON string array under stack_frames, in order. No other
+// poster test supplies a non-empty stack, so this covers that wire mapping.
+func TestSDKPoster_MapsStackFrames(t *testing.T) {
+	got := make(chan []byte, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		got <- raw
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := NewSDKPoster(srv.URL, srv.Client(), "ua", nil)
+	u := sampleUsage()
+	u.Error = true
+	u.StackFrames = []string{"provider/resource_x.go:10", "provider/resource_x.go:20"}
+	if err := p.Post(context.Background(), u); err != nil {
+		t.Fatalf("Post returned error: %v", err)
+	}
+
+	var body map[string]interface{}
+	if err := json.Unmarshal(<-got, &body); err != nil {
+		t.Fatalf("unmarshal body: %v", err)
+	}
+	sf, ok := body["stack_frames"].([]interface{})
+	if !ok {
+		t.Fatalf("stack_frames = %v (type %T), want a JSON array", body["stack_frames"], body["stack_frames"])
+	}
+	if len(sf) != 2 || sf[0] != "provider/resource_x.go:10" || sf[1] != "provider/resource_x.go:20" {
+		t.Errorf("stack_frames = %v, want the two supplied frames in order", sf)
+	}
+}

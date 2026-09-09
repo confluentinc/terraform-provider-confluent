@@ -65,6 +65,14 @@ type Poster interface {
 	Post(ctx context.Context, u Usage) error
 }
 
+// noopPoster is substituted for a nil Poster so a misconfigured transport
+// silently drops events instead of nil-panicking a worker goroutine. That panic
+// would run outside the CRUD wrapper's recover and crash the process — exactly
+// what this telemetry path exists to avoid.
+type noopPoster struct{}
+
+func (noopPoster) Post(context.Context, Usage) error { return nil }
+
 // Transport is the bounded-worker delivery mechanism. Construct it once per
 // provider process (during provider configuration) and share it across the
 // concurrent CRUD goroutines; Report is safe for concurrent use.
@@ -91,6 +99,9 @@ func NewTransport(poster Poster, logCtx context.Context) *Transport {
 }
 
 func newTransport(poster Poster, logCtx context.Context, workers, queueDepth int, timeout time.Duration) *Transport {
+	if poster == nil {
+		poster = noopPoster{}
+	}
 	if logCtx == nil {
 		logCtx = context.Background()
 	}

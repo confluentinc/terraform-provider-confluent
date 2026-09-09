@@ -211,8 +211,13 @@ func TestNewTransport_UsesDefaults(t *testing.T) {
 	if tr.timeout != defaultPerReportTimeout {
 		t.Errorf("per-report timeout = %s, want %s", tr.timeout, defaultPerReportTimeout)
 	}
-	if defaultWorkers < 1 {
-		t.Errorf("defaultWorkers = %d, want a fixed pool of at least 1", defaultWorkers)
+	// Pin the documented constants to their literal values, so a regression in
+	// any of them fails here rather than silently changing the pool's shape.
+	if defaultWorkers != 4 {
+		t.Errorf("defaultWorkers = %d, want 4", defaultWorkers)
+	}
+	if defaultQueueDepth != 8 {
+		t.Errorf("defaultQueueDepth = %d, want 8", defaultQueueDepth)
 	}
 	if defaultQueueDepth != defaultWorkers*2 {
 		t.Errorf("defaultQueueDepth = %d, want workers*2 (=%d) so the queue stays shallow", defaultQueueDepth, defaultWorkers*2)
@@ -231,6 +236,22 @@ func TestNewTransport_NilLogCtx(t *testing.T) {
 
 	tr.Report(sampleUsage())
 	waitSignals(t, fp.entered, 1, 2*time.Second)
+}
+
+// TestNewTransport_NilPosterIsSafe confirms a nil Poster is replaced with a safe
+// no-op rather than left nil. Telemetry must never crash the process it observes;
+// without the substitution the first delivery would nil-panic a worker goroutine,
+// which runs outside the CRUD wrapper's recover and would take down the process.
+func TestNewTransport_NilPosterIsSafe(t *testing.T) {
+	tr := NewTransport(nil, context.Background())
+	defer tr.Close()
+
+	if tr.poster == nil {
+		t.Fatal("nil Poster was not replaced with a safe no-op; a worker would nil-panic on Post")
+	}
+	// The non-nil assertion above is the deterministic guarantee; also enqueue one
+	// event as a best-effort smoke of the delivery path against the substitute.
+	tr.Report(sampleUsage())
 }
 
 // TestTransport_CloseIsIdempotent confirms Close can be called more than once
