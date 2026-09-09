@@ -137,6 +137,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1 h1:WZJYfgXJrvTIYQpCFps/qHF7T
 github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1/go.mod h1:kB+MXWYYg9ohrTCb27LlfpTbuexAzyYAmum105ow0ho=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUfu2Hnq9PfnI/1H62wEs=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
+github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.0.0-20260909150805-7dfad3daf9b5 h1:3HGMmpdFdJV4eVhzqjnyUBmpMkL8dP7jpyMLvnujw+w=
+github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.0.0-20260909150805-7dfad3daf9b5/go.mod h1:CrN0g1b6r60ZHTx62RC9MdHcT8aqff/JrrX2NiuZBYY=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.7.0 h1:yf/1TiSCiAT0cD1dBZB6SU+hUAAL+uCezLx5MM9aHCA=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.7.0/go.mod h1:A0gPt6EjmzCV+CftXu2TeefIOiha2OTbATVOPp0ccx0=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=
