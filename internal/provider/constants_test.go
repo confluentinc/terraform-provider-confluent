@@ -1153,6 +1153,7 @@ message SomeRecord {
 	transitGatewayAttachmentDataSourceDisplayName      = "prod-tgw-use1"
 	transitGatewayAttachmentDataSourceLabel            = "example"
 	unityCatalogIntegrationScenarioName                = "confluent_catalog_integration Unity Resource Lifecycle"
+	bigLakeMetastoreCatalogIntegrationScenarioName     = "confluent_catalog_integration BigLake Metastore Resource Lifecycle"
 	updatedIssuer                                      = "https://example.okta.com/oauth2/default"
 	updatedJwksUri                                     = "https://example.okta.com/oauth2/default/v1/keys"
 	userApiVersion                                     = "iam/v2"
