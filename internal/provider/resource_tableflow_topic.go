@@ -30,7 +30,7 @@ import (
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
-var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
+var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage, paramGcsStorage}
 var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
 var acceptedMetadataColumnNamingSchemes = []string{metadataColumnNamingSchemeDefault, metadataColumnNamingSchemePortable}
 
@@ -116,6 +116,7 @@ func tableflowTopicResource() *schema.Resource {
 			paramByobAws:        byobAwsSchema(),
 			paramManagedStorage: managedStorageSchema(),
 			paramAzureStorage:   azureStorageSchema(),
+			paramGcsStorage:     gcsStorageSchema(),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -199,6 +200,36 @@ func azureStorageSchema() *schema.Schema {
 	}
 }
 
+func gcsStorageSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		ForceNew:    true,
+		Optional:    true,
+		Description: "The Tableflow storage configuration for topic in Google Cloud Storage.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramBucketName: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramBucketRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedBucketTypes,
+	}
+}
+
 func errorHandlingSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -243,6 +274,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	isByobAws := len(d.Get(paramByobAws).([]interface{})) > 0
 	isManaged := len(d.Get(paramManagedStorage).([]interface{})) > 0
 	isAzure := len(d.Get(paramAzureStorage).([]interface{})) > 0
+	isGcs := len(d.Get(paramGcsStorage).([]interface{})) > 0
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -317,6 +349,15 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 				StorageAccountName:    extractStringValueFromBlock(d, paramAzureStorage, paramStorageAccount),
 				ProviderIntegrationId: extractStringValueFromBlock(d, paramAzureStorage, paramProviderIntegrationId),
 				StorageRegion:         tableflowv1.PtrString(extractStringValueFromBlock(d, paramAzureStorage, paramStorageRegion)),
+			},
+		})
+	} else if isGcs {
+		tableflowTopicSpec.SetStorage(tableflowv1.TableflowV1TableflowTopicSpecStorageOneOf{
+			TableflowV1GoogleCloudStorageSpec: &tableflowv1.TableflowV1GoogleCloudStorageSpec{
+				Kind:                  gcsSpecKind,
+				BucketName:            extractStringValueFromBlock(d, paramGcsStorage, paramBucketName),
+				BucketRegion:          tableflowv1.PtrString(extractStringValueFromBlock(d, paramGcsStorage, paramBucketRegion)),
+				ProviderIntegrationId: extractStringValueFromBlock(d, paramGcsStorage, paramProviderIntegrationId),
 			},
 		})
 	}
@@ -444,6 +485,10 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1AzureAdlsSpec.GetTablePath()); err != nil {
 			return nil, err
 		}
+	} else if storageType == gcsSpecKind {
+		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1GoogleCloudStorageSpec.GetTablePath()); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.Set(paramRecordFailureStrategy, tableflowTopic.GetSpec().Config.GetRecordFailureStrategy()); err != nil {
@@ -477,6 +522,14 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 			paramContainerName:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetContainerName(),
 			paramStorageRegion:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetStorageRegion(),
 			paramProviderIntegrationId: tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetProviderIntegrationId(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if tableflowTopic.Spec.GetStorage().TableflowV1GoogleCloudStorageSpec != nil {
+		if err := d.Set(paramGcsStorage, []interface{}{map[string]interface{}{
+			paramBucketName:            tableflowTopic.Spec.GetStorage().TableflowV1GoogleCloudStorageSpec.GetBucketName(),
+			paramBucketRegion:          tableflowTopic.Spec.GetStorage().TableflowV1GoogleCloudStorageSpec.GetBucketRegion(),
+			paramProviderIntegrationId: tableflowTopic.Spec.GetStorage().TableflowV1GoogleCloudStorageSpec.GetProviderIntegrationId(),
 		}}); err != nil {
 			return nil, err
 		}
@@ -530,6 +583,10 @@ func getStorageType(tableflowTopic tableflowv1.TableflowV1TableflowTopic) (strin
 
 	if config.TableflowV1AzureAdlsSpec != nil {
 		return azureSpecKind, nil
+	}
+
+	if config.TableflowV1GoogleCloudStorageSpec != nil {
+		return gcsSpecKind, nil
 	}
 
 	return "", fmt.Errorf("error reading storage type for Tableflow Topic %q", tableflowTopic.Spec.GetDisplayName())
