@@ -122,10 +122,12 @@ func TestTransport_ReportNonBlockingAndDropsWhenFull(t *testing.T) {
 	if got := fp.calls.Load(); got != 4 {
 		t.Fatalf("expected 4 total Posts (2 in-flight + 2 queued, 6 dropped), got %d", got)
 	}
-	// Give any erroneous extra deliveries a chance to appear, then confirm none did.
-	time.Sleep(50 * time.Millisecond)
-	if got := fp.calls.Load(); got != 4 {
-		t.Fatalf("dropped events must never be delivered; calls grew to %d", got)
+	// The six dropped events must never reach a worker: fail fast if a fifth Post
+	// enters within a bounded window, else the window elapsing confirms none did.
+	select {
+	case <-fp.entered:
+		t.Fatalf("dropped events must never be delivered; a 5th Post entered (calls=%d)", fp.calls.Load())
+	case <-time.After(50 * time.Millisecond):
 	}
 }
 
@@ -189,10 +191,12 @@ func TestTransport_NoRetryOnFailure(t *testing.T) {
 
 	tr.Report(sampleUsage())
 	waitSignals(t, fp.entered, 1, 2*time.Second)
-	// A retry would produce a second call; give it a window and confirm it stays 1.
-	time.Sleep(100 * time.Millisecond)
-	if got := fp.calls.Load(); got != 1 {
-		t.Fatalf("failed send must not be retried; got %d calls", got)
+	// A retry would enter Post a second time: fail fast if it does, else the window
+	// elapsing confirms the failed send was not retried.
+	select {
+	case <-fp.entered:
+		t.Fatalf("failed send must not be retried; a 2nd Post entered (calls=%d)", fp.calls.Load())
+	case <-time.After(100 * time.Millisecond):
 	}
 }
 
