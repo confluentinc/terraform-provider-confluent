@@ -4,7 +4,17 @@ TEST?=./...
 NAME        := terraform-provider-confluent
 # Build variables
 BUILD_DIR   := bin
+# The release path (release-ci) runs only under CI, the only place the next version is pushed as a
+# tag. There, read the newest tag from origin, not the local clone: CI fetches only tags reachable
+# from the built branch, so a tag already pushed onto an off-branch commit is invisible locally, gets
+# recomputed, and fails to push as "already exists", wedging the release. Off CI keep the local-tag
+# lookup: VERSION is expanded at parse time (via CLEAN_VERSION :=), so an unconditional ls-remote
+# would hit the network on every make target. sort -V = max; $$-anchor skips "-deleted"/peeled refs.
+ifeq ($(CI),true)
+VERSION     ?= $(shell git ls-remote --tags origin 2>/dev/null | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n 1)
+else
 VERSION     ?= $(shell git tag --sort=-creatordate | grep -v ".*deleted" | head -n 1)
+endif
 # Go variables
 GOENV         := GO111MODULE=on
 GOCMD         := $(GOENV) go
