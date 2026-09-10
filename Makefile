@@ -4,7 +4,11 @@ TEST?=./...
 NAME        := terraform-provider-confluent
 # Build variables
 BUILD_DIR   := bin
-VERSION     ?= $(shell git tag --sort=-creatordate | grep -v ".*deleted" | head -n 1)
+# Newest release tag, read from origin (not the local clone): CI only fetches tags reachable from the
+# built branch, so a tag already pushed onto an off-branch commit stays invisible locally, gets
+# recomputed, then fails to push as "already exists" and wedges the release. sort -V picks the max;
+# the $$-anchored match keeps only bare vX.Y.Z, skipping "-deleted" and peeled "^{}" refs.
+VERSION     ?= $(shell git ls-remote --tags origin 2>/dev/null | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n 1)
 # Go variables
 GOENV         := GO111MODULE=on
 GOCMD         := $(GOENV) go
