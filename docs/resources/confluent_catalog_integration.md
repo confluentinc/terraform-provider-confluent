@@ -102,6 +102,11 @@ The following arguments are supported:
     - `client_id` - (Required String, Sensitive) The OAuth client ID used to authenticate with the Unity Catalog.
     - `client_secret` - (Required String, Sensitive) The OAuth client secret used for authentication with the Unity Catalog.
     - `custom_schema` - (Optional String) The custom schema name to use in Unity Catalog.
+- `biglake_metastore` (Optional Configuration Block) supports the following:
+    - `provider_integration_id` - (Required String) The provider integration id.
+    - `gcp_project_id` - (Required String) The GCP project id that hosts the BigLake Metastore catalog.
+    - `catalog_name` - (Required String) The name of the catalog within BigLake Metastore.
+    - `custom_namespace` - (Optional String) The custom namespace to use in BigLake Metastore.
 - `credentials` (Optional Configuration Block, ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
