@@ -130,6 +130,7 @@ const (
 	azureProviderIntegrationV2ResourceLabel                             = "test_azure"
 	azureSubscription                                                   = "1234abcd-12ab-34cd-1234-123456abcdef"
 	azureTableflowTopicScenarioName                                     = "confluent_tableflow_topic Azure Storage Resource Lifecycle"
+	gcsTableflowTopicScenarioName                                       = "confluent_tableflow_topic GCS Storage Resource Lifecycle"
 	azureTenant                                                         = "1111tttt-1111-1111-1111-111111tttttt"
 	businessMetadataBindingDataSourceLabel                              = "data.confluent_business_metadata_binding.main"
 	businessMetadataBindingDataSourceScenarioName                       = "confluent_business_metadata_binding Data Source Lifecycle"
