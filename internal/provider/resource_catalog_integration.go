@@ -30,7 +30,7 @@ import (
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
-var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake, paramUnity}
+var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake, paramUnity, paramBigLakeMetastore}
 
 func catalogIntegrationResource() *schema.Resource {
 	return &schema.Resource{
@@ -53,12 +53,13 @@ func catalogIntegrationResource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether the Catalog Integration should be suspended.",
 			},
-			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
-			paramEnvironment:  environmentSchema(),
-			paramCredentials:  credentialsSchema(),
-			paramAwsGlue:      catalogIntegrationAwsGlueSchema(),
-			paramSnowflake:    catalogIntegrationSnowflakeSchema(),
-			paramUnity:        catalogIntegrationUnitySchema(),
+			paramKafkaCluster:     requiredKafkaClusterBlockSchema(),
+			paramEnvironment:      environmentSchema(),
+			paramCredentials:      credentialsSchema(),
+			paramAwsGlue:          catalogIntegrationAwsGlueSchema(),
+			paramSnowflake:        catalogIntegrationSnowflakeSchema(),
+			paramUnity:            catalogIntegrationUnitySchema(),
+			paramBigLakeMetastore: catalogIntegrationBigLakeMetastoreSchema(),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -80,6 +81,43 @@ func catalogIntegrationAwsGlueSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The custom database name to use in AWS Glue.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedCatalogIntegrationConnectionTypes,
+	}
+}
+
+func catalogIntegrationBigLakeMetastoreSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Description: "The catalog integration connection configuration for BigLake Metastore.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramGcpProjectId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The GCP project id that hosts the BigLake Metastore catalog.",
+				},
+				paramCatalogName: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The name of the catalog within BigLake Metastore.",
+				},
+				paramCustomNamespace: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom namespace to use in BigLake Metastore.",
 				},
 			},
 		},
@@ -188,6 +226,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 	isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
 	isUnity := len(d.Get(paramUnity).([]interface{})) > 0
+	isBigLake := len(d.Get(paramBigLakeMetastore).([]interface{})) > 0
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -236,6 +275,19 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
 			TableflowV1CatalogIntegrationUnitySpec: unitySpec,
+		})
+	} else if isBigLake {
+		bigLakeMetastoreSpec := &tableflowv1.TableflowV1CatalogIntegrationBigLakeMetastoreSpec{
+			Kind:                  bigLakeMetastoreSpecKind,
+			ProviderIntegrationId: extractStringValueFromBlock(d, paramBigLakeMetastore, paramProviderIntegrationId),
+			GcpProjectId:          extractStringValueFromBlock(d, paramBigLakeMetastore, paramGcpProjectId),
+			CatalogName:           extractStringValueFromBlock(d, paramBigLakeMetastore, paramCatalogName),
+		}
+		if v := extractStringValueFromBlock(d, paramBigLakeMetastore, paramCustomNamespace); v != "" {
+			bigLakeMetastoreSpec.SetCustomNamespace(v)
+		}
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationBigLakeMetastoreSpec: bigLakeMetastoreSpec,
 		})
 	}
 
@@ -382,6 +434,18 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 		if err := d.Set(paramUnity, []interface{}{unityAttributes}); err != nil {
 			return nil, err
 		}
+	} else if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec != nil {
+		bigLakeMetastoreAttributes := map[string]interface{}{
+			paramProviderIntegrationId: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec.GetProviderIntegrationId(),
+			paramGcpProjectId:          catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec.GetGcpProjectId(),
+			paramCatalogName:           catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec.GetCatalogName(),
+		}
+		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec.HasCustomNamespace() {
+			bigLakeMetastoreAttributes[paramCustomNamespace] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationBigLakeMetastoreSpec.GetCustomNamespace()
+		}
+		if err := d.Set(paramBigLakeMetastore, []interface{}{bigLakeMetastoreAttributes}); err != nil {
+			return nil, err
+		}
 	}
 
 	if !c.isMetadataSetInProviderBlock {
@@ -419,8 +483,8 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramCredentials) {
-		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, and %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramCredentials)
+	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramBigLakeMetastore, paramCredentials) {
+		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, and %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity, paramBigLakeMetastore, paramCredentials)
 	}
 
 	// `credentials` is only used to authenticate to the Tableflow REST API and isn't part of the
@@ -448,6 +512,8 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 		isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 		isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
+		isUnity := len(d.Get(paramUnity).([]interface{})) > 0
+		isBiglake := len(d.Get(paramBigLakeMetastore).([]interface{})) > 0
 		if isAwsGlue {
 			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
 				Kind: awsGlueSpecKind,
@@ -455,6 +521,14 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		} else if isSnowflake {
 			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 				Kind: snowflakeSpecKind,
+			}))
+		} else if isUnity {
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpec{
+				Kind: unitySpecKind,
+			}))
+		} else if isBiglake {
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationBigLakeMetastoreUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationBigLakeMetastoreUpdateSpec{
+				Kind: bigLakeMetastoreSpecKind,
 			}))
 		}
 	}
@@ -507,6 +581,14 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramCustomSchema)) {
 			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetCustomSchema(extractStringValueFromBlock(d, paramUnity, paramCustomSchema))
+		}
+	}
+	if d.HasChange(paramBigLakeMetastore) {
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationBigLakeMetastoreUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationBigLakeMetastoreUpdateSpec{
+			Kind: bigLakeMetastoreSpecKind,
+		}))
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramBigLakeMetastore, paramCustomNamespace)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationBigLakeMetastoreUpdateSpec.SetCustomNamespace(extractStringValueFromBlock(d, paramBigLakeMetastore, paramCustomNamespace))
 		}
 	}
 
