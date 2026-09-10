@@ -52,6 +52,7 @@
   ],
   "confluent_catalog_integration": [
     "aws_glue",
+    "biglake_metastore",
     "credentials",
     "display_name",
     "environment",
