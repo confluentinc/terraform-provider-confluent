@@ -28,7 +28,6 @@ const (
 	awsGlueSpecKind                           = "AwsGlue"
 	awsIngressPrivateLinkEndpoint             = "AwsIngressPrivateLinkEndpoint"
 	awsIngressPrivateLinkGatewaySpecKind      = "AwsIngressPrivateLinkGatewaySpec"
-	AwsIntegrationConfigKind                  = "AwsIntegrationConfig"
 	awsPeeringKind                            = "AwsPeering"
 	awsPrivateLinkAccessKind                  = "AwsPrivateLinkAccess"
 	awsPrivateNetworkInterface                = "AwsPrivateNetworkInterface"
