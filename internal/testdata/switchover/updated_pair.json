@@ -1,0 +1,39 @@
+{
+  "api_version": "switchover/v1",
+  "kind": "SwitchoverPair",
+  "id": "sw-abc123",
+  "metadata": {
+    "created_at": "2026-08-01T22:25:50.415274Z",
+    "resource_name": "crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-abc123",
+    "self": "https://api.confluent.cloud/switchover/v1/switchover-pairs/sw-abc123?environment=env-abc123",
+    "updated_at": "2026-08-01T23:00:00.000000Z"
+  },
+  "spec": {
+    "display_name": "prod-kafka-dr-v2",
+    "environment_crn": "crn://confluent.cloud/organization=org-abc/environment=env-abc123",
+    "members": [
+      {
+        "name": "west",
+        "member_crn": "crn://confluent.cloud/organization=org-abc/environment=env-abc123/cloud-cluster=lkc-west01",
+        "location": {
+          "cloud": "AWS",
+          "region": "us-west-2"
+        }
+      },
+      {
+        "name": "east",
+        "member_crn": "crn://confluent.cloud/organization=org-abc/environment=env-def456/cloud-cluster=lkc-east01",
+        "location": {
+          "cloud": "AWS",
+          "region": "us-east-2"
+        }
+      }
+    ],
+    "active_member": "west",
+    "first_active": "west",
+    "failover_type": "PLANNED"
+  },
+  "status": {
+    "phase": "READY_TO_FAILOVER"
+  }
+}
