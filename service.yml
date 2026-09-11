@@ -17,6 +17,11 @@ semaphore:
   branches:
     - master
     - /^v\d+\.\d+\.x$/
+    # Build the GitHub merge-queue branches so the pre-merge live-test gate in
+    # .semaphore/semaphore.yml runs before a PR is merged (matches schema-registry
+    # and other repos). Without this, Semaphore never builds the queue branch and
+    # a required check on it would deadlock the queue.
+    - /^gh-readonly-queue.*/
   tasks:
     - name: "Live Integration Tests - PROD"
       description: "Run live integration tests against Confluent Cloud with optional resource group filtering"
