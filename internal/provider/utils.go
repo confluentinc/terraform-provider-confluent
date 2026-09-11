@@ -1581,3 +1581,32 @@ func (c *Client) rtceV1ApiContext(ctx context.Context) context.Context {
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for rtceV1 client")
 	return ctx
 }
+
+// normalizeGatewayPhases normalizes phase values to lowercase for API
+func normalizeGatewayPhases(phases []string) []string {
+	if len(phases) == 0 {
+		return phases
+	}
+
+	normalized := make([]string, len(phases))
+	validPhases := map[string]string{
+		"PROVISIONING":   "provisioning",
+		"CREATED":        "created",
+		"ACTIVE":         "active", // API expects "active" but returns "ready" in response, so map "ready" input to "active" for API filter
+		"READY":          "active",
+		"FAILED":         "failed",
+		"DEPROVISIONING": "deprovisioning",
+		"EXPIRED":        "expired",
+	}
+
+	for i, phase := range phases {
+		upperPhase := strings.ToUpper(strings.TrimSpace(phase))
+		if mappedPhase, ok := validPhases[upperPhase]; ok {
+			normalized[i] = mappedPhase
+		} else {
+			normalized[i] = strings.ToLower(upperPhase)
+		}
+	}
+
+	return normalized
+}
