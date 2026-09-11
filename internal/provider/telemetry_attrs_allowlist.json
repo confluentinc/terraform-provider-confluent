@@ -574,6 +574,29 @@
     "schema_registry_cluster",
     "subject_name"
   ],
+  "confluent_switchover_endpoint": [
+    "display_name",
+    "endpoints",
+    "parent_resource_crn",
+    "phase",
+    "target"
+  ],
+  "confluent_switchover_pair": [
+    "active_member",
+    "display_name",
+    "environment_crn",
+    "failover_type",
+    "first_active",
+    "members",
+    "phase"
+  ],
+  "confluent_switchover_pair_failover": [
+    "active_member",
+    "environment_crn",
+    "failover_type",
+    "phase",
+    "switchover_pair_id"
+  ],
   "confluent_tableflow_topic": [
     "azure_data_lake_storage_gen_2",
     "byob_aws",

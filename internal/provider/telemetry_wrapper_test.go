@@ -87,8 +87,8 @@ func testWrapConfig(reporter telemetryReporter) telemetryWrapConfig {
 func TestWrapResourcesMap_CoversAllManagedResourcesAndExcludesDataSources(t *testing.T) {
 	p := New(testVersion, "")()
 
-	// There are 64 managed resources; bump this pin when ResourcesMap changes.
-	const wantManagedResources = 64
+	// There are 67 managed resources; bump this pin when ResourcesMap changes.
+	const wantManagedResources = 67
 	if got := len(p.ResourcesMap); got != wantManagedResources {
 		t.Errorf("ResourcesMap has %d resources, want %d (update this pin if resources were intentionally added/removed)", got, wantManagedResources)
 	}
@@ -116,6 +116,7 @@ func TestWrapResourcesMap_PreservesNilUpdateContext(t *testing.T) {
 		"confluent_ksql_cluster":                    true,
 		"confluent_provider_integration":            true,
 		"confluent_provider_integration_setup":      true,
+		"confluent_switchover_pair_failover":        true,
 		"confluent_tf_importer":                     true,
 	}
 
