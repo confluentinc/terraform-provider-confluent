@@ -40,8 +40,9 @@ MASTER_BRANCH := master
 BUMP ?= auto
 DEFAULT_BUMP ?= patch
 # Scan from the last on-branch "version bump" chore commit, not the base tag: an off-branch tag isn't
-# resolvable in CI's branch-scoped clone and silently drops the keyword (same reason VERSION uses ls-remote).
-LAST_RELEASE_COMMIT := $(shell git log --grep='chore:.*version bump' -n 1 --pretty=%H HEAD)
+# resolvable in CI's branch-scoped clone and silently drops the keyword (same reason VERSION uses
+# ls-remote). Match the commit SUBJECT (%s); --grep would also match bodies that mention the phrase.
+LAST_RELEASE_COMMIT := $(shell git log --pretty='%H %s' HEAD | grep -m1 -E 'chore:.*version bump v[0-9]' | cut -d' ' -f1)
 GIT_MESSAGES := $(shell git log --pretty='%s' $(LAST_RELEASE_COMMIT)..HEAD | tr '\n' ' ')
 
 # If auto bump enabled, search git messages for bump hash
@@ -81,9 +82,12 @@ RELEASE_SVG := <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w
 all: clean deps test testacc tools build
 
 .PHONY: release-ci
+# $(shell) ignores exit status, so an empty LAST_RELEASE_COMMIT (base release commit missing from this
+# clone) would let the bump silently default to patch. Guard the release path so it fails instead.
 release-ci:
 ifeq ($(BRANCH_NAME), $(MASTER_BRANCH))
 ifeq ($(CI),true)
+	@test -n "$(LAST_RELEASE_COMMIT)" || { echo "release-ci: cannot find the last 'version bump' commit; refusing to guess the version bump" >&2; exit 1; }
 	make release
 endif
 endif
