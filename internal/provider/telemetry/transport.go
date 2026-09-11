@@ -23,78 +23,51 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// This file is the client-analytics transport (TFCA-B5): a small, fixed worker
-// pool that delivers Usage events without ever blocking or failing the CRUD
-// goroutine that produced them.
-//
-// The contract with the wrapper (TFCA-B3) is deliberate: the wrapper builds the
-// Usage synchronously — while the *schema.ResourceData is still valid — and
-// hands the finished value to Report. Report only enqueues; the network send
-// happens on a worker. So the decision of what to report is synchronous, but
-// the send is not, and a slow or unreachable backend can never delay an apply.
-//
-// Loss is expected and accepted. Terraform's plugin protocol has no drain hook:
-// the provider subprocess is killed the moment the graph walk completes, with no
-// chance to flush. A deep queue would not reduce loss, only change which events
-// are dropped, so the queue is intentionally shallow and a full queue drops
-// immediately — the same log-and-drop terms as a failed send. There are no
-// retries.
+// Bounded-worker transport for client-analytics events. Report enqueues an event
+// and returns; a fixed pool of workers sends it in the background, so a slow or
+// unreachable backend never delays the caller. Delivery is best-effort: a full
+// queue and a failed send are both logged and dropped, with no retries.
 
 const (
-	// defaultWorkers is the fixed number of concurrent senders. Fixed rather
-	// than one goroutine per call so a slow backend cannot accumulate
-	// connections during a large apply.
+	// defaultWorkers is the fixed number of concurrent senders, so a slow backend
+	// cannot accumulate one connection per call during a large apply.
 	defaultWorkers = 4
 
-	// defaultQueueDepth is kept shallow — roughly the worker concurrency — for
-	// the reasons in the file header. An event that cannot be handed to the
-	// queue immediately is dropped immediately.
+	// defaultQueueDepth is kept shallow; an event that cannot be queued
+	// immediately is dropped immediately.
 	defaultQueueDepth = defaultWorkers * 2
 
-	// defaultPerReportTimeout is the hard per-report deadline, mirroring the
-	// CLI's 5-second usage-report timeout. It bounds how long a worker may spend
-	// on a single send; it does not affect the CRUD goroutine, which never waits
-	// on a send.
+	// defaultPerReportTimeout bounds how long a worker may spend on a single send.
 	defaultPerReportTimeout = 5 * time.Second
 )
 
-// Poster delivers a single Usage. The generated terraform-usage/v1 client backs
-// the production implementation (see sdkPoster); tests substitute a fake. Post
-// must honor ctx cancellation/deadline so the transport's per-report timeout can
-// bound a hung backend.
+// Poster delivers a single Usage. Post must honor ctx so the per-report timeout
+// can bound a hung backend.
 type Poster interface {
 	Post(ctx context.Context, u Usage) error
 }
 
-// noopPoster is substituted for a nil Poster so a misconfigured transport
-// silently drops events instead of nil-panicking a worker goroutine. That panic
-// would run outside the CRUD wrapper's recover and crash the process — exactly
-// what this telemetry path exists to avoid.
+// noopPoster replaces a nil Poster so a misconfigured transport drops events
+// instead of nil-panicking a worker goroutine and crashing the process.
 type noopPoster struct{}
 
 func (noopPoster) Post(context.Context, Usage) error { return nil }
 
-// Transport is the bounded-worker delivery mechanism. Construct it once per
-// provider process (during provider configuration) and share it across the
-// concurrent CRUD goroutines; Report is safe for concurrent use.
-//
-// It satisfies the reporter seam the wrapper expects (a Report(Usage) method),
-// so a *Transport can be installed as the wrapper's reporter directly.
+// Transport is the bounded-worker delivery mechanism. Construct it once and share
+// it across concurrent callers; Report is safe for concurrent use.
 type Transport struct {
 	poster  Poster
 	queue   chan Usage
 	timeout time.Duration
-	// logCtx carries the provider's configured logger for the workers, which run
-	// after the configuring call has returned. Its cancellation is stripped so it
-	// stays usable for the life of the process without leaking a request scope.
+	// logCtx carries the workers' logger; its cancellation is stripped so it
+	// stays usable for the life of the process.
 	logCtx    context.Context
 	done      chan struct{}
 	closeOnce sync.Once
 }
 
-// NewTransport starts a Transport with the default worker pool, queue depth, and
-// per-report timeout. logCtx supplies the logger the workers log dropped events
-// through; a nil logCtx falls back to a background context.
+// NewTransport starts a Transport with the default pool size, queue depth, and
+// per-report timeout. A nil logCtx falls back to a background context.
 func NewTransport(poster Poster, logCtx context.Context) *Transport {
 	return newTransport(poster, logCtx, defaultWorkers, defaultQueueDepth, defaultPerReportTimeout)
 }
@@ -119,11 +92,8 @@ func newTransport(poster Poster, logCtx context.Context, workers, queueDepth int
 	return t
 }
 
-// Report hands one Usage to the worker pool. It never blocks: if every worker is
-// busy and the queue is full, the event is dropped immediately (logged at debug
-// level), because there is no drain window in which a queued event would fare
-// better than a dropped one. This is the method the CRUD wrapper calls, and it
-// must stay non-blocking so telemetry can never slow an apply.
+// Report hands one Usage to the worker pool. It never blocks: when the queue is
+// full the event is dropped and logged, so telemetry can never slow the caller.
 func (t *Transport) Report(u Usage) {
 	select {
 	case t.queue <- u:
@@ -150,10 +120,8 @@ func (t *Transport) worker() {
 }
 
 func (t *Transport) deliver(u Usage) {
-	// A panicking Poster.Post runs on this worker goroutine, outside the CRUD
-	// wrapper's recover; unrecovered it would crash the whole provider process —
-	// the failure this telemetry path must never cause. Recover, log, and drop
-	// like any other failed send, and let the worker keep running.
+	// A panic from Post runs on this worker goroutine, outside the caller's
+	// recover; catch it so a bad send can never crash the process.
 	defer func() {
 		if r := recover(); r != nil {
 			tflog.Debug(t.logCtx, "dropped client-analytics event: report panicked", map[string]interface{}{
@@ -166,7 +134,7 @@ func (t *Transport) deliver(u Usage) {
 	ctx, cancel := context.WithTimeout(t.logCtx, t.timeout)
 	defer cancel()
 	if err := t.poster.Post(ctx, u); err != nil {
-		// Log and drop. Never retry, and never surface as a CRUD error.
+		// Log and drop; never retry.
 		tflog.Debug(t.logCtx, "dropped client-analytics event: report failed", map[string]interface{}{
 			"resource_type": u.ResourceType,
 			"operation":     string(u.Operation),
@@ -175,11 +143,8 @@ func (t *Transport) deliver(u Usage) {
 	}
 }
 
-// Close signals the workers to stop. Production never calls it — the provider
-// subprocess is killed at the end of the graph walk — but tests use it to end
-// the workers deterministically. It signals rather than drains: events still
-// queued when Close is called are not guaranteed to be delivered. It must not
-// race with Report; after Close, Report must not be called. Close is idempotent.
+// Close signals the workers to stop. Only tests call it (production lets the
+// subprocess exit); it does not drain queued events and is idempotent.
 func (t *Transport) Close() {
 	t.closeOnce.Do(func() {
 		close(t.done)

@@ -71,11 +71,8 @@ func waitSignals(t *testing.T, ch <-chan struct{}, n int, timeout time.Duration)
 	}
 }
 
-// TestTransport_ReportNonBlockingAndDropsWhenFull proves Report never blocks the
-// caller and that a saturated pool drops events immediately rather than queuing
-// unboundedly. With 2 workers stuck in Post and a queue depth of 2, capacity is
-// exactly 4: two events reach a worker, two sit in the queue, and everything
-// beyond that is dropped.
+// TestTransport_ReportNonBlockingAndDropsWhenFull asserts Report never blocks and
+// a saturated pool drops events (2 workers + queue 2 => capacity 4).
 func TestTransport_ReportNonBlockingAndDropsWhenFull(t *testing.T) {
 	release := make(chan struct{})
 	fp := newFakePoster(func(ctx context.Context, _ Usage) error {
@@ -85,8 +82,7 @@ func TestTransport_ReportNonBlockingAndDropsWhenFull(t *testing.T) {
 	tr := newTransport(fp, context.Background(), 2 /*workers*/, 2 /*queueDepth*/, time.Minute)
 	defer tr.Close()
 
-	// Fill both workers first, deterministically: fire one, wait for a worker to
-	// enter Post, repeat. Now both workers are blocked in Post.
+	// Block both workers in Post.
 	tr.Report(sampleUsage())
 	tr.Report(sampleUsage())
 	waitSignals(t, fp.entered, 2, 2*time.Second)
@@ -95,8 +91,7 @@ func TestTransport_ReportNonBlockingAndDropsWhenFull(t *testing.T) {
 		t.Fatalf("expected 2 in-flight Posts, got %d", got)
 	}
 
-	// Fire 8 more. Two fit the queue; six must be dropped. None of these can
-	// enter Post because both workers are blocked — Report must return anyway.
+	// Fire 8 more: 2 fit the queue, 6 are dropped; Report must not block.
 	done := make(chan struct{})
 	go func() {
 		for i := 0; i < 8; i++ {
@@ -115,8 +110,7 @@ func TestTransport_ReportNonBlockingAndDropsWhenFull(t *testing.T) {
 		t.Fatalf("no new Post should start while workers are blocked, got %d", got)
 	}
 
-	// Release the workers; the two queued events now drain (calls -> 4). The six
-	// dropped events never entered, so calls must settle at exactly 4.
+	// Release the workers; the 2 queued events drain, so calls settle at 4.
 	close(release)
 	waitSignals(t, fp.entered, 2, 2*time.Second)
 	if got := fp.calls.Load(); got != 4 {
@@ -157,8 +151,7 @@ func TestTransport_AppliesPerReportTimeout(t *testing.T) {
 		if _, ok := ctx.Deadline(); ok {
 			sawDeadline.Store(true)
 		}
-		// The first event blocks until its context deadline fires; later events
-		// return immediately, proving the worker recovered.
+		// First event blocks until its deadline; later events return immediately.
 		select {
 		case first <- struct{}{}:
 			<-ctx.Done()
@@ -167,8 +160,7 @@ func TestTransport_AppliesPerReportTimeout(t *testing.T) {
 			return nil
 		}
 	})
-	// One worker, so recovery is observable: if the worker wedged on the timed-out
-	// send, the second event could never be delivered.
+	// One worker, so a wedged send would block the second event.
 	tr := newTransport(fp, context.Background(), 1, 4, 50*time.Millisecond)
 	defer tr.Close()
 
@@ -191,8 +183,7 @@ func TestTransport_NoRetryOnFailure(t *testing.T) {
 
 	tr.Report(sampleUsage())
 	waitSignals(t, fp.entered, 1, 2*time.Second)
-	// A retry would enter Post a second time: fail fast if it does, else the window
-	// elapsing confirms the failed send was not retried.
+	// A retry would enter Post again; fail fast if it does within the window.
 	select {
 	case <-fp.entered:
 		t.Fatalf("failed send must not be retried; a 2nd Post entered (calls=%d)", fp.calls.Load())
@@ -200,10 +191,9 @@ func TestTransport_NoRetryOnFailure(t *testing.T) {
 	}
 }
 
-// TestTransport_RecoversPosterPanic asserts a panicking Post is contained on the
-// worker goroutine — it must never crash the process this telemetry path exists to
-// protect — and that the worker survives to deliver the next event. Without the
-// recover in deliver, the unrecovered panic would abort the whole process.
+// TestTransport_RecoversPosterPanic asserts a panicking Post is contained and the
+// worker survives to deliver the next event (an unrecovered panic would crash the
+// process).
 func TestTransport_RecoversPosterPanic(t *testing.T) {
 	var n atomic.Int64
 	fp := newFakePoster(func(context.Context, Usage) error {
@@ -212,8 +202,7 @@ func TestTransport_RecoversPosterPanic(t *testing.T) {
 		}
 		return nil // later deliveries succeed
 	})
-	// One worker, so "the worker survived" is only observable if the panic didn't
-	// kill it: the second event can only be delivered by the same recovered worker.
+	// One worker, so the second delivery only happens if it survived the panic.
 	tr := newTransport(fp, context.Background(), 1, 4, time.Minute)
 	defer tr.Close()
 
@@ -222,11 +211,8 @@ func TestTransport_RecoversPosterPanic(t *testing.T) {
 	waitSignals(t, fp.entered, 2, 2*time.Second)
 }
 
-// TestNewTransport_UsesDefaults pins the production constructor to the documented
-// pool size, queue depth, and per-report timeout. Without this, a regression in
-// the constants — e.g. defaultWorkers dropping to 0, which would silently
-// deliver nothing — would pass every other test, which all use newTransport with
-// explicit values.
+// TestNewTransport_UsesDefaults pins the default pool size, queue depth, and
+// per-report timeout the constructor uses.
 func TestNewTransport_UsesDefaults(t *testing.T) {
 	tr := NewTransport(newFakePoster(nil), context.Background())
 	defer tr.Close()
@@ -237,8 +223,7 @@ func TestNewTransport_UsesDefaults(t *testing.T) {
 	if tr.timeout != defaultPerReportTimeout {
 		t.Errorf("per-report timeout = %s, want %s", tr.timeout, defaultPerReportTimeout)
 	}
-	// Pin the documented constants to their literal values, so a regression in
-	// any of them fails here rather than silently changing the pool's shape.
+	// Pin the constants to their literal values.
 	if defaultWorkers != 4 {
 		t.Errorf("defaultWorkers = %d, want 4", defaultWorkers)
 	}
@@ -264,10 +249,8 @@ func TestNewTransport_NilLogCtx(t *testing.T) {
 	waitSignals(t, fp.entered, 1, 2*time.Second)
 }
 
-// TestNewTransport_NilPosterIsSafe confirms a nil Poster is replaced with a safe
-// no-op rather than left nil. Telemetry must never crash the process it observes;
-// without the substitution the first delivery would nil-panic a worker goroutine,
-// which runs outside the CRUD wrapper's recover and would take down the process.
+// TestNewTransport_NilPosterIsSafe confirms a nil Poster is replaced with a no-op
+// so a worker never nil-panics.
 func TestNewTransport_NilPosterIsSafe(t *testing.T) {
 	tr := NewTransport(nil, context.Background())
 	defer tr.Close()
@@ -275,14 +258,12 @@ func TestNewTransport_NilPosterIsSafe(t *testing.T) {
 	if tr.poster == nil {
 		t.Fatal("nil Poster was not replaced with a safe no-op; a worker would nil-panic on Post")
 	}
-	// The non-nil assertion above is the deterministic guarantee; also enqueue one
-	// event as a best-effort smoke of the delivery path against the substitute.
+	// Also smoke the delivery path against the substitute.
 	tr.Report(sampleUsage())
 }
 
 // TestTransport_CloseIsIdempotent confirms Close can be called more than once
-// without panicking; without the sync.Once guard the second close(done) would
-// panic on an already-closed channel.
+// without panicking.
 func TestTransport_CloseIsIdempotent(t *testing.T) {
 	tr := newTransport(newFakePoster(nil), context.Background(), 1, 1, time.Minute)
 	tr.Close()

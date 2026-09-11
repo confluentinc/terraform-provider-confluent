@@ -195,12 +195,9 @@ func TestWrapper_StackFramesAreCapped(t *testing.T) {
 	}
 }
 
-// TestWrapper_PanicDetailAndPayloadDiverge asserts the two caps diverge in a
-// single recovered panic: the telemetry payload keeps the full stack (more than
-// the operator cap, up to maxStackFrames) while the operator-facing Detail is
-// trimmed to maxDetailFrames with a marker. Asserted together here because the
-// unit tests only cover each cap separately — a regression that over-truncated
-// the payload down to the detail cap would otherwise pass.
+// TestWrapper_PanicDetailAndPayloadDiverge asserts that in one recovered panic the
+// telemetry payload keeps the full stack (up to maxStackFrames) while the operator
+// Detail is trimmed to maxDetailFrames with a marker.
 func TestWrapper_PanicDetailAndPayloadDiverge(t *testing.T) {
 	rec := &recordingReporter{}
 	r := newTestResource()
@@ -228,8 +225,7 @@ func TestWrapper_PanicDetailAndPayloadDiverge(t *testing.T) {
 		t.Errorf("payload StackFrames = %d, want in (%d, %d]", len(payload), maxDetailFrames, maxStackFrames)
 	}
 
-	// Operator Detail shows exactly maxDetailFrames frames plus a truncation
-	// marker citing the full payload frame count.
+	// Operator Detail shows exactly maxDetailFrames frames plus a marker.
 	detail := diags[0].Detail
 	shown := 0
 	for _, ln := range strings.Split(detail, "\n") {
@@ -455,10 +451,8 @@ func TestShortenSourcePath(t *testing.T) {
 	}
 }
 
-// TestPanicDetail_CapsFramesForOperator asserts the operator-facing error shows at
-// most maxDetailFrames frames (with a truncation marker) even though the full stack
-// is still reported to telemetry. It keeps the human-readable error short while the
-// panic origin, near the top of the stack, stays visible.
+// TestPanicDetail_CapsFramesForOperator asserts the operator error shows at most
+// maxDetailFrames frames with a truncation marker.
 func TestPanicDetail_CapsFramesForOperator(t *testing.T) {
 	stack := make([]string, maxStackFrames) // deeper than the detail cap
 	for i := range stack {

@@ -22,24 +22,16 @@ import (
 	terraformusagev1 "github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage/v1"
 )
 
-// sdkPoster is the production Poster: it maps a Usage onto the generated
-// terraform-usage/v1 contract type and POSTs it to
-// <endpoint>/terraform-usage/v1/usages via the generated client (TFCA-A2).
-//
-// Authentication is applied per request by authFunc, not baked into the client,
-// so the caller decides which identity to use. TFCA-B7 supplies a function that
-// scopes reporting to the top-level Cloud API key / OAuth identity only; a nil
-// authFunc sends unauthenticated (used only by tests against a local stub).
+// sdkPoster maps a Usage onto the terraform-usage/v1 contract and POSTs it to
+// <endpoint>/terraform-usage/v1/usages. authFunc applies per-request auth (a nil
+// authFunc sends unauthenticated).
 type sdkPoster struct {
 	client   *terraformusagev1.APIClient
 	authFunc func(context.Context) context.Context
 }
 
-// NewSDKPoster builds a Poster backed by the generated terraform-usage/v1
-// client. basePath is the API origin (e.g. https://api.confluent.cloud);
-// httpClient carries any transport-level configuration (a nil httpClient uses
-// the SDK default). authFunc decorates each request context with credentials
-// and may be nil.
+// NewSDKPoster builds a Poster backed by the terraform-usage/v1 client. basePath
+// is the API origin; a nil httpClient uses the SDK default; authFunc may be nil.
 func NewSDKPoster(basePath string, httpClient *http.Client, userAgent string, authFunc func(context.Context) context.Context) Poster {
 	cfg := terraformusagev1.NewConfiguration()
 	if basePath != "" {
@@ -59,9 +51,8 @@ func NewSDKPoster(basePath string, httpClient *http.Client, userAgent string, au
 	}
 }
 
-// Post delivers one Usage. It honors ctx (the transport's per-report deadline),
-// applies authentication, and returns an error on any transport failure or
-// non-2xx response so the transport can log-and-drop.
+// Post delivers one Usage: it applies auth, honors ctx, and returns an error on
+// any transport failure or non-2xx response.
 func (p *sdkPoster) Post(ctx context.Context, u Usage) error {
 	if p.authFunc != nil {
 		ctx = p.authFunc(ctx)
@@ -72,9 +63,7 @@ func (p *sdkPoster) Post(ctx context.Context, u Usage) error {
 		TerraformUsageV1Usage(toContractUsage(u)).
 		Execute()
 	if resp != nil && resp.Body != nil {
-		// The generated client already drains and closes the underlying response
-		// body (it returns a NopCloser over an in-memory buffer), so this Close is
-		// a harmless safeguard that stays correct if that behavior ever changes.
+		// The generated client already closes the body; this is a harmless safeguard.
 		defer resp.Body.Close()
 	}
 	if err != nil {
@@ -86,10 +75,8 @@ func (p *sdkPoster) Post(ctx context.Context, u Usage) error {
 	return nil
 }
 
-// toContractUsage maps the provider-internal Usage onto the generated contract
-// type. Sequence and DurationMs are int64 internally but int32 on the wire; a
-// single provider process cannot approach the int32 ceiling (2.1B events, or an
-// operation lasting ~24 days), so the narrowing conversion is safe in practice.
+// toContractUsage maps the internal Usage onto the wire contract. Sequence and
+// DurationMs narrow int64->int32; one process cannot reach the int32 ceiling.
 func toContractUsage(u Usage) terraformusagev1.TerraformUsageV1Usage {
 	m := terraformusagev1.NewTerraformUsageV1Usage()
 	m.SetRunId(u.RunID)
@@ -102,10 +89,8 @@ func toContractUsage(u Usage) terraformusagev1.TerraformUsageV1Usage {
 	m.SetTerraformVersion(u.TerraformVersion)
 	m.SetResourceType(u.ResourceType)
 	m.SetOperation(string(u.Operation))
-	// ChangedAttributes is required by the contract and non-nullable, so it must
-	// serialize as [] and never null. The wrapper already guarantees a non-nil
-	// slice; coerce here too so this last step before the wire enforces the
-	// contract on its own rather than trusting that upstream invariant.
+	// ChangedAttributes is required and non-nullable: coerce nil to [] so it
+	// serializes as [] rather than null.
 	changed := u.ChangedAttributes
 	if changed == nil {
 		changed = []string{}

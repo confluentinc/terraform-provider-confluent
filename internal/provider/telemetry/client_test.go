@@ -27,9 +27,8 @@ import (
 	terraformusagev1 "github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage/v1"
 )
 
-// TestSDKPoster_PostsMappedUsage asserts the poster hits the contract path with
-// the correct method, applies auth, and maps the Usage onto the wire body —
-// including a non-null empty changed_attributes.
+// TestSDKPoster_PostsMappedUsage asserts the poster POSTs to the contract path
+// with auth applied and maps every Usage field onto the wire body.
 func TestSDKPoster_PostsMappedUsage(t *testing.T) {
 	type captured struct {
 		method string
@@ -146,15 +145,13 @@ func TestSDKPoster_Non2xxIsError(t *testing.T) {
 }
 
 // TestSDKPoster_HonorsContextDeadline asserts the poster respects a cancelled
-// context (the transport's per-report timeout), so a hung endpoint can't wedge a
-// worker.
+// context, so a hung endpoint can't wedge a worker.
 func TestSDKPoster_HonorsContextDeadline(t *testing.T) {
 	block := make(chan struct{})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		<-block // hang until the test releases us
 	}))
-	// Defer ordering matters (LIFO): unblock the handler FIRST, then Close, so
-	// srv.Close() isn't left waiting on an in-flight handler.
+	// Unblock the handler before Close (LIFO) so Close isn't left waiting on it.
 	defer srv.Close()
 	defer close(block)
 
@@ -172,11 +169,8 @@ func TestSDKPoster_HonorsContextDeadline(t *testing.T) {
 	}
 }
 
-// TestSDKPoster_NilChangedAttributesSerializesAsEmpty asserts the poster coerces a
-// nil ChangedAttributes to [] on the wire. changed_attributes is contract-required
-// and non-nullable, so sending null (what SetChangedAttributes(nil) would emit)
-// would be rejected. The wrapper always supplies a non-nil slice, but the poster
-// hardens the last step before the wire rather than trusting that.
+// TestSDKPoster_NilChangedAttributesSerializesAsEmpty asserts a nil
+// ChangedAttributes serializes as [] (not null) on the wire.
 func TestSDKPoster_NilChangedAttributesSerializesAsEmpty(t *testing.T) {
 	got := make(chan []byte, 1)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -206,9 +200,8 @@ func TestSDKPoster_NilChangedAttributesSerializesAsEmpty(t *testing.T) {
 	}
 }
 
-// TestSDKPoster_MapsStackFrames asserts a non-empty StackFrames (the panic-only
-// field) serializes as a JSON string array under stack_frames, in order. No other
-// poster test supplies a non-empty stack, so this covers that wire mapping.
+// TestSDKPoster_MapsStackFrames asserts a non-empty StackFrames serializes as an
+// ordered JSON array under stack_frames.
 func TestSDKPoster_MapsStackFrames(t *testing.T) {
 	got := make(chan []byte, 1)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
