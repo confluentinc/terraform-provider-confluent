@@ -1,6 +1,7 @@
 {
   "compatibilityLevel": "FULL",
   "compatibilityGroup": "abc.cg.version",
+  "compatibilityPolicy": "STRICT",
   "normalize": true,
   "alias": ""
 }
