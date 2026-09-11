@@ -52,6 +52,7 @@
   ],
   "confluent_catalog_integration": [
     "aws_glue",
+    "biglake_metastore",
     "credentials",
     "display_name",
     "environment",
@@ -584,6 +585,7 @@
     "enable_partitioning",
     "environment",
     "error_handling",
+    "google_cloud_storage",
     "kafka_cluster",
     "managed_storage",
     "metadata_column_naming_scheme",

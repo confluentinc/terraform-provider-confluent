@@ -409,6 +409,122 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 	})
 }
 
+func TestAccCatalogIntegrationBigLakeMetastore(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/create_biglake_metastore_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
+		InScenario(bigLakeMetastoreCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillReturn(
+			string(createCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
+
+	readCreatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_biglake_metastore_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(bigLakeMetastoreCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillReturn(
+			string(readCreatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_biglake_metastore_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(bigLakeMetastoreCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenUpdated).
+		WillReturn(
+			string(updatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(bigLakeMetastoreCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenUpdated).
+		WillReturn(
+			string(updatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(bigLakeMetastoreCatalogIntegrationScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceCatalogIntegrationBigLakeMetastore(mockServerUrl, "catalog_integration_1", "my-custom-namespace"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.gcp_project_id", "my-gcp-project"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.catalog_name", "catalog_name"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.custom_namespace", "my-custom-namespace"),
+				),
+			},
+			{
+				Config: testAccCheckResourceCatalogIntegrationBigLakeMetastore(mockServerUrl, "catalog_integration_2", "my-custom-namespace-2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.gcp_project_id", "my-gcp-project"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.catalog_name", "catalog_name"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "biglake_metastore.0.custom_namespace", "my-custom-namespace-2"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
@@ -518,4 +634,32 @@ func testAccCheckResourceCatalogIntegrationUnity(mockServerUrl, displayName, wor
 		}
 	}
 	`, mockServerUrl, displayName, workspaceEndpoint, catalogName, clientId, clientSecret)
+}
+
+func testAccCheckResourceCatalogIntegrationBigLakeMetastore(mockServerUrl, displayName, customNamespace string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_catalog_integration" "main" {
+		display_name = "%s"
+		environment {
+			id = "env-abc123"
+		}
+		kafka_cluster {
+			id = "lkc-00000"
+		}
+		biglake_metastore {
+			provider_integration_id = "cspi-stgce89r7"
+			gcp_project_id = "my-gcp-project"
+			catalog_name = "catalog_name"
+			custom_namespace = "%s"
+		}
+		credentials {
+			key = "test_key"
+			secret = "test_secret"
+		}
+	}
+	`, mockServerUrl, displayName, customNamespace)
 }
