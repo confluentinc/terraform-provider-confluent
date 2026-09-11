@@ -39,7 +39,10 @@ MASTER_BRANCH := master
 # Auto bump by default
 BUMP ?= auto
 DEFAULT_BUMP ?= patch
-GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/null | tr '\n' ' ')
+# Scan from the last on-branch "version bump" chore commit, not the base tag: an off-branch tag isn't
+# resolvable in CI's branch-scoped clone and silently drops the keyword (same reason VERSION uses ls-remote).
+LAST_RELEASE_COMMIT := $(shell git log --grep='chore:.*version bump' -n 1 --pretty=%H HEAD)
+GIT_MESSAGES := $(shell git log --pretty='%s' $(LAST_RELEASE_COMMIT)..HEAD | tr '\n' ' ')
 
 # If auto bump enabled, search git messages for bump hash
 ifeq ($(BUMP),auto)
