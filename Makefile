@@ -39,7 +39,16 @@ MASTER_BRANCH := master
 # Auto bump by default
 BUMP ?= auto
 DEFAULT_BUMP ?= patch
-GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/null | tr '\n' ' ')
+# Which commits to scan for the bump keyword. The base version tag points at the previous release's
+# "chore: ... version bump" commit, but that tag can be off-branch (a reused/orphaned patch line), and
+# CI's branch-scoped clone only fetches history reachable from the built branch -- so the old
+# `git log v$(CLEAN_VERSION)...HEAD` errored on the missing ref, got swallowed by 2>/dev/null, and
+# silently fell back to DEFAULT_BUMP, dropping the keyword (the same off-branch-tag blind spot the
+# ls-remote lookup on VERSION handles). The last "version bump" chore commit is always pushed to
+# master, so it is on-branch and resolvable in CI; for a healthy release it IS the commit the base tag
+# points at, so the scanned range is unchanged. Left un-swallowed so a future breakage fails loudly.
+LAST_RELEASE_COMMIT := $(shell git log --grep='chore:.*version bump' -n 1 --pretty=%H HEAD)
+GIT_MESSAGES := $(shell git log --pretty='%s' $(LAST_RELEASE_COMMIT)..HEAD | tr '\n' ' ')
 
 # If auto bump enabled, search git messages for bump hash
 ifeq ($(BUMP),auto)
