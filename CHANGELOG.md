@@ -1,6 +1,6 @@
 ## 2.86.0 (September 10th, 2026) 
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0) 
 
 **New features:**
 * Added a new `confluent_dns_forwarder` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_dns_forwarder). 
