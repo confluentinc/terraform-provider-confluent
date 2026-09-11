@@ -70,7 +70,11 @@
       "bucket_count": 10,
       "kind": "HASH"
     },
-    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
+    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;",
+    "start_mode": {
+      "kind": "FROM_TIMESTAMP",
+      "timestamp": "2026-04-01T00:00:00Z"
+    }
   },
   "status": {
     "phase": "STOPPED",
