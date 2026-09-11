@@ -49,11 +49,17 @@ func TestAccIdentityPoolLive(t *testing.T) {
 
 	// Generate unique names for test resources
 	randomSuffix := rand.Intn(100000)
+	saResourceLabel := "test_pool_owner_sa"
 	idpResourceLabel := "test_idp_for_pool"
 	poolResourceLabel := "test_identity_pool"
 
+	saResourceName := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
 	idpResourceName := fmt.Sprintf("confluent_identity_provider.%s", idpResourceLabel)
 	poolResourceName := fmt.Sprintf("confluent_identity_pool.%s", poolResourceLabel)
+
+	// Service Account used as the pool's assigned_resource_owner. Kept stable across Create/Update
+	// steps so that the owner change does not trigger the resource's ForceNew on its own.
+	saDisplayName := fmt.Sprintf("tf-live-sa-pool-owner-%d", randomSuffix)
 
 	// Initial Identity Provider attributes
 	idpDisplayName := fmt.Sprintf("tf-live-idp-%d", randomSuffix)
@@ -75,9 +81,9 @@ func TestAccIdentityPoolLive(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckIdentityPoolLiveDestroy,
 		Steps: []resource.TestStep{
-			// Step 1: Test Create
+			// Step 1: Test Create (with assigned_resource_owner)
 			{
-				Config: testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter),
+				Config: testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, saResourceLabel, saDisplayName, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityProviderLiveExists(idpResourceName),
 					testAccCheckIdentityPoolLiveExists(poolResourceName),
@@ -86,17 +92,20 @@ func TestAccIdentityPoolLive(t *testing.T) {
 					resource.TestCheckResourceAttr(poolResourceName, "identity_claim", poolIdentityClaim),
 					resource.TestCheckResourceAttr(poolResourceName, "filter", poolFilter),
 					resource.TestCheckResourceAttrPair(poolResourceName, "identity_provider.0.id", idpResourceName, "id"),
+					// State echo: the SA id the user wrote stays in state even though the API does not return it.
+					resource.TestCheckResourceAttrPair(poolResourceName, "assigned_resource_owner", saResourceName, "id"),
 				),
 			},
-			// Step 2: Test Update
+			// Step 2: Test Update (assigned_resource_owner unchanged; other fields change in-place)
 			{
-				Config: testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResourceLabel, idpDisplayName, poolResourceLabel, updatedPoolDisplayName, updatedPoolDescription, updatedPoolIdentityClaim, updatedPoolFilter),
+				Config: testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, saResourceLabel, saDisplayName, idpResourceLabel, idpDisplayName, poolResourceLabel, updatedPoolDisplayName, updatedPoolDescription, updatedPoolIdentityClaim, updatedPoolFilter),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityPoolLiveExists(poolResourceName),
 					resource.TestCheckResourceAttr(poolResourceName, "display_name", updatedPoolDisplayName),
 					resource.TestCheckResourceAttr(poolResourceName, "description", updatedPoolDescription),
 					resource.TestCheckResourceAttr(poolResourceName, "identity_claim", updatedPoolIdentityClaim),
 					resource.TestCheckResourceAttr(poolResourceName, "filter", updatedPoolFilter),
+					resource.TestCheckResourceAttrPair(poolResourceName, "assigned_resource_owner", saResourceName, "id"),
 				),
 			},
 			// Step 3: Test Import
@@ -104,6 +113,8 @@ func TestAccIdentityPoolLive(t *testing.T) {
 				ResourceName:      poolResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+				// API does not return assigned_resource_owner, so imported state will not have it.
+				ImportStateVerifyIgnore: []string{"assigned_resource_owner"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					pool, ok := resources[poolResourceName]
@@ -117,7 +128,7 @@ func TestAccIdentityPoolLive(t *testing.T) {
 			},
 			// Step 4: Test API Error Handling with invalid filter
 			{
-				Config:      testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, "this-is-not-a-valid-filter"),
+				Config:      testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, saResourceLabel, saDisplayName, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, "this-is-not-a-valid-filter"),
 				ExpectError: regexp.MustCompile("Invalid syntax in policy expression"),
 			},
 		},
@@ -159,12 +170,17 @@ func testAccCheckIdentityPoolLiveDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter string) string {
+func testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, saResourceLabel, saDisplayName, idpResourceLabel, idpDisplayName, poolResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
 		cloud_api_key    = "%s"
 		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_service_account" "%s" {
+		display_name = "%s"
+		description  = "Owner SA for identity pool live test"
 	}
 
 	resource "confluent_identity_provider" "%s" {
@@ -178,10 +194,14 @@ func testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResource
 		identity_provider {
 			id = confluent_identity_provider.%s.id
 		}
-		display_name   = "%s"
-		description    = "%s"
-		identity_claim = "%s"
-		filter         = %q
+		display_name            = "%s"
+		description             = "%s"
+		identity_claim          = "%s"
+		filter                  = %q
+		assigned_resource_owner = confluent_service_account.%s.id
 	}
-	`, endpoint, apiKey, apiSecret, idpResourceLabel, idpDisplayName, poolResourceLabel, idpResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter)
+	`, endpoint, apiKey, apiSecret,
+		saResourceLabel, saDisplayName,
+		idpResourceLabel, idpDisplayName,
+		poolResourceLabel, idpResourceLabel, poolDisplayName, poolDescription, poolIdentityClaim, poolFilter, saResourceLabel)
 }

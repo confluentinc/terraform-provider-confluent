@@ -403,6 +403,7 @@ const (
 	groupMappingResourceLabel                                           = "test_group_mapping_resource_label"
 	groupMappingScenarioName                                            = "confluent_group_mapping Resource Lifecycle"
 	identityPoolDataSourceLabel                                         = "example"
+	identityPoolAssignedResourceOwner                                   = "sa-test12"
 	identityPoolDescription                                             = "Prod Access to Kafka clusters to Release Engineering"
 	identityPoolDisplayName                                             = "My Identity Pool"
 	identityPoolFilter                                                  = "claims.aud==\"confluent\" && claims.group!=\"invalid_group\""
