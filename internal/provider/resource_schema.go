@@ -269,7 +269,9 @@ func metadataSchema() *schema.Schema {
 
 func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
 	if !diff.HasChange(paramSchema) {
-		return nil
+		// The schema definition itself is unchanged, but a change of the references / ruleset / metadata
+		// still re-registers the schema (see schemaUpdate()) and therefore still bumps its version.
+		return setSchemaOutputsKnownAfterApply(diff)
 	}
 
 	oldObj, newObj := diff.GetChange(paramSchema)
@@ -353,6 +355,15 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		createSchemaRequest.SetMetadata(*metadata)
 	}
 
+	// A referenced schema that will be (re)registered during the same apply doesn't have its new version yet at
+	// plan time, so schema_reference reads back either as unknown or with a zero version here. Neither the
+	// validation nor the lookup check below can run against a schema version that doesn't exist yet, so skip both:
+	// they run again during apply, once every referenced version is known.
+	if hasUnresolvedSchemaReferences(diff, schemaReferences) {
+		tflog.Debug(ctx, fmt.Sprintf("Skipping validation and lookup checks for Schema %q: it references a schema version that isn't known yet during plan", subjectName))
+		return setSchemaOutputsKnownAfterApply(diff)
+	}
+
 	// SetSchemaDiff() function is invoked during terraform plan
 	// Having schema validation check during plan empowers customers to review schema changes before applying
 	// paramSkipValidationDuringPlan = true -> skipping schema validation during 'terraform plan'
@@ -389,7 +400,63 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	if shouldRecreateOnUpdate && hasSemanticSchemaUpdate {
 		return fmt.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", diff.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
 	}
+
+	// Deliberately after schemaLookupCheck(): a semantically equivalent schema (see the newline / tab drift
+	// described in https://github.com/confluentinc/terraform-provider-confluent/issues/378) has already been
+	// reverted to its old value at this point, so it's not reported as a version bump.
+	return setSchemaOutputsKnownAfterApply(diff)
+}
+
+// setSchemaOutputsKnownAfterApply marks the attributes that Schema Registry assigns during apply as unknown
+// ("known after apply") whenever the plan implies that the schema will be re-registered.
+//
+// schemaUpdate() forwards a change of paramSchema, paramSchemaReference, paramRuleset or paramMetadata to
+// schemaCreate(), which registers a new schema version, so both paramVersion and paramSchemaIdentifier change.
+// Since both are Computed-only, Terraform otherwise keeps their prior state values throughout the plan, and a
+// resource that interpolates them (most commonly another schema's schema_reference.version) sees no change until
+// the next plan / apply cycle: https://github.com/confluentinc/terraform-provider-confluent/issues/269
+func setSchemaOutputsKnownAfterApply(diff *schema.ResourceDiff) error {
+	// A schema that hasn't been created yet already has unknown computed attributes.
+	if diff.Id() == "" {
+		return nil
+	}
+
+	// recreate_on_update = true rejects a schema update instead of registering a new version (see above).
+	if diff.Get(paramRecreateOnUpdate).(bool) {
+		return nil
+	}
+
+	// These are exactly the attributes that schemaUpdate() forwards to schemaCreate().
+	if !diff.HasChanges(paramSchema, paramSchemaReference, paramRuleset, paramMetadata) {
+		return nil
+	}
+
+	if err := diff.SetNewComputed(paramVersion); err != nil {
+		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+	}
+	if err := diff.SetNewComputed(paramSchemaIdentifier); err != nil {
+		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+	}
 	return nil
+}
+
+// hasUnresolvedSchemaReferences reports whether this schema references another schema whose version isn't known
+// yet during plan, which is the case when the referenced schema is created or updated within the same apply.
+func hasUnresolvedSchemaReferences(diff *schema.ResourceDiff, references []schemaregistryv1.SchemaReference) bool {
+	// An unknown value inside a set makes the whole set unknown, in which case diff.Get(paramSchemaReference)
+	// returned an empty list rather than the configured references.
+	if !diff.NewValueKnown(paramSchemaReference) {
+		return true
+	}
+
+	// Schema Registry versions start at 1, and an unknown version reads back as the zero value of its type, so a
+	// zero version is a reference to a schema version that doesn't exist yet.
+	for _, reference := range references {
+		if reference.GetVersion() == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName, oldSchema string) error {
