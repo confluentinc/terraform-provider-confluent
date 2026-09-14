@@ -450,8 +450,11 @@ func New(version, userAgent string) func() *schema.Provider {
 		// Wrap every managed resource's CRUD and import entry points with
 		// telemetry, once ResourcesMap is complete. terraformVersion is read
 		// lazily because Core sets it during ConfigureProvider, after this point.
+		// The reporter is the late-binding publishedTelemetryReporter: it forwards
+		// to whatever provider configuration publishes (TFCA-B6) and drops until
+		// then or when reporting is disabled.
 		wrapResourcesMapForTelemetry(provider.ResourcesMap, telemetryWrapConfig{
-			reporter:         noopTelemetryReporter{},
+			reporter:         publishedTelemetryReporter{},
 			providerVersion:  version,
 			terraformVersion: func() string { return provider.TerraformVersion },
 		})
@@ -836,6 +839,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isLiveProductionTestMode:     liveProductionTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
+
+	// Publish the client-analytics opt-out decision for this process (TFCA-B6):
+	// disable when the opt-out env var is set or the endpoint is not the public
+	// production endpoint, and publish the process-scoped runtime the resource
+	// wrappers read. Written once here, before the concurrent CRUD/import
+	// goroutines run.
+	publishTelemetryRuntime(endpoint)
 
 	return &client, nil
 }
