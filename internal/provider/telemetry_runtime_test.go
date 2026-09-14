@@ -89,10 +89,8 @@ func TestPublishedTelemetryReporter_DropsWhenDisabledOrUnset(t *testing.T) {
 }
 
 // TestPublishedTelemetryReporter_ConcurrentReads publishes once, then issues many
-// concurrent Reports — the real usage shape (one write at configuration, many
-// reads from parallel resource operations) — and asserts every read forwards.
-// Concurrent load/store of the atomic is covered by
-// TestPublishedTelemetryReporter_ConcurrentPublishAndReport, so keep both.
+// concurrent Reports and asserts each one forwards. Concurrent load/store of the
+// atomic is covered by TestPublishedTelemetryReporter_ConcurrentPublishAndReport.
 func TestPublishedTelemetryReporter_ConcurrentReads(t *testing.T) {
 	restorePublishedTelemetry(t)
 	rec := &recordingReporter{}
@@ -114,9 +112,8 @@ func TestPublishedTelemetryReporter_ConcurrentReads(t *testing.T) {
 }
 
 // TestPublishedTelemetryReporter_ConcurrentPublishAndReport races a publisher
-// against concurrent Reports to exercise the atomic pointer under -race. No count
-// is asserted because reads legitimately straddle the publish; it checks only for
-// races and nil-panics on a swapped-out runtime.
+// against concurrent Reports to exercise the atomic pointer under -race. It
+// asserts no count (reads straddle the publish) — only race- and panic-freedom.
 func TestPublishedTelemetryReporter_ConcurrentPublishAndReport(t *testing.T) {
 	restorePublishedTelemetry(t)
 

@@ -21,15 +21,9 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// Client analytics opt-out: decide once, during provider configuration, whether
-// usage reporting is enabled for this process, and publish that decision for the
+// Client analytics opt-out: during provider configuration, decide whether usage
+// reporting is enabled for this process and publish that decision for the
 // resource wrappers to read.
-//
-// The wrapper captures its reporter at New(), before the endpoint and
-// credentials are known, so that reporter is a late binder over a process-scoped
-// runtime that configuration publishes once. The atomic pointer publishes it
-// safely: it is written before the concurrent resource operations start and only
-// read after. The sink behind the gate is a no-op today, so reporting is off.
 
 const (
 	// disableProviderAnalyticsEnvVar opts the process out of analytics when set to
@@ -78,14 +72,11 @@ func telemetryOptOut(endpoint string) bool {
 	return endpoint != defaultCloudEndpoint
 }
 
-// publishTelemetryRuntime computes the opt-out decision and publishes the
-// runtime the resource wrappers read. Called once at the end of provider
-// configuration, before the concurrent resource operations run.
+// publishTelemetryRuntime computes the opt-out decision and publishes the runtime
+// the resource wrappers read, once at the end of provider configuration.
 //
-// The enabled sink is a no-op today. A real network reporter that replaces it
-// must be safe for concurrent use and must stay disabled during test runs: live
-// tests use the production endpoint, so this endpoint check alone will not
-// disable them.
+// The enabled sink is a no-op today; a real reporter must be concurrency-safe and
+// stay off during test runs (live tests use the production endpoint).
 func publishTelemetryRuntime(endpoint string) {
 	disabled := telemetryOptOut(endpoint)
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
