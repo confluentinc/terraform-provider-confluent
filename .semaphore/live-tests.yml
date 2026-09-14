@@ -33,6 +33,36 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
+            # 1.5 Sweep leftover tf-live-* test topics from earlier runs BEFORE testing.
+            # Standard clusters cap at 2500 partitions; leaked topics accumulate until every
+            # topic create fails with 400 "would exceed 2500 total partitions" and the whole
+            # suite wedges. Terraform destroys topics only when a run completes normally, so a
+            # timed-out (24h limit) or canceled run leaks them. This runs pre-test rather than
+            # in the epilogue because the epilogue is skipped on exactly those timeout/cancel
+            # paths (see the epilogue comment below), so a pre-run sweep is the only placement
+            # that reliably clears whatever the previous run left behind. Best-effort: it only
+            # touches this provider's own tf-live-* topics and never fails the job.
+            - |
+              cleanup_leftover_topics() {
+                cid="$1"; rest="$2"; key="$3"; secret="$4"
+                if [ -z "$cid" ] || [ -z "$rest" ] || [ -z "$key" ] || [ -z "$secret" ]; then
+                  echo "Skipping topic cleanup for ${cid:-<unset cluster>}: credentials not set"
+                  return 0
+                fi
+                base="${rest%/}/kafka/v3/clusters/${cid}/topics"
+                echo "Sweeping leftover tf-live-* topics on ${cid}..."
+                curl -s -u "${key}:${secret}" "$base" \
+                  | grep -oE '"topic_name":"tf-live-[^"]*"' \
+                  | sed -E 's/^"topic_name":"//; s/"$//' \
+                  | while IFS= read -r t; do
+                      [ -n "$t" ] || continue
+                      code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE -u "${key}:${secret}" "${base}/${t}")
+                      echo "  deleted ${t} (HTTP ${code})"
+                    done
+              }
+              cleanup_leftover_topics "$KAFKA_STANDARD_AWS_CLUSTER_ID" "$KAFKA_STANDARD_AWS_REST_ENDPOINT" "$KAFKA_STANDARD_AWS_API_KEY" "$KAFKA_STANDARD_AWS_API_SECRET" || true
+              cleanup_leftover_topics "$KAFKA_DEDICATED_AWS_CLUSTER_ID" "$KAFKA_DEDICATED_AWS_REST_ENDPOINT" "$KAFKA_DEDICATED_AWS_API_KEY" "$KAFKA_DEDICATED_AWS_API_SECRET" || true
+
             # 2. The main script
             - |
               set -e
