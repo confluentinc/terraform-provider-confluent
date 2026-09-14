@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.12
+go 1.26.7
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
@@ -37,6 +37,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.7.0
+	github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0
 	github.com/dghubble/sling v1.4.1
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-retryablehttp v0.7.7
