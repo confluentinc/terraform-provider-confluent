@@ -88,14 +88,11 @@ func TestPublishedTelemetryReporter_DropsWhenDisabledOrUnset(t *testing.T) {
 	}
 }
 
-// TestPublishedTelemetryReporter_ConcurrentReads publishes once and then issues
-// many concurrent Reports — the exact safe-publication shape B6 relies on (one
-// write during configuration, many reads from the parallel graph walk). It
-// asserts reader/reader safety and that every read forwards. Publication itself
-// establishes happens-before via goroutine creation here, so the atomic is
-// exercised specifically by TestPublishedTelemetryReporter_ConcurrentPublishAndReport
-// below (a publish racing the reads) — keep that test even though this one looks
-// similar.
+// TestPublishedTelemetryReporter_ConcurrentReads publishes once, then issues many
+// concurrent Reports — the real usage shape (one write at configuration, many
+// reads from parallel resource operations) — and asserts every read forwards.
+// Concurrent load/store of the atomic is covered by
+// TestPublishedTelemetryReporter_ConcurrentPublishAndReport, so keep both.
 func TestPublishedTelemetryReporter_ConcurrentReads(t *testing.T) {
 	restorePublishedTelemetry(t)
 	rec := &recordingReporter{}
@@ -117,10 +114,9 @@ func TestPublishedTelemetryReporter_ConcurrentReads(t *testing.T) {
 }
 
 // TestPublishedTelemetryReporter_ConcurrentPublishAndReport races a publisher
-// against concurrent Reports to exercise the atomic.Pointer itself (defense in
-// depth beyond the write-before-reads guarantee). No count is asserted because
-// reads legitimately straddle the publish; the point is -race cleanliness and no
-// nil-panic on a swapped-out runtime.
+// against concurrent Reports to exercise the atomic pointer under -race. No count
+// is asserted because reads legitimately straddle the publish; it checks only for
+// races and nil-panics on a swapped-out runtime.
 func TestPublishedTelemetryReporter_ConcurrentPublishAndReport(t *testing.T) {
 	restorePublishedTelemetry(t)
 
@@ -190,28 +186,23 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 		if rt.reporter == nil {
 			t.Fatalf("enabled runtime must carry a non-nil reporter")
 		}
-		// The run ID is process-scoped and stable: the published config carries
-		// the same RunID every CRUD goroutine will observe.
+		// The published run ID is stable and matches the process run ID.
 		if rt.config.RunID != telemetry.RunID() {
 			t.Errorf("published RunID = %q, want the process RunID %q", rt.config.RunID, telemetry.RunID())
 		}
 	})
 }
 
-// TestPublishedGate_EndToEndThroughWrapper drives a real wrapped CRUD call
-// through the exact publishedTelemetryReporter wiring New() installs, and proves
-// the published opt-out state controls emission at the wrapper boundary: a
-// disabled runtime (what a non-default/empty endpoint or the opt-out env var
-// publishes) emits nothing even with a sink present, and an enabled runtime
-// forwards exactly one event. This is the acceptance-criteria behavior without
-// the Docker-backed acceptance harness.
+// TestPublishedGate_EndToEndThroughWrapper drives a real wrapped Create through
+// the same reporter wiring New() installs, and checks the published opt-out state
+// controls emission: a disabled runtime emits nothing even with a sink present,
+// an enabled runtime forwards exactly one event.
 func TestPublishedGate_EndToEndThroughWrapper(t *testing.T) {
 	restorePublishedTelemetry(t)
 
 	rec := &recordingReporter{}
 	r := newTestResource()
-	// Wire exactly as New() does: the wrapper reports through the late-binding
-	// publishedTelemetryReporter, not a reporter captured directly.
+	// Wire the reporter exactly as New() does.
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, telemetryWrapConfig{
 		reporter:         publishedTelemetryReporter{},
 		providerVersion:  "9.9.9-test",
@@ -234,13 +225,10 @@ func TestPublishedGate_EndToEndThroughWrapper(t *testing.T) {
 	}
 }
 
-// TestDefaultCloudEndpointMatchesSchemaDefault pins defaultCloudEndpoint to the
-// provider's "endpoint" schema default. The gate enables reporting only on an
-// exact match to defaultCloudEndpoint, so if the schema default (what a normally
-// configured provider resolves to) ever diverged from the constant, telemetry
-// would silently disable on the real production endpoint. The two literals live
-// in different files (provider.go schema vs. this package); this test is the
-// enforcement the comment on defaultCloudEndpoint asserts.
+// TestDefaultCloudEndpointMatchesSchemaDefault keeps defaultCloudEndpoint in sync
+// with the provider's "endpoint" schema default. The gate enables reporting only
+// on an exact match, so if the two drifted, telemetry would silently disable on
+// the production endpoint.
 func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
 	p := New(testVersion, "")()
 	got, ok := p.Schema["endpoint"].Default.(string)
