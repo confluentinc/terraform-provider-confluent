@@ -235,13 +235,22 @@ func panicError(resourceType string, op telemetry.Operation, rec interface{}, st
 	return fmt.Errorf("the Confluent provider recovered from a panic during %s of %s: %s", strings.ToLower(string(op)), resourceType, panicDetail(rec, stack))
 }
 
-// panicDetail renders the panic value and its trimmed stack for the operator's
-// error, so a recovered panic stays as diagnosable as the crash it replaces.
+// maxDetailFrames caps how many stack frames the operator-facing panic error
+// shows; the full stack still goes to telemetry (up to maxStackFrames).
+const maxDetailFrames = 15
+
+// panicDetail renders the panic value and the top maxDetailFrames stack frames
+// for the operator's error.
 func panicDetail(rec interface{}, stack []string) string {
 	if len(stack) == 0 {
 		return fmt.Sprintf("%v", rec)
 	}
-	return fmt.Sprintf("%v\n\n%s", rec, strings.Join(stack, "\n"))
+	shown, suffix := stack, ""
+	if len(shown) > maxDetailFrames {
+		shown = shown[:maxDetailFrames]
+		suffix = fmt.Sprintf("\n\t… (showing top %d of %d frames)", maxDetailFrames, len(stack))
+	}
+	return fmt.Sprintf("%v\n\n%s%s", rec, strings.Join(shown, "\n"), suffix)
 }
 
 // maxStackFrames caps how many frames a crash report carries.
