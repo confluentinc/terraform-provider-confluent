@@ -33,11 +33,12 @@ import (
 // atomic.Pointer provides the happens-before edge. Aliased provider instances
 // run in separate OS processes and share none of this.
 //
-// The terminal sink behind the gate is the no-op reporter. The network
-// transport (TFCA-B5) and its auth scoping (TFCA-B7) land downstream and the
-// enabled path forwards to them once wired; until then this file is
-// behaviorally transparent — no Usage leaves the process and configuration
-// performs no new network or filesystem I/O.
+// The terminal sink behind the gate is the no-op reporter. B5's network
+// transport is present on master but unwired here; wiring it in (with B7 auth
+// scoping) lands downstream, and the enabled path forwards to it once wired.
+// Until then this file is behaviorally transparent — no Usage leaves the
+// process and configuration does no network or filesystem I/O (the one-time
+// run-ID mint reads OS entropy via a syscall, not a file).
 
 const (
 	// disableProviderAnalyticsEnvVar opts a process out of client analytics when
@@ -56,9 +57,11 @@ const (
 // telemetryRuntime is the process-scoped analytics state published once during
 // provider configuration.
 type telemetryRuntime struct {
-	// config is the immutable opt-out + run-ID snapshot for this process (the
-	// configure-time struct TFCA-B1 defines). Report reads config.Disabled; the
-	// RunID is published here for the network transport to consume downstream.
+	// config is the immutable {RunID, Disabled} snapshot published once for this
+	// process (the configure-time struct TFCA-B1 defines). Report reads
+	// config.Disabled; config.RunID makes the run ID part of the consistently-
+	// published state (each emitted Usage independently carries the same process
+	// RunID, both via telemetry.RunID()'s sync.Once).
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
@@ -103,11 +106,12 @@ func telemetryOptOut(endpoint string) bool {
 // end of provider configuration, before the concurrent CRUD/import goroutines
 // run.
 //
-// When enabled, the runtime forwards to the network transport (TFCA-B5),
-// authenticated with the top-level Cloud identity (TFCA-B7). Both land
-// downstream; until then the enabled sink is the no-op reporter, so publishing
-// an enabled runtime today adds no outbound calls — the opt-out gate is in place
-// ahead of the transport it will guard.
+// When enabled, the runtime will forward to B5's network transport,
+// authenticated with the top-level Cloud identity (TFCA-B7). B5's transport is
+// present on master but not wired here; that wiring lands downstream. Until then
+// the enabled sink is the no-op reporter, so publishing an enabled runtime today
+// adds no outbound calls — the opt-out gate is in place ahead of the transport
+// it will guard.
 //
 // Two preconditions must hold before a real transport replaces that no-op sink:
 //   - It must be safe for concurrent use: the CRUD/import goroutines call the

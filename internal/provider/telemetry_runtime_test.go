@@ -234,4 +234,22 @@ func TestPublishedGate_EndToEndThroughWrapper(t *testing.T) {
 	}
 }
 
+// TestDefaultCloudEndpointMatchesSchemaDefault pins defaultCloudEndpoint to the
+// provider's "endpoint" schema default. The gate enables reporting only on an
+// exact match to defaultCloudEndpoint, so if the schema default (what a normally
+// configured provider resolves to) ever diverged from the constant, telemetry
+// would silently disable on the real production endpoint. The two literals live
+// in different files (provider.go schema vs. this package); this test is the
+// enforcement the comment on defaultCloudEndpoint asserts.
+func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
+	p := New(testVersion, "")()
+	got, ok := p.Schema["endpoint"].Default.(string)
+	if !ok {
+		t.Fatalf("provider \"endpoint\" schema default is not a string: %T", p.Schema["endpoint"].Default)
+	}
+	if got != defaultCloudEndpoint {
+		t.Errorf("provider \"endpoint\" schema default = %q, want defaultCloudEndpoint %q; the opt-out gate misfires if these diverge", got, defaultCloudEndpoint)
+	}
+}
+
 func strptr(s string) *string { return &s }
