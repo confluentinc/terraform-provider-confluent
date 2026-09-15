@@ -16,6 +16,7 @@ package telemetry
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -128,6 +129,63 @@ func TestSDKPoster_PostsMappedUsage(t *testing.T) {
 	} else if ts, err := time.Parse(time.RFC3339, sa); err != nil || !ts.Equal(u.StartedAt) {
 		t.Errorf("started_at = %q, want %s", sa, u.StartedAt.Format(time.RFC3339))
 	}
+}
+
+// TestSDKPoster_AppliesAuthHeaders drives the shipped auth decorators through a
+// real POST and asserts the resulting Authorization header, for both the Cloud
+// API key (Basic) and the OAuth/STS bearer token. This proves the full wire path
+// — decorator -> SDK context key -> HTTP header — for each scheme end to end, not
+// just the context key in isolation, so a regression in the decorators or in how
+// NewSDKPoster applies auth is caught here.
+func TestSDKPoster_AppliesAuthHeaders(t *testing.T) {
+	newStub := func(t *testing.T) (*httptest.Server, <-chan string) {
+		t.Helper()
+		auth := make(chan string, 1)
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/terraform-usage/v1/usages" {
+				t.Errorf("path = %s, want /terraform-usage/v1/usages", r.URL.Path)
+			}
+			auth <- r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(srv.Close)
+		return srv, auth
+	}
+
+	t.Run("OAuth/STS token yields a Bearer header", func(t *testing.T) {
+		srv, auth := newStub(t)
+		p := NewSDKPoster(srv.URL, srv.Client(), "ua", func(ctx context.Context) context.Context {
+			return TokenAuthContext(ctx, "sts-tok")
+		})
+		if err := p.Post(context.Background(), sampleUsage()); err != nil {
+			t.Fatalf("Post returned error: %v", err)
+		}
+		if got := <-auth; got != "Bearer sts-tok" {
+			t.Errorf("Authorization = %q, want %q", got, "Bearer sts-tok")
+		}
+	})
+
+	t.Run("Cloud API key yields a Basic header", func(t *testing.T) {
+		srv, auth := newStub(t)
+		p := NewSDKPoster(srv.URL, srv.Client(), "ua", func(ctx context.Context) context.Context {
+			return BasicAuthContext(ctx, "key", "secret")
+		})
+		if err := p.Post(context.Background(), sampleUsage()); err != nil {
+			t.Fatalf("Post returned error: %v", err)
+		}
+		got := <-auth
+		const prefix = "Basic "
+		if !strings.HasPrefix(got, prefix) {
+			t.Fatalf("Authorization = %q, want a Basic auth header", got)
+		}
+		dec, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(got, prefix))
+		if err != nil {
+			t.Fatalf("decoding Basic credentials: %v", err)
+		}
+		if string(dec) != "key:secret" {
+			t.Errorf("Basic credentials = %q, want %q", dec, "key:secret")
+		}
+	})
 }
 
 // TestSDKPoster_Non2xxIsError asserts a non-2xx response surfaces as an error so
