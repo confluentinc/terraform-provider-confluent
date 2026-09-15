@@ -28,11 +28,11 @@ import (
 )
 
 const (
-	notificationTypeDataSourceScenarioName = "confluent_notifications_notification_type Data Source Lifecycle"
+	notificationTypeDataSourceScenarioName = "confluent_notification_type Data Source Lifecycle"
 	notificationTypeId                     = "dlz-f3a90de"
 )
 
-func TestAccDataSourceNotificationsNotificationType(t *testing.T) {
+func TestAccDataSourceNotificationType(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -49,7 +49,7 @@ func TestAccDataSourceNotificationsNotificationType(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readNotificationTypeResponse, _ := ioutil.ReadFile("../testdata/notifications_notification_type/read_created_notification_type.json")
+	readNotificationTypeResponse, _ := ioutil.ReadFile("../testdata/notification_type/read_created_notification_type.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/notifications/v1/notification-types/%s", notificationTypeId))).
 		InScenario(notificationTypeDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -65,14 +65,14 @@ func TestAccDataSourceNotificationsNotificationType(t *testing.T) {
 	isIncludedInPlan := "false"
 	severity := "INFO"
 	notificationTypeDataSourceLabel := "test_notification_type_data_source_label"
-	fullNotificationTypeDataSourceLabel := fmt.Sprintf("data.confluent_notifications_notification_type.%s", notificationTypeDataSourceLabel)
+	fullNotificationTypeDataSourceLabel := fmt.Sprintf("data.confluent_notification_type.%s", notificationTypeDataSourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceNotificationsNotificationTypeConfig(mockServerUrl, notificationTypeDataSourceLabel),
+				Config: testAccCheckDataSourceNotificationTypeConfig(mockServerUrl, notificationTypeDataSourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullNotificationTypeDataSourceLabel, "id", notificationTypeId),
 					resource.TestCheckResourceAttr(fullNotificationTypeDataSourceLabel, "display_name", displayName),
@@ -90,12 +90,12 @@ func TestAccDataSourceNotificationsNotificationType(t *testing.T) {
 	})
 }
 
-func testAccCheckDataSourceNotificationsNotificationTypeConfig(mockServerUrl, notificationTypeDataSourceLabel string) string {
+func testAccCheckDataSourceNotificationTypeConfig(mockServerUrl, notificationTypeDataSourceLabel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluent_notifications_notification_type" "%s" {
+	data "confluent_notification_type" "%s" {
 		id = %q
 	}
 	`, mockServerUrl, notificationTypeDataSourceLabel, notificationTypeId)
