@@ -411,6 +411,14 @@
     "user_email_target",
     "webhook_target"
   ],
+  "confluent_notifications_subscription": [
+    "api_version",
+    "current_state",
+    "integrations",
+    "kind",
+    "notification_type",
+    "resource_name"
+  ],
   "confluent_peering": [
     "aws",
     "azure",
