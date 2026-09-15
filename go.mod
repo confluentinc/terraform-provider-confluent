@@ -21,7 +21,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
-	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
+	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0
@@ -29,7 +29,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/org v0.12.0
+	github.com/confluentinc/ccloud-sdk-go-v2/org v0.15.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/rtce v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
