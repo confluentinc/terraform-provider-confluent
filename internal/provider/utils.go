@@ -149,9 +149,9 @@ func (c *Client) connectCustomPluginV1ApiContext(ctx context.Context) context.Co
 func (c *Client) ccpmV1ApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Custom Code Logging client: %v", err))
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Custom Connect Plugin Management client: %v", err))
 		}
-		return context.WithValue(ctx, connectcustompluginv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, ccpmv1.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
@@ -161,7 +161,7 @@ func (c *Client) ccpmV1ApiContext(ctx context.Context) context.Context {
 		})
 	}
 
-	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Custom Code Logging client")
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Custom Connect Plugin Management client")
 	return ctx
 }
 
@@ -243,7 +243,7 @@ func (c *Client) certificateAuthorityV2ApiContext(ctx context.Context) context.C
 
 func (c *Client) camV1ApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), camv1.ContextBasicAuth, camv1.BasicAuth{
+		return context.WithValue(ctx, camv1.ContextBasicAuth, camv1.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -749,6 +749,7 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Kafka rest client: %v", err))
+			return context.WithValue(ctx, kafkarestv3.ContextAccessToken, currToken.AccessToken)
 		}
 		c.externalAccessToken = token
 		return context.WithValue(ctx, kafkarestv3.ContextAccessToken, c.externalAccessToken.AccessToken)
@@ -771,6 +772,7 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Schema Registry rest client: %v", err))
+			return context.WithValue(ctx, schemaregistryv1.ContextAccessToken, currToken.AccessToken)
 		}
 		c.externalAccessToken = token
 		return context.WithValue(ctx, schemaregistryv1.ContextAccessToken, c.externalAccessToken.AccessToken)
@@ -793,6 +795,7 @@ func (c *SchemaRegistryRestClient) dataCatalogV1ApiContext(ctx context.Context) 
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Data Catalog rest client: %v", err))
+			return context.WithValue(ctx, datacatalogv1.ContextAccessToken, currToken.AccessToken)
 		}
 		c.externalAccessToken = token
 		return context.WithValue(ctx, datacatalogv1.ContextAccessToken, c.externalAccessToken.AccessToken)
@@ -815,6 +818,7 @@ func (c *CatalogRestClient) dataCatalogV1ApiContext(ctx context.Context) context
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Stream Governance Cluster rest client: %v", err))
+			return context.WithValue(ctx, datacatalogv1.ContextAccessToken, currToken.AccessToken)
 		}
 		c.externalAccessToken = token
 		return context.WithValue(ctx, datacatalogv1.ContextAccessToken, c.externalAccessToken.AccessToken)
@@ -836,6 +840,7 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
+			return context.WithValue(ctx, flinkgatewayv1.ContextAccessToken, currToken.AccessToken)
 		}
 		c.externalAccessToken = token
 		return context.WithValue(ctx, flinkgatewayv1.ContextAccessToken, c.externalAccessToken.AccessToken)
