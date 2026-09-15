@@ -460,7 +460,6 @@
     "cloud",
     "display_name",
     "environment",
-    "id",
     "status",
     "usages"
   ],
