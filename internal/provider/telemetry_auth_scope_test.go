@@ -31,9 +31,11 @@ import (
 func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
+	t.Setenv(previewProviderAnalyticsEnvVar, "1")
 
-	// Default endpoint (would otherwise enable) and not test mode, but no Cloud
-	// key and no OAuth/STS token — mirroring a Kafka-only provider configuration.
+	// Default endpoint, preview opt-in set, not test mode — so the only thing that
+	// disables here is the missing top-level Cloud identity: no Cloud key and no
+	// OAuth/STS token, mirroring a Kafka-only provider configuration.
 	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "", "", nil, nil, false)
 
 	rt := publishedTelemetry.Load()
@@ -59,6 +61,7 @@ func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
+	t.Setenv(previewProviderAnalyticsEnvVar, "1")
 
 	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 	rt := publishedTelemetry.Load()

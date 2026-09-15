@@ -32,6 +32,14 @@ const (
 	// any non-empty value.
 	disableProviderAnalyticsEnvVar = "CONFLUENT_DISABLE_PROVIDER_ANALYTICS"
 
+	// previewProviderAnalyticsEnvVar is a TEMPORARY dark-launch opt-in: while it is
+	// unset, reporting stays a no-op for everyone — even on the production endpoint
+	// with a configured identity — so the provider makes zero telemetry calls. It
+	// exists only so client analytics can be verified end-to-end before it is
+	// enabled by default. Remove it, its gate in publishTelemetryRuntime, and the
+	// test setup that sets it at go-live (APIE-1570).
+	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
+
 	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
 	// the schema default of the provider's "endpoint" argument; reporting is
 	// enabled only for an exact match, and any other endpoint disables it.
@@ -105,7 +113,8 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 // publishTelemetryRuntime computes the reporting decision and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
 //
-// Reporting is enabled only when the process is not opted out and is on the
+// Reporting is enabled only when the temporary preview opt-in is set (see
+// previewProviderAnalyticsEnvVar), the process is not opted out and is on the
 // production endpoint (TFCA-B6), a top-level Cloud identity is configured to
 // attribute it (TFCA-B7), and the provider is not running an acceptance or live
 // test — live tests use the production endpoint with real credentials, so the
@@ -117,7 +126,12 @@ func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIK
 	// Kafka credentials, which are never passed here), authFunc is nil and
 	// reporting is a no-op — not an error.
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
-	disabled := telemetryOptOut(endpoint) || authFunc == nil || testMode
+	// TEMPORARY dark-launch guard (remove at go-live, APIE-1570): keep reporting a
+	// no-op for everyone until CONFLUENT_PROVIDER_ANALYTICS_PREVIEW is set, so the
+	// real transport can be verified end-to-end before it is on by default. This is
+	// an extra opt-in, never a bypass — every other gate below still applies.
+	previewOptIn := os.Getenv(previewProviderAnalyticsEnvVar) != ""
+	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || testMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
