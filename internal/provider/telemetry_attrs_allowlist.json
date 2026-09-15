@@ -419,6 +419,16 @@
     "resource_name",
     "resource_type"
   ],
+  "confluent_notifications_resource_subscription": [
+    "api_version",
+    "current_state",
+    "integrations",
+    "kind",
+    "notification_type",
+    "resource",
+    "resource_name",
+    "resource_type"
+  ],
   "confluent_notifications_subscription": [
     "api_version",
     "current_state",
