@@ -52,7 +52,7 @@ semaphore:
       pipeline_file: ".semaphore/smoke-tests.yml"
       status: ACTIVE
 make:
-  enable: true
+  enable: false
 sonarqube:
   enable: true
   languages:
