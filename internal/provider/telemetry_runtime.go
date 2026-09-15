@@ -37,7 +37,11 @@ const (
 	// with a configured identity — so the provider makes zero telemetry calls. It
 	// exists only so client analytics can be verified end-to-end before it is
 	// enabled by default. Remove it, its gate in publishTelemetryRuntime, and the
-	// test setup that sets it at go-live (APIE-1570).
+	// test setup that sets it at go-live (APIE-1570). It is presence-based, matching
+	// disableProviderAnalyticsEnvVar: any non-empty value opts in (so even
+	// "...=false" enables the preview); the opt-out env var still wins when both are
+	// set. This is an internal rollout switch, deliberately kept out of the public
+	// opt-out docs.
 	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
 
 	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
@@ -57,6 +61,16 @@ type telemetryRuntime struct {
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
 // concurrent resource operations read it without locking.
+//
+// A process global is safe here rather than per-configuration state because
+// Terraform runs each provider configuration — including every alias — in its own
+// plugin OS subprocess (one plugin.Serve -> one *schema.Provider -> one meta slot
+// set once by ConfigureProvider). Within a process there is therefore exactly one
+// provider configuration and one top-level identity, so a later alias cannot
+// overwrite an earlier alias's runtime here; that would require two configurations
+// to share a process, which the plugin model does not do. A repeated configure of
+// the same configuration (e.g. a combined plan+apply) republishes the identical
+// decision.
 var publishedTelemetry atomic.Pointer[telemetryRuntime]
 
 // publishedTelemetryReporter is the reporter the wrapper holds. It forwards to

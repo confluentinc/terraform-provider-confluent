@@ -203,6 +203,22 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 		}
 	})
 
+	t.Run("preview opt-in is presence-based: a false-ish value still enables", func(t *testing.T) {
+		restorePublishedTelemetry(t)
+		t.Setenv(disableProviderAnalyticsEnvVar, "")
+		// Any non-empty value opts in — including "false" — so a mutation from the
+		// presence check (!= "") to a specific value (== "1") would disable this.
+		t.Setenv(previewProviderAnalyticsEnvVar, "false")
+		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+		rt := publishedTelemetry.Load()
+		if rt == nil || rt.config.Disabled || rt.reporter == nil {
+			t.Fatalf("a non-empty preview value must enable, got %+v", rt)
+		}
+		if c, ok := rt.reporter.(interface{ Close() }); ok {
+			c.Close()
+		}
+	})
+
 	t.Run("default endpoint, no opt-out, preview opt-in set: enabled runtime with a live sink", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")

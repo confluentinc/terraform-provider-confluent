@@ -840,10 +840,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	// Publish this process's analytics decision for the resource wrappers, once,
-	// before the concurrent resource operations. Reporting is enabled only on the
-	// production endpoint with the opt-out env var unset (TFCA-B6), when a
-	// top-level Cloud identity is configured to attribute it (TFCA-B7), and never
-	// during acceptance/live test runs.
+	// before the concurrent resource operations. Reporting stays off unless the
+	// temporary preview opt-in is set (see previewProviderAnalyticsEnvVar), and even
+	// then only on the production endpoint with the opt-out env var unset (TFCA-B6),
+	// when a top-level Cloud identity is configured to attribute it (TFCA-B7), and
+	// never during acceptance/live test runs.
 	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken, acceptanceTestMode || liveProductionTestMode)
 
 	return &client, nil
