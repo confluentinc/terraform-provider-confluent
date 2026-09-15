@@ -130,6 +130,8 @@ func TestAccIdentityPool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramDescription, identityPoolDescription),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramIdentityClaim, identityPoolIdentityClaim),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramFilter, identityPoolFilter),
+					// Fallback: resource_owner isn't set in config, so no owner should be assigned.
+					resource.TestCheckNoResourceAttr(fullIdentityPoolResourceLabel, paramResourceOwner),
 				),
 			},
 			{
@@ -160,6 +162,134 @@ func TestAccIdentityPool(t *testing.T) {
 	checkStubCount(t, wiremockClient, createSaStub, "POST /iam/v2/identity-providers/op-537/identity-pools", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchSaStub, "PATCH /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
+}
+
+// TestAccIdentityPoolWithResourceOwner covers the `resource_owner` attribute added for
+// https://confluent.zendesk.com/agent/tickets/361467: the create stub only matches a request that
+// carries `assigned_resource_owner`, so if the provider stopped sending it, this test would fail
+// with a "no stub matched" error rather than silently passing.
+//
+// identityPoolResourceOwnerId is deliberately a service-account-shaped ID (sa-...) rather than a
+// user (u-...): the API accepts a User, Service Account, Group Mapping, or Identity Pool as owner,
+// and resource_owner has no format-restricting ValidateFunc, so this documents that any principal
+// type round-trips the same way. TestAccServiceAccountWithResourceOwner covers the user case.
+func TestAccIdentityPoolWithResourceOwner(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createIdentityPoolResponse, _ := ioutil.ReadFile("../testdata/identity_pool/create_identity_pool.json")
+	createIdentityPoolWithOwnerStub := wiremock.Post(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId))).
+		WithQueryParam("assigned_resource_owner", wiremock.EqualTo(identityPoolResourceOwnerId)).
+		InScenario(identityPoolScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateIdentityPoolHasBeenCreated).
+		WillReturn(
+			string(createIdentityPoolResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createIdentityPoolWithOwnerStub)
+
+	readCreatedIdentityPoolResponse, _ := ioutil.ReadFile("../testdata/identity_pool/read_created_identity_pool.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId))).
+		InScenario(identityPoolScenarioName).
+		WhenScenarioStateIs(scenarioStateIdentityPoolHasBeenCreated).
+		WillReturn(
+			string(readCreatedIdentityPoolResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedIdentityPoolResponse, _ := ioutil.ReadFile("../testdata/identity_pool/read_deleted_identity_pool.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId))).
+		InScenario(identityPoolScenarioName).
+		WhenScenarioStateIs(scenarioStateIdentityPoolHasBeenDeleted).
+		WillReturn(
+			string(readDeletedIdentityPoolResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	deleteIdentityPoolStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId))).
+		InScenario(identityPoolScenarioName).
+		WhenScenarioStateIs(scenarioStateIdentityPoolHasBeenCreated).
+		WillSetStateTo(scenarioStateIdentityPoolHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteIdentityPoolStub)
+
+	identityPoolResourceLabel := "test_identity_pool_resource_label"
+	fullIdentityPoolResourceLabel := fmt.Sprintf("confluent_identity_pool.%s", identityPoolResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckIdentityPoolDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckIdentityPoolConfigWithResourceOwner(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolIdentityClaim, identityPoolFilter, identityPoolResourceOwnerId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramDisplayName, identityPoolDisplayName),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramDescription, identityPoolDescription),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramIdentityClaim, identityPoolIdentityClaim),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramFilter, identityPoolFilter),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramResourceOwner, identityPoolResourceOwnerId),
+				),
+			},
+			{
+				// resource_owner assigns a role binding as a side effect of create; it isn't part
+				// of the identity pool API response, so it can't be recovered on import.
+				ResourceName:      fullIdentityPoolResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					poolId := resources[fullIdentityPoolResourceLabel].Primary.ID
+					providerId := resources[fullIdentityPoolResourceLabel].Primary.Attributes["identity_provider.0.id"]
+					return providerId + "/" + poolId, nil
+				},
+				ImportStateVerifyIgnore: []string{paramResourceOwner},
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createIdentityPoolWithOwnerStub, "POST /iam/v2/identity-providers/op-4EY/identity-pools?assigned_resource_owner="+identityPoolResourceOwnerId, expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteIdentityPoolStub, "DELETE /iam/v2/identity-providers/op-4EY/identity-pools/pool-AzXR", expectedCountOne)
+}
+
+func testAccCheckIdentityPoolConfigWithResourceOwner(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter, identityPoolResourceOwnerId string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_identity_pool" "%s" {
+        identity_provider {
+            id = "%s"
+        }
+		display_name    = "%s"
+		description     = "%s"
+		identity_claim  = "%s"
+		filter          = %q
+		resource_owner  = "%s"
+	}
+	`, mockServerUrl, identityPoolResourceLabel, identityProviderId, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter, identityPoolResourceOwnerId)
 }
 
 func testAccCheckIdentityPoolDestroy(s *terraform.State) error {
