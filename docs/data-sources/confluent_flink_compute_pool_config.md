@@ -37,3 +37,5 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `default_compute_pool_enabled` - (Required Boolean) Whether default compute pools are enabled for the organization.
 - `default_max_cfu` - (Required Integer) Maximum number of Confluent Flink Units (CFU).
+- `api_version` - (String) API Version defines the schema version of this representation of a resource.
+- `kind` - (String) Kind defines the object this REST resource represents.
