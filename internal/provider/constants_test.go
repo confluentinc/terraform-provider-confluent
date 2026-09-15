@@ -236,6 +236,9 @@ const (
 	dnsRecordResourceLabel                                              = "confluent_dns_record.main"
 	dnsRecordScenarioName                                               = "confluent_dns_record Resource Lifecycle"
 	dnsRecordUrlPath                                                    = "/networking/v1/dns-records"
+	eighthConfigName                                                    = "confluent.value.association"
+	eighthConfigUpdatedValue                                            = `{"schema":"{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.example.avro\",\"doc\":\"Update test.\\nChecks if it works.\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",\"string\"]},{\"name\":\"field2\",\"type\":[\"null\",\"int\"],\"default\":null}]}","schemaType":"AVRO"}`
+	eighthConfigValue                                                   = `{"schema":"{\"type\":\"record\",\"name\":\"TestValueRecord\",\"namespace\":\"com.example.avro\",\"doc\":\"Create test.\\nChecks equals sign = and escaping.\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",\"string\"]}]}","schemaType":"AVRO"}`
 	endpointApiVersion                                                  = "endpoint/v1"
 	endpointDataSourceScenarioName                                      = "confluent_endpoint Data Source Lifecycle"
 	endpointKind                                                        = "Endpoint"
@@ -907,6 +910,9 @@ const (
 	sensitiveAttributeKey                                               = "foo"
 	sensitiveAttributeUpdatedValue                                      = "bar updated"
 	sensitiveAttributeValue                                             = "bar"
+	seventhConfigName                                                   = "confluent.key.association"
+	seventhConfigUpdatedValue                                           = `{"schema":"{\"type\":\"record\",\"name\":\"TestKeyRecord\",\"namespace\":\"com.example.avro\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":[\"null\",\"int\"],\"default\":null}]}","schemaType":"AVRO"}`
+	seventhConfigValue                                                  = `{"schema":"{\"type\":\"record\",\"name\":\"TestKeyRecord\",\"namespace\":\"com.example.avro\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}","schemaType":"AVRO"}`
 	sixthClusterConfigAddedValue                                        = "TLSv1.3"
 	sixthClusterConfigName                                              = "ssl.enabled.protocols"
 	sixthConfigName                                                     = "confluent.schema.validation.context.name"
