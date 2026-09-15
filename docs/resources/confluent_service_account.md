@@ -28,6 +28,7 @@ The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the Service Account. Must be 64 characters or fewer.
 - `description` - (Optional String) A free-form description of the Service Account.
+- `resource_owner` - (Optional String, Forces new resource) The ID of the principal (for example, a User, Service Account, or Group Mapping) to assign the `ResourceOwner` role on this Service Account at creation time. If unset, no owner is assigned automatically.
 
 ## Attributes Reference
 

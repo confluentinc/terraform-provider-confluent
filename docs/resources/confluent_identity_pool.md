@@ -67,6 +67,7 @@ The following arguments are supported:
 - `description` - (Required String) A description for the Identity Pool.
 - `identity_claim` - (Required String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from (see [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1) for more details). This appears in the audit log records, showing, for example, that "identity Z used identity pool X to access topic A".
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).
+- `resource_owner` - (Optional String, Forces new resource) The ID of the principal (for example, a User, Service Account, or Group Mapping) to assign the `ResourceOwner` role on this Identity Pool at creation time. If unset, no owner is assigned automatically.
 
 ## Attributes Reference
 

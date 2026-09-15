@@ -52,6 +52,14 @@ func serviceAccountResource() *schema.Resource {
 				Computed:    true,
 				Description: "A free-form description of the Service Account",
 			},
+			paramResourceOwner: {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The ID of the principal (for example, a User, Service Account, or Group Mapping) to " +
+					"assign the `ResourceOwner` role on this Service Account at creation time. If unset, no owner " +
+					"is assigned automatically, matching prior behavior.",
+			},
 			paramApiVersion: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -87,7 +95,8 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Creating new service account: %s", createServiceAccountRequestJson))
 
 	// Make API call
-	createdServiceAccount, resp, err := executeServiceAccountCreate(c.iamV2ApiContext(ctx), c, createServiceAccountRequest)
+	resourceOwner := d.Get(paramResourceOwner).(string)
+	createdServiceAccount, resp, err := executeServiceAccountCreate(c.iamV2ApiContext(ctx), c, createServiceAccountRequest, resourceOwner)
 	if err != nil {
 		return diag.Errorf("error creating service account %q: %s", createServiceAccountIdentifier, createDescriptiveError(err, resp))
 	}
@@ -104,8 +113,11 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return serviceAccountRead(ctx, d, meta)
 }
 
-func executeServiceAccountCreate(ctx context.Context, c *Client, serviceAccount *iamv2.IamV2ServiceAccount) (iamv2.IamV2ServiceAccount, *http.Response, error) {
+func executeServiceAccountCreate(ctx context.Context, c *Client, serviceAccount *iamv2.IamV2ServiceAccount, resourceOwner string) (iamv2.IamV2ServiceAccount, *http.Response, error) {
 	req := c.iamV2Client.ServiceAccountsIamV2Api.CreateIamV2ServiceAccount(c.iamV2ApiContext(ctx)).IamV2ServiceAccount(*serviceAccount)
+	if resourceOwner != "" {
+		req = req.AssignedResourceOwner(resourceOwner)
+	}
 	return req.Execute()
 }
 

@@ -61,6 +61,14 @@ func identityPoolResource() *schema.Resource {
 				Required:    true,
 				Description: "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).",
 			},
+			paramResourceOwner: {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The ID of the principal (for example, a User, Service Account, or Group Mapping) to " +
+					"assign the `ResourceOwner` role on this Identity Pool at creation time. If unset, no owner " +
+					"is assigned automatically, matching prior behavior.",
+			},
 		},
 	}
 }
@@ -87,7 +95,8 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Make API call
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
-	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
+	resourceOwner := d.Get(paramResourceOwner).(string)
+	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId, resourceOwner)
 	if err != nil {
 		return diag.Errorf("error creating identity pool %q: %s", createIdentityPoolIdentifier, createDescriptiveError(err, resp))
 	}
@@ -104,8 +113,11 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return identityPoolRead(ctx, d, meta)
 }
 
-func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
+func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId string, resourceOwner string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
 	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.CreateIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId).IamV2IdentityPool(*identityPool)
+	if resourceOwner != "" {
+		req = req.AssignedResourceOwner(resourceOwner)
+	}
 	return req.Execute()
 }
 
