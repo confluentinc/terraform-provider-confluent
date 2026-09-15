@@ -15,6 +15,8 @@
 package provider
 
 import (
+	"context"
+	"net/http"
 	"os"
 	"sync/atomic"
 
@@ -72,16 +74,54 @@ func telemetryOptOut(endpoint string) bool {
 	return endpoint != defaultCloudEndpoint
 }
 
-// publishTelemetryRuntime computes the opt-out decision and publishes the runtime
-// the resource wrappers read, once at the end of provider configuration.
+// telemetryAuthFunc builds the per-request auth decorator from the provider's
+// top-level Cloud identity ONLY — the OAuth/STS bearer token or the Cloud API
+// key/secret, preferring the bearer token when present (the same order the
+// provider uses to authenticate to Confluent Cloud APIs; see the ApiContext
+// helpers in utils.go). It deliberately never reads resource-scoped credentials
+// (Kafka/Schema Registry/Flink/Tableflow API keys), which are not even passed in:
+// analytics is attributed to the org-level identity, not a data-plane key. The
+// bearer token is snapshotted here rather than read from the live *STSToken at
+// send time, so a mid-run token refresh is not picked up (best-effort) and the
+// worker goroutines never race the unsynchronized token mutation in utils.go.
+// Returns nil when no top-level identity is configured, which
+// publishTelemetryRuntime turns into a disabled runtime (TFCA-B7).
+func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) func(context.Context) context.Context {
+	switch {
+	case oauth != nil && sts != nil && sts.AccessToken != "":
+		token := sts.AccessToken
+		return func(ctx context.Context) context.Context {
+			return telemetry.TokenAuthContext(ctx, token)
+		}
+	case cloudAPIKey != "" && cloudAPISecret != "":
+		return func(ctx context.Context) context.Context {
+			return telemetry.BasicAuthContext(ctx, cloudAPIKey, cloudAPISecret)
+		}
+	default:
+		return nil
+	}
+}
+
+// publishTelemetryRuntime computes the reporting decision and publishes the
+// runtime the resource wrappers read, once at the end of provider configuration.
 //
-// The enabled sink is a no-op today; a real reporter must be concurrency-safe and
-// stay off during test runs (live tests use the production endpoint).
-func publishTelemetryRuntime(endpoint string) {
-	disabled := telemetryOptOut(endpoint)
+// Reporting is enabled only when the process is not opted out and is on the
+// production endpoint (TFCA-B6), a top-level Cloud identity is configured to
+// attribute it (TFCA-B7), and the provider is not running an acceptance or live
+// test — live tests use the production endpoint with real credentials, so the
+// real transport must stay off there. When enabled the sink is the bounded-worker
+// transport; otherwise it is nil and the late-binding reporter drops every event.
+func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
+	// Auth scoping (TFCA-B7): reporting uses only the top-level Cloud identity. If
+	// none is configured (for example a provider set up with only resource-scoped
+	// Kafka credentials, which are never passed here), authFunc is nil and
+	// reporting is a no-op — not an error.
+	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
+	disabled := telemetryOptOut(endpoint) || authFunc == nil || testMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
-		rt.reporter = noopTelemetryReporter{}
+		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
+		rt.reporter = telemetry.NewTransport(poster, ctx)
 	}
 	publishedTelemetry.Store(rt)
 }
