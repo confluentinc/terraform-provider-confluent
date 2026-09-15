@@ -168,6 +168,11 @@ func TestAccIdentityPool(t *testing.T) {
 // https://confluent.zendesk.com/agent/tickets/361467: the create stub only matches a request that
 // carries `assigned_resource_owner`, so if the provider stopped sending it, this test would fail
 // with a "no stub matched" error rather than silently passing.
+//
+// identityPoolResourceOwnerId is deliberately a service-account-shaped ID (sa-...) rather than a
+// user (u-...): the API accepts a User, Service Account, Group Mapping, or Identity Pool as owner,
+// and resource_owner has no format-restricting ValidateFunc, so this documents that any principal
+// type round-trips the same way. TestAccServiceAccountWithResourceOwner covers the user case.
 func TestAccIdentityPoolWithResourceOwner(t *testing.T) {
 	ctx := context.Background()
 

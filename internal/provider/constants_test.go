@@ -408,7 +408,7 @@ const (
 	identityPoolFilter                                                  = "claims.aud==\"confluent\" && claims.group!=\"invalid_group\""
 	identityPoolId                                                      = "pool-AzXR"
 	identityPoolIdentityClaim                                           = "claims.sub"
-	identityPoolResourceOwnerId                                         = "u-a83k9b"
+	identityPoolResourceOwnerId                                         = "sa-8ynqv7"
 	identityPoolScenarioName                                            = "confluent_identity_pool Resource Lifecycle"
 	identityProviderDataSourceLabel                                     = "example"
 	identityProviderDescription                                         = "fake description"
