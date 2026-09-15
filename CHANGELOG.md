@@ -1,3 +1,15 @@
+## 2.86.0 (September 10th, 2026) 
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0) 
+
+**New features:**
+* Added a new `confluent_dns_forwarder` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_dns_forwarder). 
+* Added a new `confluent_plugin` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_plugin) that looks up a Custom Connect Plugin by `id` within an environment.
+
+**Bug fixes:**
+* Changed a field inside the `forward_via_ip` and `forward_via_gcp_dns_zones` block, so `confluent_dns_forwarder` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_dns_forwarder) now correctly plans a resource replacement. 
+* Fixed a 403 error relating to `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) refresh caused by an invalid Cloud API key.
+
 ## 2.85.0 (August 28th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.84.0...v2.85.0)
