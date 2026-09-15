@@ -62,13 +62,18 @@ func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 
 	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 	rt := publishedTelemetry.Load()
-	if rt == nil || rt.config.Disabled || rt.reporter == nil {
+	if rt == nil || rt.config.Disabled {
 		t.Fatalf("expected an enabled runtime with a top-level identity, got %+v", rt)
 	}
-	// Stop the transport's worker goroutines started for this test.
-	if c, ok := rt.reporter.(interface{ Close() }); ok {
-		c.Close()
+	// The enabled path must build the real bounded-worker transport, not fall
+	// back to a no-op reporter — both are non-nil, so assert the concrete type so
+	// a revert to noopTelemetryReporter{} is caught here rather than only in B8.
+	tr, ok := rt.reporter.(*telemetry.Transport)
+	if !ok {
+		t.Fatalf("enabled runtime must use the real transport, got %T", rt.reporter)
 	}
+	// Stop the transport's worker goroutines started for this test.
+	tr.Close()
 }
 
 // TestTelemetryAuthFuncScoping verifies telemetryAuthFunc reads only the
@@ -121,5 +126,19 @@ func TestTelemetryAuthFuncScoping(t *testing.T) {
 	// identity, and with no Cloud key it disables.
 	if fn := telemetryAuthFunc("", "", &OAuthToken{AccessToken: "external"}, nil); fn != nil {
 		t.Errorf("expected a nil authFunc for an OAuth token with no STS token and no Cloud key")
+	}
+
+	// An empty STS AccessToken is not a usable bearer: the bearer path is skipped
+	// and it falls through to the Cloud key rather than attaching an empty token.
+	fn = telemetryAuthFunc("cloud-key", "cloud-secret", &OAuthToken{AccessToken: "external"}, &STSToken{AccessToken: ""})
+	if fn == nil {
+		t.Fatal("expected a non-nil authFunc: an empty STS token should fall through to the Cloud key")
+	}
+	ctx = fn(context.Background())
+	if ctx.Value(terraformusagev1.ContextAccessToken) != nil {
+		t.Errorf("an empty STS token must not be attached as a bearer")
+	}
+	if ba, ok := ctx.Value(terraformusagev1.ContextBasicAuth).(terraformusagev1.BasicAuth); !ok || ba.UserName != "cloud-key" {
+		t.Errorf("empty STS token should fall through to Cloud key basic auth, got %+v (ok=%v)", ba, ok)
 	}
 }
