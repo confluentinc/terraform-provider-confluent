@@ -217,6 +217,7 @@
     "query",
     "rest_endpoint",
     "session_options",
+    "start_mode",
     "stopped",
     "table_options",
     "watermark"
