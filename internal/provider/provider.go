@@ -51,6 +51,7 @@ import (
 	networkingipv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	notificationsv1 "github.com/confluentinc/ccloud-sdk-go-v2/notifications/v1"
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
@@ -130,6 +131,7 @@ type Client struct {
 	isAcceptanceTestMode            bool
 	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
+	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
 	// cli-tfgen:tf-client-fields
 }
@@ -376,6 +378,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_rtce_topic":                         rtceTopicDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
+				"confluent_notifications_integration":          integrationDataSource(),
 				// cli-tfgen:tf-datasources
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -443,6 +446,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                         rtceTopicResource(),
+				"confluent_notifications_integration":          integrationResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
@@ -604,6 +608,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg := providerintegrationv1.NewConfiguration()
 	providerIntegrationV2Cfg := providerintegrationv2.NewConfiguration()
 	kafkaQuotasV1Cfg := kafkaquotasv1.NewConfiguration()
+	notificationsV1Cfg := notificationsv1.NewConfiguration()
 	rtceV1Cfg := rtcev1.NewConfiguration()
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
@@ -637,6 +642,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg.Servers[0].URL = endpoint
 	providerIntegrationV2Cfg.Servers[0].URL = endpoint
 	kafkaQuotasV1Cfg.Servers[0].URL = endpoint
+	notificationsV1Cfg.Servers[0].URL = endpoint
 	rtceV1Cfg.Servers[0].URL = endpoint
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
@@ -671,6 +677,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg.UserAgent = userAgent
 	providerIntegrationV2Cfg.UserAgent = userAgent
 	kafkaQuotasV1Cfg.UserAgent = userAgent
+	notificationsV1Cfg.UserAgent = userAgent
 	rtceV1Cfg.UserAgent = userAgent
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
@@ -717,6 +724,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	kafkaQuotasV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	networkingAccessPointV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	notificationsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	rtceV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -797,6 +805,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		tableflowRestClientFactory:      tableflowRestClientFactory,
 		mdsV2Client:                     mdsv2.NewAPIClient(mdsV2Cfg),
 		kafkaQuotasV1Client:             kafkaquotasv1.NewAPIClient(kafkaQuotasV1Cfg),
+		notificationsV1Client:           notificationsv1.NewAPIClient(notificationsV1Cfg),
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
