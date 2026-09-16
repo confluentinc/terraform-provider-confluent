@@ -411,6 +411,14 @@
     "user_email_target",
     "webhook_target"
   ],
+  "confluent_notifications_resource_preference": [
+    "api_version",
+    "current_state",
+    "kind",
+    "resource",
+    "resource_name",
+    "resource_type"
+  ],
   "confluent_notifications_subscription": [
     "api_version",
     "current_state",
