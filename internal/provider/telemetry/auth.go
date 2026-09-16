@@ -20,11 +20,8 @@ import (
 	terraformusagev1 "github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage/v1"
 )
 
-// Auth decorators for the terraform-usage client. A Poster's authFunc calls one
-// of these to attach the provider's top-level Cloud identity to a request's
-// context; the generated client reads these context keys when it builds the HTTP
-// request. Keeping the SDK context keys here confines the terraform-usage/v1
-// import to this package.
+// Auth decorators for the terraform-usage client: they attach credentials to a
+// request context, which the generated client reads when building the request.
 
 // TokenAuthContext attaches an OAuth/STS bearer access token.
 func TokenAuthContext(ctx context.Context, accessToken string) context.Context {

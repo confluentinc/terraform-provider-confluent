@@ -142,12 +142,9 @@ func TestPublishedTelemetryReporter_ConcurrentPublishAndReport(t *testing.T) {
 }
 
 func TestPublishTelemetryRuntime(t *testing.T) {
-	// A top-level Cloud identity is supplied in every case, and the temporary
-	// preview opt-in is set wherever some other gate (or the enabled path) is under
-	// test, so that endpoint/opt-out/test-mode — not a missing identity or a missing
-	// preview flag — is the only factor being exercised. The no-identity path is
-	// covered in telemetry_auth_scope_test.go; the preview gate itself is exercised
-	// by the "preview opt-in unset" subtest below.
+	// Every case supplies a top-level identity and sets the preview opt-in except
+	// where it is the factor under test, so each subtest isolates one gate. The
+	// no-identity path lives in telemetry_auth_scope_test.go.
 	t.Run("non-default endpoint publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
@@ -206,8 +203,7 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("preview opt-in is presence-based: a false-ish value still enables", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		// Any non-empty value opts in — including "false" — so a mutation from the
-		// presence check (!= "") to a specific value (== "1") would disable this.
+		// Any non-empty value opts in, including "false".
 		t.Setenv(previewProviderAnalyticsEnvVar, "false")
 		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()

@@ -23,19 +23,16 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// TestTelemetryDisabledWithoutTopLevelIdentity covers TFCA-B7's acceptance
-// criterion: a provider configured with no top-level Cloud identity (for example
-// only resource-scoped Kafka credentials, which are never passed here) reports
-// nothing — the runtime is disabled with no transport, so zero telemetry calls
-// are made. Reporting with no identity is a no-op, never an error.
+// TestTelemetryDisabledWithoutTopLevelIdentity checks that a provider with no
+// top-level Cloud identity (e.g. only resource-scoped Kafka credentials) reports
+// nothing: the runtime is disabled with no transport, and reporting is a no-op.
 func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
 	t.Setenv(previewProviderAnalyticsEnvVar, "1")
 
-	// Default endpoint, preview opt-in set, not test mode — so the only thing that
-	// disables here is the missing top-level Cloud identity: no Cloud key and no
-	// OAuth/STS token, mirroring a Kafka-only provider configuration.
+	// Everything else opens the gate, so the missing identity is the only thing
+	// disabling here (no Cloud key and no OAuth/STS token).
 	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "", "", nil, nil, false)
 
 	rt := publishedTelemetry.Load()
@@ -49,15 +46,12 @@ func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 		t.Errorf("no transport should be built without a top-level identity, got %T", rt.reporter)
 	}
 
-	// With no transport, the late-binding reporter is a no-op: it must not panic
-	// and makes zero calls (there is nothing to send through).
+	// With no transport the reporter is a no-op: it must not panic.
 	publishedTelemetryReporter{}.Report(telemetry.Usage{ResourceType: "confluent_kafka_topic", Operation: telemetry.OperationCreate})
 }
 
 // TestTelemetryEnabledWithTopLevelIdentity is the positive control: the same
-// inputs plus a top-level Cloud API key on the default endpoint yield an enabled
-// runtime with a live transport. Without this, the negative test above could pass
-// simply because nothing ever enables.
+// inputs plus a Cloud API key yield an enabled runtime with a live transport.
 func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
@@ -68,9 +62,8 @@ func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	if rt == nil || rt.config.Disabled {
 		t.Fatalf("expected an enabled runtime with a top-level identity, got %+v", rt)
 	}
-	// The enabled path must build the real bounded-worker transport, not fall
-	// back to a no-op reporter — both are non-nil, so assert the concrete type so
-	// a revert to noopTelemetryReporter{} is caught here rather than only in B8.
+	// The enabled path must build the real transport, not a no-op reporter (both
+	// are non-nil), so assert the concrete type.
 	tr, ok := rt.reporter.(*telemetry.Transport)
 	if !ok {
 		t.Fatalf("enabled runtime must use the real transport, got %T", rt.reporter)
@@ -79,16 +72,13 @@ func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	tr.Close()
 }
 
-// TestTelemetryAuthFuncScoping verifies telemetryAuthFunc reads only the
-// top-level Cloud identity and selects the right scheme: an OAuth/STS bearer
-// token is preferred over the Cloud API key, the Cloud API key is used when no
-// bearer token is present, and no top-level identity yields nil (disabled).
-// telemetryAuthFunc takes no Kafka/Schema Registry/Flink/Tableflow parameters, so
-// it structurally cannot authenticate with a resource-scoped credential.
+// TestTelemetryAuthFuncScoping checks telemetryAuthFunc selects the right scheme
+// from the top-level Cloud identity: STS/OAuth bearer preferred, else the Cloud
+// key/secret, else nil. It takes no resource-scoped parameters, so it cannot
+// authenticate with a data-plane credential.
 func TestTelemetryAuthFuncScoping(t *testing.T) {
-	// Bearer preferred: an OAuth/STS identity wins even when a Cloud key is also
-	// set, and the attached token is the STS access token (what the provider uses
-	// for Cloud APIs), never the raw external OAuth token.
+	// Bearer preferred over the Cloud key, using the STS access token (not the raw
+	// external OAuth token).
 	oauth := &OAuthToken{AccessToken: "external-oauth-token"}
 	sts := &STSToken{AccessToken: "sts-token"}
 	fn := telemetryAuthFunc("cloud-key", "cloud-secret", oauth, sts)

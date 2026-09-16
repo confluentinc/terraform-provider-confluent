@@ -32,16 +32,9 @@ const (
 	// any non-empty value.
 	disableProviderAnalyticsEnvVar = "CONFLUENT_DISABLE_PROVIDER_ANALYTICS"
 
-	// previewProviderAnalyticsEnvVar is a TEMPORARY dark-launch opt-in: while it is
-	// unset, reporting stays a no-op for everyone — even on the production endpoint
-	// with a configured identity — so the provider makes zero telemetry calls. It
-	// exists only so client analytics can be verified end-to-end before it is
-	// enabled by default. Remove it, its gate in publishTelemetryRuntime, and the
-	// test setup that sets it at go-live (APIE-1570). It is presence-based, matching
-	// disableProviderAnalyticsEnvVar: any non-empty value opts in (so even
-	// "...=false" enables the preview); the opt-out env var still wins when both are
-	// set. This is an internal rollout switch, deliberately kept out of the public
-	// opt-out docs.
+	// previewProviderAnalyticsEnvVar temporarily gates reporting behind an opt-in:
+	// reporting stays off for everyone unless this is set to any non-empty value.
+	// Remove it once analytics is enabled by default.
 	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
 
 	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
@@ -60,17 +53,9 @@ type telemetryRuntime struct {
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
-// concurrent resource operations read it without locking.
-//
-// A process global is safe here rather than per-configuration state because
-// Terraform runs each provider configuration — including every alias — in its own
-// plugin OS subprocess (one plugin.Serve -> one *schema.Provider -> one meta slot
-// set once by ConfigureProvider). Within a process there is therefore exactly one
-// provider configuration and one top-level identity, so a later alias cannot
-// overwrite an earlier alias's runtime here; that would require two configurations
-// to share a process, which the plugin model does not do. A repeated configure of
-// the same configuration (e.g. a combined plan+apply) republishes the identical
-// decision.
+// concurrent resource operations read it without locking. A process global is safe
+// because Terraform runs each provider configuration (including each alias) in its
+// own plugin subprocess, so one process serves exactly one configuration.
 var publishedTelemetry atomic.Pointer[telemetryRuntime]
 
 // publishedTelemetryReporter is the reporter the wrapper holds. It forwards to
@@ -97,17 +82,10 @@ func telemetryOptOut(endpoint string) bool {
 }
 
 // telemetryAuthFunc builds the per-request auth decorator from the provider's
-// top-level Cloud identity ONLY — the OAuth/STS bearer token or the Cloud API
-// key/secret, preferring the bearer token when present (the same order the
-// provider uses to authenticate to Confluent Cloud APIs; see the ApiContext
-// helpers in utils.go). It deliberately never reads resource-scoped credentials
-// (Kafka/Schema Registry/Flink/Tableflow API keys), which are not even passed in:
-// analytics is attributed to the org-level identity, not a data-plane key. The
-// bearer token is snapshotted here rather than read from the live *STSToken at
-// send time, so a mid-run token refresh is not picked up (best-effort) and the
-// worker goroutines never race the unsynchronized token mutation in utils.go.
-// Returns nil when no top-level identity is configured, which
-// publishTelemetryRuntime turns into a disabled runtime (TFCA-B7).
+// top-level Cloud identity only — the OAuth/STS bearer token or the Cloud API
+// key/secret, never resource-scoped credentials. It returns nil when no top-level
+// identity is configured, which disables reporting. The bearer token is captured
+// by value so the background workers never race the provider's token refresh.
 func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) func(context.Context) context.Context {
 	switch {
 	case oauth != nil && sts != nil && sts.AccessToken != "":
@@ -124,26 +102,15 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 	}
 }
 
-// publishTelemetryRuntime computes the reporting decision and publishes the
+// publishTelemetryRuntime decides whether reporting is enabled and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
-//
-// Reporting is enabled only when the temporary preview opt-in is set (see
-// previewProviderAnalyticsEnvVar), the process is not opted out and is on the
-// production endpoint (TFCA-B6), a top-level Cloud identity is configured to
-// attribute it (TFCA-B7), and the provider is not running an acceptance or live
-// test — live tests use the production endpoint with real credentials, so the
-// real transport must stay off there. When enabled the sink is the bounded-worker
-// transport; otherwise it is nil and the late-binding reporter drops every event.
+// Reporting is enabled only when the preview opt-in is set, the process is not
+// opted out and is on the production endpoint, a top-level Cloud identity is
+// configured, and the provider is not running a test. When enabled the sink is the
+// bounded-worker transport; otherwise it is nil and every event is dropped.
 func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
-	// Auth scoping (TFCA-B7): reporting uses only the top-level Cloud identity. If
-	// none is configured (for example a provider set up with only resource-scoped
-	// Kafka credentials, which are never passed here), authFunc is nil and
-	// reporting is a no-op — not an error.
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
-	// TEMPORARY dark-launch guard (remove at go-live, APIE-1570): keep reporting a
-	// no-op for everyone until CONFLUENT_PROVIDER_ANALYTICS_PREVIEW is set, so the
-	// real transport can be verified end-to-end before it is on by default. This is
-	// an extra opt-in, never a bypass — every other gate below still applies.
+	// Temporary opt-in gate: keep reporting off until the preview flag is set.
 	previewOptIn := os.Getenv(previewProviderAnalyticsEnvVar) != ""
 	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || testMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}

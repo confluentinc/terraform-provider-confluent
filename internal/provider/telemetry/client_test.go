@@ -131,12 +131,9 @@ func TestSDKPoster_PostsMappedUsage(t *testing.T) {
 	}
 }
 
-// TestSDKPoster_AppliesAuthHeaders drives the shipped auth decorators through a
-// real POST and asserts the resulting Authorization header, for both the Cloud
-// API key (Basic) and the OAuth/STS bearer token. This proves the full wire path
-// — decorator -> SDK context key -> HTTP header — for each scheme end to end, not
-// just the context key in isolation, so a regression in the decorators or in how
-// NewSDKPoster applies auth is caught here.
+// TestSDKPoster_AppliesAuthHeaders drives the auth decorators through a real POST
+// and asserts the Authorization header for both the Cloud API key (Basic) and the
+// OAuth/STS bearer token, covering the full path from decorator to HTTP header.
 func TestSDKPoster_AppliesAuthHeaders(t *testing.T) {
 	newStub := func(t *testing.T) (*httptest.Server, <-chan string) {
 		t.Helper()
