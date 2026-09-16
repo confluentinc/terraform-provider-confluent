@@ -15,6 +15,8 @@
 package provider
 
 import (
+	"context"
+	"net/http"
 	"os"
 	"sync/atomic"
 
@@ -29,6 +31,11 @@ const (
 	// disableProviderAnalyticsEnvVar opts the process out of analytics when set to
 	// any non-empty value.
 	disableProviderAnalyticsEnvVar = "CONFLUENT_DISABLE_PROVIDER_ANALYTICS"
+
+	// previewProviderAnalyticsEnvVar temporarily gates reporting behind an opt-in:
+	// reporting stays off for everyone unless this is set to any non-empty value.
+	// Remove it once analytics is enabled by default.
+	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
 
 	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
 	// the schema default of the provider's "endpoint" argument; reporting is
@@ -46,7 +53,9 @@ type telemetryRuntime struct {
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
-// concurrent resource operations read it without locking.
+// concurrent resource operations read it without locking. A process global is safe
+// because Terraform runs each provider configuration (including each alias) in its
+// own plugin subprocess, so one process serves exactly one configuration.
 var publishedTelemetry atomic.Pointer[telemetryRuntime]
 
 // publishedTelemetryReporter is the reporter the wrapper holds. It forwards to
@@ -72,16 +81,42 @@ func telemetryOptOut(endpoint string) bool {
 	return endpoint != defaultCloudEndpoint
 }
 
-// publishTelemetryRuntime computes the opt-out decision and publishes the runtime
-// the resource wrappers read, once at the end of provider configuration.
-//
-// The enabled sink is a no-op today; a real reporter must be concurrency-safe and
-// stay off during test runs (live tests use the production endpoint).
-func publishTelemetryRuntime(endpoint string) {
-	disabled := telemetryOptOut(endpoint)
+// telemetryAuthFunc builds the per-request auth decorator from the provider's
+// top-level Cloud identity only — the OAuth/STS bearer token or the Cloud API
+// key/secret, never resource-scoped credentials. It returns nil when no top-level
+// identity is configured, which disables reporting. The bearer token is captured
+// by value so the background workers never race the provider's token refresh.
+func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) func(context.Context) context.Context {
+	switch {
+	case oauth != nil && sts != nil && sts.AccessToken != "":
+		token := sts.AccessToken
+		return func(ctx context.Context) context.Context {
+			return telemetry.TokenAuthContext(ctx, token)
+		}
+	case cloudAPIKey != "" && cloudAPISecret != "":
+		return func(ctx context.Context) context.Context {
+			return telemetry.BasicAuthContext(ctx, cloudAPIKey, cloudAPISecret)
+		}
+	default:
+		return nil
+	}
+}
+
+// publishTelemetryRuntime decides whether reporting is enabled and publishes the
+// runtime the resource wrappers read, once at the end of provider configuration.
+// Reporting is enabled only when the preview opt-in is set, the process is not
+// opted out and is on the production endpoint, a top-level Cloud identity is
+// configured, and the provider is not running a test. When enabled the sink is the
+// bounded-worker transport; otherwise it is nil and every event is dropped.
+func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
+	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
+	// Temporary opt-in gate: keep reporting off until the preview flag is set.
+	previewOptIn := os.Getenv(previewProviderAnalyticsEnvVar) != ""
+	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || testMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
-		rt.reporter = noopTelemetryReporter{}
+		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
+		rt.reporter = telemetry.NewTransport(poster, ctx)
 	}
 	publishedTelemetry.Store(rt)
 }
