@@ -45,6 +45,7 @@ import (
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	configurationcontrolv1 "github.com/confluentinc/ccloud-sdk-go-v2/configurationcontrol/v1"
 	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
@@ -219,6 +220,25 @@ func (c *Client) iamIpFilteringV2ApiContext(ctx context.Context) context.Context
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for IAM IP client")
+	return ctx
+}
+
+func (c *Client) configurationControlV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Configuration Control client: %v", err))
+		}
+		return context.WithValue(ctx, configurationcontrolv1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, configurationcontrolv1.ContextBasicAuth, configurationcontrolv1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Configuration Control client")
 	return ctx
 }
 
