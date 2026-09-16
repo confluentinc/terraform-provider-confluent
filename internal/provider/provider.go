@@ -32,6 +32,7 @@ import (
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	configurationcontrolv1 "github.com/confluentinc/ccloud-sdk-go-v2/configurationcontrol/v1"
 	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
@@ -131,6 +132,7 @@ type Client struct {
 	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
 	rtceV1Client                    *rtcev1.APIClient
+	configurationControlV1Client    *configurationcontrolv1.APIClient
 	// cli-tfgen:tf-client-fields
 }
 
@@ -443,6 +445,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                         rtceTopicResource(),
+				"confluent_client_request_policy":              clientRequestPolicyResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
@@ -610,6 +613,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
+	configurationControlV1Cfg := configurationcontrolv1.NewConfiguration()
 	// cli-tfgen:tf-client-cfg
 
 	apiKeysV2Cfg.Servers[0].URL = endpoint
@@ -643,6 +647,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
+	configurationControlV1Cfg.Servers[0].URL = endpoint
 	// cli-tfgen:tf-client-endpoint
 
 	apiKeysV2Cfg.UserAgent = userAgent
@@ -677,6 +682,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
+	configurationControlV1Cfg.UserAgent = userAgent
 	// cli-tfgen:tf-client-useragent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
@@ -723,6 +729,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	configurationControlV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	// cli-tfgen:tf-client-httpclient
 
 	secureTokenServiceClient := stsv1.NewAPIClient(stsV1Cfg)
@@ -802,6 +809,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
+		configurationControlV1Client:    configurationcontrolv1.NewAPIClient(configurationControlV1Cfg),
 		// cli-tfgen:tf-client-literal
 		userAgent:                  userAgent,
 		catalogRestEndpoint:        catalogRestEndpoint,
