@@ -18,12 +18,12 @@ description: |-
 
 ```terraform
 resource "confluent_notifications_resource_subscription" "example" {
-  resource = "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector"
+  resource      = "${confluent_kafka_cluster.example.rbac_crn}/connector=${confluent_connector.example.config_nonsensitive["name"]}"
   resource_type = "CONNECTOR"
   notification_type {
-    id = "not-abc123"
+    id = "nt-Bp3ab"
   }
-  integrations = [""]
+  integrations  = [confluent_notifications_integration.example.id]
   current_state = "ENABLED"
 }
 ```

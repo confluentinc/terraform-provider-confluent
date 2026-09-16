@@ -17,10 +17,14 @@ description: |-
 ## Example Usage
 
 ```terraform
+resource "confluent_environment" "example" {
+  display_name = "example"
+}
+
 resource "confluent_notifications_resource_preference" "example" {
-  resource = "environment=env-456xy/cloud-cluster=lkc-df123/connector=my_datagen_connector"
-  resource_type = "CONNECTOR"
-  current_state = "ENABLED"
+  resource      = confluent_environment.example.resource_name
+  resource_type = "ENVIRONMENT"
+  current_state = "DISABLED"
 }
 ```
 
