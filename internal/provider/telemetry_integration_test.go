@@ -42,9 +42,9 @@ func (c capturingPoster) Post(_ context.Context, u telemetry.Usage) error {
 // It is the regression guard for the New() wiring line itself: if
 // `reporter: publishedTelemetryReporter{}` were ever reverted to a no-op, or the
 // published-runtime lookup broke, no other test would fail — this one would time
-// out. Reading with a nil ResourceData panics inside the real resource; the
-// wrapper's panic recovery converts that into a reported crash event, which is the
-// Usage we assert arrives — proving the chain end to end without any network.
+// out. Reading with a nil ResourceData makes the resource panic immediately, which
+// the wrapper recovers; the wrapper reports a Usage after every wrapped call, so
+// the reported event reaches the poster with no network and no real Client.
 func TestTelemetryEnabledPathEmitsEndToEnd(t *testing.T) {
 	restorePublishedTelemetry(t)
 

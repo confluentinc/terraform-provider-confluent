@@ -103,8 +103,9 @@ func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 		},
 	})
 
-	// Sanity: the lifecycle really ran (create happened once)...
+	// Sanity: the full lifecycle really ran (create and destroy each happened once)...
 	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-1jrymj", expectedCountOne)
 	// ...and yet zero telemetry was emitted during the acceptance run.
 	checkStubCount(t, wiremockClient, telemetryStub, "POST /terraform-usage/v1/usages", expectedCountZero)
 }
