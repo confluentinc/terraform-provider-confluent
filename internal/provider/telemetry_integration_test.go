@@ -22,8 +22,7 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// capturingPoster is a telemetry.Poster that forwards each delivered Usage to a
-// channel, so a test can observe what actually reached the transport's sender.
+// capturingPoster forwards each delivered Usage to a channel for the test to observe.
 type capturingPoster struct {
 	got chan telemetry.Usage
 }
@@ -33,18 +32,10 @@ func (c capturingPoster) Post(_ context.Context, u telemetry.Usage) error {
 	return nil
 }
 
-// TestTelemetryEnabledPathEmitsEndToEnd exercises the whole enabled chain that no
-// per-component test composes: a resource from New()'s real, wrapped ResourcesMap
-// -> the reporter captured at New() (publishedTelemetryReporter) -> an enabled
-// published runtime -> the real bounded-worker Transport -> a poster that receives
-// the Usage.
-//
-// It is the regression guard for the New() wiring line itself: if
-// `reporter: publishedTelemetryReporter{}` were ever reverted to a no-op, or the
-// published-runtime lookup broke, no other test would fail — this one would time
-// out. Reading with a nil ResourceData makes the resource panic immediately, which
-// the wrapper recovers; the wrapper reports a Usage after every wrapped call, so
-// the reported event reaches the poster with no network and no real Client.
+// TestTelemetryEnabledPathEmitsEndToEnd checks the enabled path end to end: a
+// New()-wrapped resource reports a Usage that travels through the published
+// reporter and the real Transport to the poster. It guards the New() reporter
+// wiring, which no other test exercises through the real transport.
 func TestTelemetryEnabledPathEmitsEndToEnd(t *testing.T) {
 	restorePublishedTelemetry(t)
 
@@ -52,20 +43,20 @@ func TestTelemetryEnabledPathEmitsEndToEnd(t *testing.T) {
 	transport := telemetry.NewTransport(poster, context.Background())
 	defer transport.Close()
 
-	// Publish an ENABLED runtime backed by the real Transport (no endpoint or
-	// network involved — the poster is a local capture).
+	// Enabled runtime backed by the real transport; the poster captures locally.
 	publishedTelemetry.Store(&telemetryRuntime{
 		config:   telemetry.NewConfig(false),
 		reporter: transport,
 	})
 
-	// Drive a real, New()-wrapped resource, so this asserts the New() wiring rather
-	// than a synthetic fixture.
+	// Drive a real New()-wrapped resource so this covers the actual wiring.
 	p := New(testVersion, "")()
 	r, ok := p.ResourcesMap["confluent_environment"]
 	if !ok || r.ReadContext == nil {
 		t.Fatal("confluent_environment with a ReadContext is required for this test")
 	}
+	// nil args make the read fail fast without a network call; the wrapper still
+	// reports a Usage.
 	_ = r.ReadContext(context.Background(), nil, nil)
 
 	select {
@@ -77,6 +68,6 @@ func TestTelemetryEnabledPathEmitsEndToEnd(t *testing.T) {
 			t.Errorf("Operation = %q, want READ", u.Operation)
 		}
 	case <-time.After(3 * time.Second):
-		t.Fatal("no telemetry reached the poster: the New() -> published reporter -> transport -> poster chain is broken")
+		t.Fatal("no telemetry reached the poster: the enabled reporter/transport chain is broken")
 	}
 }

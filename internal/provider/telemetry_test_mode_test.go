@@ -27,14 +27,10 @@ import (
 
 const telemetryTestModeScenario = "telemetryTestModeScenarioName"
 
-// TestAccTelemetryDisabledDuringAcceptanceTests is the end-to-end guard that no
-// telemetry escapes during a testacc run: a full environment create/destroy
-// lifecycle under TF_ACC emits zero telemetry calls, verified with checkStubCount
-// against a stubbed terraform-usage endpoint (a non-zero create-stub count proves
-// the lifecycle really ran). It does not isolate the test-mode gate on its own —
-// an acceptance run also uses a non-default (mock) endpoint, which disables
-// reporting too; the gate itself is isolated by TestPublishTelemetryRuntime's
-// test-mode subtest. This test guards the composed outcome.
+// TestAccTelemetryDisabledDuringAcceptanceTests asserts that no telemetry is
+// emitted during a testacc run: a full environment create/destroy lifecycle hits
+// the stubbed terraform-usage endpoint zero times, while the create stub confirms
+// the lifecycle actually ran.
 func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 	restorePublishedTelemetry(t)
 	ctx := context.Background()
@@ -52,13 +48,12 @@ func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	// A stub for the telemetry endpoint. If anything reported, this counter would
-	// be non-zero; the test asserts it stays at zero.
+	// Telemetry endpoint stub; the test asserts it is never hit.
 	telemetryStub := wiremock.Post(wiremock.URLPathEqualTo("/terraform-usage/v1/usages")).
 		WillReturn("", contentTypeJSONHeader, http.StatusOK)
 	_ = wiremockClient.StubFor(telemetryStub)
 
-	// A minimal create -> destroy environment lifecycle, so real CRUD runs.
+	// A create -> destroy environment lifecycle so real CRUD runs.
 	createEnvResponse, _ := os.ReadFile("../testdata/environment/create_env.json")
 	createEnvStub := wiremock.Post(wiremock.URLPathEqualTo("/org/v2/environments")).
 		InScenario(telemetryTestModeScenario).
@@ -93,8 +88,7 @@ func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 		CheckDestroy:      testAccCheckEnvironmentDestroy,
 		Steps: []resource.TestStep{
 			{
-				// display_name must match the value in the create/read fixtures, else
-				// the post-apply plan is non-empty and the step fails.
+				// display_name must match the fixtures, or the post-apply plan is non-empty.
 				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, "test_env_display_name", "ESSENTIALS"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
@@ -103,9 +97,8 @@ func TestAccTelemetryDisabledDuringAcceptanceTests(t *testing.T) {
 		},
 	})
 
-	// Sanity: the full lifecycle really ran (create and destroy each happened once)...
+	// The lifecycle ran (create and destroy each fired once) but emitted no telemetry.
 	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-1jrymj", expectedCountOne)
-	// ...and yet zero telemetry was emitted during the acceptance run.
 	checkStubCount(t, wiremockClient, telemetryStub, "POST /terraform-usage/v1/usages", expectedCountZero)
 }
