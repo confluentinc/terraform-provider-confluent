@@ -848,10 +848,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isOAuthEnabled:               oauthEnabled,
 	}
 
-	// Publish this process's analytics opt-out decision for the resource wrappers:
-	// disabled when the opt-out env var is set or the endpoint is not the
-	// production endpoint. Written once, before the concurrent resource operations.
-	publishTelemetryRuntime(endpoint)
+	// Publish this process's analytics decision for the resource wrappers, once,
+	// before the concurrent resource operations. Reporting stays off unless the
+	// preview opt-in is set, and even then only on the production endpoint with a
+	// top-level Cloud identity and outside test runs.
+	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken, acceptanceTestMode || liveProductionTestMode)
 
 	return &client, nil
 }
