@@ -123,6 +123,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0 h1:ZHNF2DeqVlNPuKG
 github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0/go.mod h1:KTShFBZA7WG8LcxlWjJpoZFdWkJ+uOw3dDuwAHs5eKU=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0 h1:mC0E1nKUt57AxMM4Lpdfd+KA/YZwJVwro9ER+dCUFi8=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0/go.mod h1:GIHF2cYOUKx+6ycYokr4i8E4cuNBC22xqvO/IhqZ31U=
+github.com/confluentinc/ccloud-sdk-go-v2/notifications v0.1.0 h1:LidTP8SPc9g3Cw56eW73kCbB9JbKZ5iJ0UkgmG6Gn9I=
+github.com/confluentinc/ccloud-sdk-go-v2/notifications v0.1.0/go.mod h1:VpOjD3MKw8uRUNhwBEkEbH1a+JTs50FiNANMh0LYOQ8=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.12.0 h1:c3oeexhk5MiIzh+frC5EH9OlkoqAZK8UYeyaQVbSA+M=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.12.0/go.mod h1:f3KzqFA5c0PddJ5qe4MWxlEiZ2n1yhzwvmPsdfEU6dw=
 github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0 h1:UN2a+aqYhk95ro+wVLkeB/8W7n+UV2KsE3jNFbbDCSw=
@@ -139,6 +141,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUf
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.7.0 h1:yf/1TiSCiAT0cD1dBZB6SU+hUAAL+uCezLx5MM9aHCA=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.7.0/go.mod h1:A0gPt6EjmzCV+CftXu2TeefIOiha2OTbATVOPp0ccx0=
+github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0 h1:mjGRU9RhUy5loUE0rnFzjRvtIQX8Xjrr0GX/3wvMquU=
+github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0/go.mod h1:r5fxmaF3i+GvjQyNRlaPhjwkLcq8HJrEMBjRuGs+GIM=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=
 github.com/containerd/errdefs v1.0.0/go.mod h1:+YBYIdtsnF4Iw6nWZhJcqGSg/dwvV7tyJ/kCkyJ2k+M=
 github.com/containerd/errdefs/pkg v0.3.0 h1:9IKJ06FvyNlexW690DXuQNx2KA2cUJXx151Xdx3ZPPE=
