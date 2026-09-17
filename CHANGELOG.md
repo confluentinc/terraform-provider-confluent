@@ -1,3 +1,8 @@
+## Unreleased
+
+**New features:**
+* Added a new optional `resource_owner` attribute to the `confluent_service_account` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account) and `confluent_identity_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_pool) to assign the `ResourceOwner` role to a principal at creation time, so non-`OrganizationAdmin` identities can manage the resources they create.
+
 ## 2.86.0 (September 10th, 2026) 
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0) 
