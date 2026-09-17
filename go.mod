@@ -9,6 +9,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0
+	github.com/confluentinc/ccloud-sdk-go-v2/configurationcontrol v0.0.0-20260813221100-938c7478cf8e
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
