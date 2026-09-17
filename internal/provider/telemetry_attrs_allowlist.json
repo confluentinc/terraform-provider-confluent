@@ -399,6 +399,19 @@
     "network",
     "resource_name"
   ],
+  "confluent_notifications_integration": [
+    "api_version",
+    "description",
+    "display_name",
+    "in_app_target",
+    "kind",
+    "ms_teams_target",
+    "resource_name",
+    "role_email_target",
+    "slack_target",
+    "user_email_target",
+    "webhook_target"
+  ],
   "confluent_peering": [
     "aws",
     "azure",
@@ -448,7 +461,6 @@
     "aws",
     "display_name",
     "environment",
-    "id",
     "usages"
   ],
   "confluent_provider_integration_authorization": [
