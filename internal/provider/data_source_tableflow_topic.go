@@ -90,6 +90,7 @@ func tableflowTopicDataSource() *schema.Resource {
 			paramByobAws:        byobAwsDataSourceSchema(),
 			paramManagedStorage: managedStorageDataSourceSchema(),
 			paramAzureStorage:   azureStorageDataSourceSchema(),
+			paramGcsStorage:     gcsStorageDataSourceSchema(),
 			paramErrorHandling:  errorHandlingDataSourceSchema(),
 		},
 	}
@@ -132,6 +133,29 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func byobAwsDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramBucketName: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramBucketRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcsStorageDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
