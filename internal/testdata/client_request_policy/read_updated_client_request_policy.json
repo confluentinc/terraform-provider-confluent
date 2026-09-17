@@ -1,0 +1,30 @@
+{
+  "api_version": "configurationcontrol/v1",
+  "kind": "Policy",
+  "metadata": {
+    "self": "https://api.confluent.cloud/configurationcontrol/v1/policies/restrict-client-versions",
+    "resource_name": "crn://confluent.cloud/organization=abc/policy=restrict-client-versions",
+    "name": "restrict-client-versions",
+    "uid": "dd8c8489-6b0d-4f6d-9c1e-1a2b3c4d5e6f",
+    "resource_version": "v2",
+    "created_at": "2026-08-21T00:00:00Z",
+    "updated_at": "2026-08-21T01:00:00Z"
+  },
+  "spec": {
+    "type": "VersionPolicy",
+    "scope": {
+      "resource_name": "crn://confluent.cloud/organization=abc/environment=env-123/cloud-cluster=lkc-abc123"
+    },
+    "mode": "ACTIVE",
+    "action": "DENY",
+    "rules": [
+      {
+        "name": "require-recent-java-client",
+        "match": "request.client.version >= '3.6.0'"
+      }
+    ]
+  },
+  "status": {
+    "phase": "PROVISIONED"
+  }
+}
