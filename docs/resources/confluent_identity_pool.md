@@ -79,6 +79,8 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing an Identity Pool.
 
+-> **Note:** `assigned_resource_owner` is accepted only when the Identity Pool is created and is never returned by the API, so it cannot be imported. An imported Identity Pool has it empty in state, and adding it to the configuration afterwards plans a replacement of the Identity Pool, since resource ownership cannot be assigned after creation.
+
 You can import an Identity Pool by using Identity Provider ID and Identity Pool ID, in the format `<Identity Provider ID>/<Identity Pool ID>`. The following example shows how to import an Identity Pool:
 
 ```shell
