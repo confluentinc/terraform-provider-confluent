@@ -67,6 +67,7 @@ The following arguments are supported:
 - `description` - (Required String) A description for the Identity Pool.
 - `identity_claim` - (Required String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from (see [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1) for more details). This appears in the audit log records, showing, for example, that "identity Z used identity pool X to access topic A".
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).
+- `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
 ## Attributes Reference
 
@@ -77,6 +78,8 @@ In addition to the preceding arguments, the following attributes are exported:
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing an Identity Pool.
+
+-> **Note:** Set the `IMPORT_ASSIGNED_RESOURCE_OWNER` environment variable to the `assigned_resource_owner` value used when the Identity Pool was created. The API never returns that value, so without it the attribute is empty in imported state and the first plan after importing will want to replace the Identity Pool. Terraform cannot verify the value you supply.
 
 You can import an Identity Pool by using Identity Provider ID and Identity Pool ID, in the format `<Identity Provider ID>/<Identity Pool ID>`. The following example shows how to import an Identity Pool:
 
