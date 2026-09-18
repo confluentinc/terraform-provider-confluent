@@ -86,6 +86,7 @@ You can import an Identity Pool by using Identity Provider ID and Identity Pool 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+$ export IMPORT_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_identity_pool.example op-abc123/pool-xyz456
 ```
 
