@@ -88,17 +88,20 @@ The following arguments are supported:
              `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`,
              `message.timestamp.before.max.ms`, `message.timestamp.after.max.ms`, `message.timestamp.type`,
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
-             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`,
+             `confluent.schema.validation.context.name`, `confluent.key.association`, `confluent.value.association`.
 
 -> **Note:** Removing a topic setting from the config block will reset it to its server-side default value. This is supported for the following topic settings: `cleanup.policy`, `delete.retention.ms`,
              `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`,
              `message.timestamp.before.max.ms`, `message.timestamp.after.max.ms`, `message.timestamp.type`,
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
-             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`,
+             `confluent.schema.validation.context.name`, `confluent.key.association`, `confluent.value.association`.
 
 
 -> **Note:** Schema Validation Configuration topic settings:
-             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`,
+             `confluent.schema.validation.context.name`, `confluent.key.association`, `confluent.value.association`
              are only [available](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#prerequisites) on [dedicated clusters](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster).
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_topic` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
