@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -40,11 +41,12 @@ import (
 //     drift on refresh. A d.Set of the absent field would store "" over the user's value and
 //     produce a permanent diff — and, since the attribute is ForceNew, a permanent proposed
 //     replacement.
-//   - Import cannot recover it, hence ImportStateVerifyIgnore. This mirrors certificate_chain on
-//     confluent_certificate_authority, the provider's other write-only attribute. An imported pool
-//     therefore has the attribute empty in state, and a config that sets it plans a replacement;
-//     that is the honest representation, because resource ownership cannot be assigned after
-//     create.
+//   - Import seeds the attribute from IMPORT_ASSIGNED_RESOURCE_OWNER. Without that env var an
+//     import leaves it empty, and because the attribute is ForceNew the first post-import plan
+//     would want to *replace* the pool — from a `terraform import`, which is meant to be
+//     read-only. The import step therefore runs with ImportStateVerify and no
+//     ImportStateVerifyIgnore: the verification passing is what proves the env var closed the
+//     gap, exactly as resource_connect_artifact_azure_test.go does for IMPORT_ARTIFACT_FILENAME.
 func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	ctx := context.Background()
 
@@ -104,6 +106,13 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	identityPoolResourceLabel := "test_identity_pool_assigned_resource_owner"
 	fullIdentityPoolResourceLabel := fmt.Sprintf("confluent_identity_pool.%s", identityPoolResourceLabel)
 
+	// The import step below reads this: the API does not return the value, so without it the
+	// imported state would hold "" and ImportStateVerify would fail.
+	_ = os.Setenv("IMPORT_ASSIGNED_RESOURCE_OWNER", testAssignedResourceOwner)
+	defer func() {
+		_ = os.Unsetenv("IMPORT_ASSIGNED_RESOURCE_OWNER")
+	}()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -121,9 +130,6 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 				ResourceName:      fullIdentityPoolResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					paramAssignedResourceOwner, // Create-only query parameter, not returned by the API
-				},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					poolId := resources[fullIdentityPoolResourceLabel].Primary.ID

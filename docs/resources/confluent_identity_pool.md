@@ -79,7 +79,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing an Identity Pool.
 
--> **Note:** `assigned_resource_owner` is accepted only when the Identity Pool is created and is never returned by the API, so it cannot be imported. An imported Identity Pool has it empty in state, and adding it to the configuration afterwards plans a replacement of the Identity Pool, since resource ownership cannot be assigned after creation.
+-> **Note:** `assigned_resource_owner` is accepted only when the Identity Pool is created and is never returned by the API, so set the `IMPORT_ASSIGNED_RESOURCE_OWNER` environment variable to the principal you assigned before importing an Identity Pool that uses it. Without it the attribute is empty in imported state, and because it forces replacement the first plan afterwards will want to recreate the Identity Pool. Terraform cannot verify the value you supply, since resource ownership is not readable through the API.
 
 You can import an Identity Pool by using Identity Provider ID and Identity Pool ID, in the format `<Identity Provider ID>/<Identity Pool ID>`. The following example shows how to import an Identity Pool:
 

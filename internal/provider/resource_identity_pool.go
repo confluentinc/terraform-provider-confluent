@@ -251,6 +251,12 @@ func identityPoolImport(ctx context.Context, d *schema.ResourceData, meta interf
 	}}); err != nil {
 		return nil, err
 	}
+	// assigned_resource_owner is sent only as a create-time query parameter and is never returned, so an
+	// import leaves it empty and — since it is ForceNew — the first post-import plan would want to
+	// replace the resource. Honor the documented IMPORT_ASSIGNED_RESOURCE_OWNER env var so an import can seed it.
+	if err := d.Set(paramAssignedResourceOwner, getEnv("IMPORT_ASSIGNED_RESOURCE_OWNER", "")); err != nil {
+		return nil, err
+	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
