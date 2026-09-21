@@ -38,9 +38,16 @@ const (
 	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
 
 	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
-	// the schema default of the provider's "endpoint" argument; reporting is
-	// enabled only for an exact match, and any other endpoint disables it.
+	// the schema default of the provider's "endpoint" argument, and is one of the
+	// endpoints for which reporting is enabled (see telemetryEnabledEndpoints).
 	defaultCloudEndpoint = "https://api.confluent.cloud"
+
+	// stagingCloudEndpoint and develCloudEndpoint are the Confluent-operated
+	// non-production control-plane origins, matching the SDK's server list. They
+	// are enabled alongside production so the analytics pipeline can be validated
+	// against staging and development.
+	stagingCloudEndpoint = "https://api.stag.cpdev.cloud"
+	develCloudEndpoint   = "https://api.devel.cpdev.cloud"
 )
 
 // telemetryRuntime is the analytics state published once per process during
@@ -71,14 +78,25 @@ func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 	rt.reporter.Report(u)
 }
 
+// telemetryEnabledEndpoints is the set of Confluent-operated control-plane
+// origins for which usage reporting is enabled: production, staging, and
+// development, mirroring the SDK's server list. Gov/FedRAMP hosts are
+// deliberately excluded so telemetry never egresses a FedRAMP boundary.
+var telemetryEnabledEndpoints = map[string]bool{
+	defaultCloudEndpoint: true,
+	stagingCloudEndpoint: true,
+	develCloudEndpoint:   true,
+}
+
 // telemetryOptOut reports whether analytics is disabled for this process.
 func telemetryOptOut(endpoint string) bool {
 	if os.Getenv(disableProviderAnalyticsEnvVar) != "" {
 		return true
 	}
-	// Enable only for the production endpoint; every other value, including an
-	// empty endpoint (seen only in tests) and gov/FedRAMP hosts, disables.
-	return endpoint != defaultCloudEndpoint
+	// Enable only for the Confluent-operated control-plane endpoints; every other
+	// value, including an empty endpoint (seen only in tests) and gov/FedRAMP
+	// hosts, disables.
+	return !telemetryEnabledEndpoints[endpoint]
 }
 
 // telemetryAuthFunc builds the per-request auth decorator from the provider's
@@ -105,8 +123,9 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 // publishTelemetryRuntime decides whether reporting is enabled and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
 // Reporting is enabled only when the preview opt-in is set, the process is not
-// opted out and is on the production endpoint, a top-level Cloud identity is
-// configured, and the provider is not running a test. When enabled the sink is the
+// opted out and is on an enabled Confluent endpoint (production, staging, or
+// development), a top-level Cloud identity is configured, and the provider is not
+// running a test. When enabled the sink is the
 // bounded-worker transport; otherwise it is nil and every event is dropped.
 func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
