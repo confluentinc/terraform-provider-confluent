@@ -39,10 +39,13 @@ func TestTelemetryOptOut(t *testing.T) {
 		envValue *string // nil = unset
 		want     bool
 	}{
-		{"default endpoint, no env: enabled", defaultCloudEndpoint, nil, false},
-		{"empty endpoint disables (only prod endpoint enables)", "", nil, true},
-		{"non-default (gov) endpoint disables", "https://api.confluent-gov.cloud", nil, true},
+		{"default (prod) endpoint, no env: enabled", defaultCloudEndpoint, nil, false},
+		{"staging endpoint, no env: enabled", stagingCloudEndpoint, nil, false},
+		{"devel endpoint, no env: enabled", develCloudEndpoint, nil, false},
+		{"empty endpoint disables", "", nil, true},
+		{"non-enabled (gov) endpoint disables", "https://api.confluent-gov.cloud", nil, true},
 		{"env var disables on default endpoint", defaultCloudEndpoint, strptr("1"), true},
+		{"env var disables on staging endpoint", stagingCloudEndpoint, strptr("1"), true},
 		{"env var disables even with a false-ish value", defaultCloudEndpoint, strptr("false"), true}, // any non-empty value opts out
 	}
 	for _, tc := range tests {
@@ -234,6 +237,21 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 		// The published run ID is stable and matches the process run ID.
 		if rt.config.RunID != telemetry.RunID() {
 			t.Errorf("published RunID = %q, want the process RunID %q", rt.config.RunID, telemetry.RunID())
+		}
+	})
+
+	t.Run("staging endpoint, no opt-out, preview opt-in set: enabled runtime with a live sink", func(t *testing.T) {
+		restorePublishedTelemetry(t)
+		t.Setenv(disableProviderAnalyticsEnvVar, "")
+		t.Setenv(previewProviderAnalyticsEnvVar, "1")
+		publishTelemetryRuntime(context.Background(), stagingCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+		rt := publishedTelemetry.Load()
+		if rt == nil || rt.config.Disabled || rt.reporter == nil {
+			t.Fatalf("expected an enabled runtime on the staging endpoint, got %+v", rt)
+		}
+		// Stop the transport's worker goroutines started for this test.
+		if c, ok := rt.reporter.(interface{ Close() }); ok {
+			c.Close()
 		}
 	})
 }
