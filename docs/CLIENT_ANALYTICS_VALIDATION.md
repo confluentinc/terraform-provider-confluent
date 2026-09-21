@@ -60,22 +60,28 @@ go test ./internal/provider -run 'TestTelemetryE2E_' -race -count=1 -v
 ### Result of the validation run
 
 A representative local run (point-in-time; the tests are deterministic, so any run
-reproduces the same structure):
+reproduces the same structure). Reproduce with the commands above and read the `t.Logf`
+lines the tests print.
 
-- **65 managed resources** and **317 wrapped entry points** each delivered, over the real
-  transport, exactly one correctly-typed event — all sharing one process `run_id` with
-  strictly increasing `sequence` values (1–317).
-- The named resources were driven across all five operations over the transport:
-  `confluent_environment` and `confluent_kafka_topic`, each across
-  create/read/update/delete/import, every event carrying the correct
-  `resource_type`/`operation`/`run_id` and a strictly increasing `sequence`.
-- A forced panic produced a crash payload (`error: true` + a trimmed, path-redacted stack
-  trace) delivered end to end.
-- Sample delivered payload: `resource_type=confluent_<resource> operation=CREATE
+- **Managed resources validated:** **65** — the full `ResourcesMap`.
+- **Total events delivered over the real transport (one `go test` process):** **328** —
+  **317** from the breadth sweep (one per wrapped entry point), **10** from the two
+  named-resource lifecycles, and **1** crash payload. Every event carried the correct
+  `resource_type` and `operation`, one stable process `run_id`, and a unique, strictly
+  increasing `sequence`.
+- **Breadth sweep:** 65 resources / 317 wrapped entry points, one correctly-typed event
+  each, sequences `1–317`.
+- **Named-resource lifecycles** over the transport (illustrative sequence numbers from one
+  ordered run): `confluent_environment` — CREATE 318, READ 319, UPDATE 320, DELETE 321,
+  IMPORT 322; `confluent_kafka_topic` — CREATE 323, READ 324, UPDATE 325, DELETE 326,
+  IMPORT 327.
+- **Forced panic:** a crash payload (`error: true` + a trimmed, path-redacted stack trace)
+  delivered end to end.
+- **Sample sweep payload:** `resource_type=confluent_<resource> operation=CREATE
   run_id=<uuid> sequence=1 os=darwin arch=arm64 provider_version=<version> error=true` (the
-  specific first resource varies with Go map-iteration order). The hermetic tests drive
-  entry points with nil arguments, so the inner CRUD errors or panics and `error` is `true`;
-  that is expected and does not affect the envelope fields under test
+  first resource varies with Go map-iteration order). The hermetic tests drive entry points
+  with nil arguments, so the inner CRUD errors or panics and `error` is `true` — expected,
+  and it does not affect the envelope fields under test
   (`resource_type`/`operation`/`run_id`/`sequence`).
 
 > **Count note:** the design doc and this ticket say "64 managed resources"; the current
