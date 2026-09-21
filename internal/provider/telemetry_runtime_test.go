@@ -44,6 +44,7 @@ func TestTelemetryOptOut(t *testing.T) {
 		{"devel endpoint, no env: enabled", develCloudEndpoint, nil, false},
 		{"empty endpoint disables", "", nil, true},
 		{"non-enabled (gov) endpoint disables", "https://api.confluent-gov.cloud", nil, true},
+		{"trailing slash disables (exact match only)", defaultCloudEndpoint + "/", nil, true},
 		{"env var disables on default endpoint", defaultCloudEndpoint, strptr("1"), true},
 		{"env var disables on staging endpoint", stagingCloudEndpoint, strptr("1"), true},
 		{"env var disables even with a false-ish value", defaultCloudEndpoint, strptr("false"), true}, // any non-empty value opts out
@@ -289,9 +290,9 @@ func TestPublishedGate_EndToEndThroughWrapper(t *testing.T) {
 }
 
 // TestDefaultCloudEndpointMatchesSchemaDefault keeps defaultCloudEndpoint in sync
-// with the provider's "endpoint" schema default. The gate enables reporting only
-// on an exact match, so if the two drifted, telemetry would silently disable on
-// the production endpoint.
+// with the provider's "endpoint" schema default. Reporting is enabled only for
+// endpoints in the allowlist, so if the two drifted, telemetry would silently
+// disable on the production endpoint.
 func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
 	p := New(testVersion, "")()
 	got, ok := p.Schema["endpoint"].Default.(string)
