@@ -327,4 +327,36 @@ func TestTelemetryDisabledForTestMode(t *testing.T) {
 	}
 }
 
+// closeRecordingReporter is a telemetryReporter that records whether Close was called.
+type closeRecordingReporter struct {
+	closed bool
+}
+
+func (c *closeRecordingReporter) Report(telemetry.Usage) {}
+func (c *closeRecordingReporter) Close()                 { c.closed = true }
+
+// TestPublishTelemetryRuntime_ClosesPriorTransport checks that reconfiguring closes
+// the previously published reporter, so repeated in-process configuration does not
+// leak transport workers.
+func TestPublishTelemetryRuntime_ClosesPriorTransport(t *testing.T) {
+	restorePublishedTelemetry(t)
+	t.Setenv(disableProviderAnalyticsEnvVar, "")
+	t.Setenv(previewProviderAnalyticsEnvVar, "1")
+
+	prior := &closeRecordingReporter{}
+	publishedTelemetry.Store(&telemetryRuntime{config: telemetry.NewConfig(false), reporter: prior})
+
+	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+
+	if !prior.closed {
+		t.Error("prior reporter was not closed on reconfiguration")
+	}
+	// Stop the transport this call started.
+	if rt := publishedTelemetry.Load(); rt != nil {
+		if closer, ok := rt.reporter.(interface{ Close() }); ok {
+			closer.Close()
+		}
+	}
+}
+
 func strptr(s string) *string { return &s }
