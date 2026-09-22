@@ -22,7 +22,7 @@ Reporting is enabled for a process **only** when all of these hold (see
 
 1. the preview opt-in `CONFLUENT_PROVIDER_ANALYTICS_PREVIEW` is set (temporary, removed at go-live);
 2. the opt-out `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` is unset;
-3. the configured `endpoint` is exactly `https://api.confluent.cloud` (any other host, including gov/FedRAMP and staging, disables);
+3. the configured `endpoint` is one of the enabled Confluent Cloud origins — production `https://api.confluent.cloud`, staging `https://api.stag.cpdev.cloud`, or devel `https://api.devel.cpdev.cloud` (staging/devel added in #1266; gov/FedRAMP and any other host disable). The match is exact — a trailing slash or different host silently disables;
 4. a top-level Cloud identity is configured (Cloud API key/secret or an OAuth/STS bearer);
 5. the provider is not in acceptance/live test mode (`TF_ACC` / `TF_ACC_PROD`).
 
@@ -92,22 +92,27 @@ lines the tests print.
 ## Completing the acceptance criterion against a live backend (manual runbook)
 
 C2's literal acceptance — a full plan → apply → import → destroy cycle whose events land
-in a real `cc-cli-service` — needs the `terraform-usage/v1` route deployed (Epic A3/A4/A5)
-and a real Cloud identity. It cannot run in CI. Perform it manually once the route is live:
+in a real `cc-cli-service` — needs the `terraform-usage/v1` route deployed (Epic A3/A5) and
+a top-level Cloud identity. It cannot run in CI (telemetry is gated off under `TF_ACC*`), so
+perform it manually. As of 2026-09-22 the backend is live in **staging** — `cc-cli-service`
+`CollectTerraformUsage` plus the gateway `/terraform-usage/v1/usages` route — so staging is
+the recommended, fully-verified target.
 
-1. **Build the provider and point Terraform at it** via a `dev_overrides` block (see
-   [DEVELOPING.md](DEVELOPING.md)).
+1. **Build the provider from `master` and point Terraform at it** via a `dev_overrides` block
+   (see [DEVELOPING.md](DEVELOPING.md)). #1266 (staging/devel endpoints) is on `master` but
+   not yet released, so a released/registry provider will not report to staging.
 2. **Enable reporting.** Set `CONFLUENT_PROVIDER_ANALYTICS_PREVIEW=1`, leave
    `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` unset, and provide a top-level Cloud API
    key/secret.
-3. **Choose the backend:**
-   - *Prod public endpoint* (recommended once A5's route is in prod): keep the default
-     `endpoint = https://api.confluent.cloud` and use a throwaway/test org. No code change.
-   - *Staging `cc-cli-service`*: the endpoint gate deliberately enables reporting only for
-     the exact prod host, so a staging host disables telemetry. To validate against
-     staging, apply a **local-only** relaxation of the endpoint check in
-     `telemetryOptOut` (point it at the staging host) and set `endpoint` to that host.
-     **Do not commit this change** — it exists only to exercise a non-prod backend.
+3. **Point at the staging backend.** Set the provider `endpoint` **argument** (in the HCL
+   provider block — not `CONFLUENT_CLOUD_ENDPOINT`, which the provider schema does not read)
+   to exactly `https://api.stag.cpdev.cloud`. Since #1266 this is an enabled endpoint, so **no
+   code change is needed** (the earlier local-patch workaround is obsolete). The gate is an
+   exact-string match with no normalization — a trailing slash, a different scheme, or any
+   other host silently disables. Use a **staging** org's top-level Cloud key/secret; prefer a
+   static key over OAuth/STS, whose snapshotted token can expire mid-apply. (Prod also works
+   with the default `https://api.confluent.cloud` and a throwaway org, but confirm the route
+   is live in prod's `cc-cli-service` first — staging is the verified target.)
 4. **Drive the lifecycle** for a control-plane and a data-plane resource, e.g.
    `confluent_environment` and `confluent_kafka_topic`:
 
@@ -118,10 +123,14 @@ and a real Cloud identity. It cannot run in CI. Perform it manually once the rou
    terraform destroy       # delete
    ```
 
-5. **Confirm the events landed** with the expected `resource_type`/`operation`/`run_id`/
-   `sequence` in `cc-cli-service` logs, in Tempo, or via
-   `traces_span_metrics_calls_total{service_name="cc-cli-service"}` in AMP. Remember a
-   `plan` and its `apply` are separate processes with **different** run IDs (see caveats).
+5. **Confirm the events landed — validate presence, not counts.** Each targeted
+   `resource_type`/`operation` should appear **at least once** in `cc-cli-service` logs, in
+   Tempo, or via `traces_span_metrics_calls_total{service_name="cc-cli-service"}` in AMP.
+   Reporting is best-effort (bounded queue, drop-on-full, no drain at process exit), so
+   backend counts are a lower bound and the tail of a large apply is under-reported — treat a
+   missing event as inconclusive and cross-check the provider's `TF_LOG=debug`
+   `dropped client-analytics event` lines. Remember a `plan` and its `apply` are separate
+   processes with **different**, non-joinable run IDs (see caveats).
 6. **Crash path (optional):** temporarily inject a `panic(...)` into one resource's CRUD
    locally and confirm a payload with `error: true` and a stack trace arrives (and, if A3
    kept it in scope, that a Jira ticket is auto-filed). Revert the injected panic.
