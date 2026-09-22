@@ -25,14 +25,11 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// End-to-end validation of the enabled telemetry path: every event travels through the
-// real bounded-worker transport (not a synchronous stand-in). Each test publishes an
-// enabled runtime directly — exercising the real New()-wrapped resources without
-// reverting the shipped test-mode gate — and runs serially, keeping one event in flight
-// so the shallow, lossy transport queue never drops and delivery order matches invocation.
+// End-to-end validation of the enabled telemetry path: each test publishes an enabled
+// runtime, drives the real New()-wrapped resources over the real transport, and keeps
+// one event in flight so the transport queue never drops.
 
-// e2eDeliveryTimeout bounds a single serialized delivery. Delivery is one local
-// channel hop, so this is a deadlock backstop, not a timing assertion.
+// e2eDeliveryTimeout bounds a single delivery so a stuck test fails instead of hanging.
 const e2eDeliveryTimeout = 5 * time.Second
 
 // resourceOpKey identifies one emitted event by resource type and operation.
@@ -41,9 +38,8 @@ type resourceOpKey struct {
 	operation    telemetry.Operation
 }
 
-// enabledCapturingTransport publishes an enabled runtime whose sink is a real
-// transport that forwards each delivered Usage to the returned channel. Capacity 1
-// enforces the one-in-flight discipline the serialized sweeps rely on.
+// enabledCapturingTransport publishes an enabled runtime backed by a real transport and
+// returns a channel that receives each delivered Usage. Capacity 1 keeps one in flight.
 func enabledCapturingTransport(t *testing.T) <-chan telemetry.Usage {
 	t.Helper()
 	restorePublishedTelemetry(t)
@@ -54,9 +50,8 @@ func enabledCapturingTransport(t *testing.T) <-chan telemetry.Usage {
 	return poster.got
 }
 
-// receiveUsage returns the single Usage delivered over the transport for one
-// invocation, asserting its resource type, operation, and stable run ID. The timeout
-// fails the test rather than hanging.
+// receiveUsage returns the Usage delivered for one invocation and asserts its resource
+// type, operation, and stable run ID. It fails the test if nothing arrives in time.
 func receiveUsage(t *testing.T, got <-chan telemetry.Usage, resourceType string, op telemetry.Operation) telemetry.Usage {
 	t.Helper()
 	select {
@@ -77,10 +72,9 @@ func receiveUsage(t *testing.T, got <-chan telemetry.Usage, resourceType string,
 	}
 }
 
-// TestTelemetryE2E_AllManagedResourcesEmitCorrectPayloads drives every managed
-// resource's wrapped entry points over the real transport (one event in flight) and
-// asserts one correctly-typed event each, a stable run ID, and strictly increasing
-// sequences. Nil args make the inner CRUD fail fast, so Error is not asserted.
+// TestTelemetryE2E_AllManagedResourcesEmitCorrectPayloads drives every managed resource's
+// wrapped entry points over the real transport and asserts one correctly-typed event each,
+// a stable run ID, and strictly increasing sequences.
 func TestTelemetryE2E_AllManagedResourcesEmitCorrectPayloads(t *testing.T) {
 	got := enabledCapturingTransport(t)
 	p := New(testVersion, "")()
@@ -92,8 +86,8 @@ func TestTelemetryE2E_AllManagedResourcesEmitCorrectPayloads(t *testing.T) {
 	total := 0
 	var sample telemetry.Usage
 
-	// drive invokes one entry point, then receives its single event before the next
-	// invocation, keeping the shallow transport queue from ever overflowing.
+	// drive invokes one entry point and receives its event before the next, keeping one
+	// event in flight.
 	drive := func(resourceType string, op telemetry.Operation, call func()) {
 		expected[resourceOpKey{resourceType, op}] = true
 		call()
@@ -156,10 +150,9 @@ func TestTelemetryE2E_AllManagedResourcesEmitCorrectPayloads(t *testing.T) {
 		sample.ResourceType, sample.Operation, sample.RunID, sample.Sequence, sample.OS, sample.Arch, sample.ProviderVersion, sample.Error)
 }
 
-// TestTelemetryE2E_NamedResourcesLifecycleOverTransport drives a control-plane
-// (confluent_environment) and a data-plane (confluent_kafka_topic) resource through all
-// five operations over the same real transport, asserting each delivers one event with
-// the correct resource type, operation, stable run ID, and a strictly increasing sequence.
+// TestTelemetryE2E_NamedResourcesLifecycleOverTransport drives confluent_environment and
+// confluent_kafka_topic through all five operations over the real transport, asserting each
+// delivers one event with the correct resource type, operation, run ID, and increasing sequence.
 func TestTelemetryE2E_NamedResourcesLifecycleOverTransport(t *testing.T) {
 	got := enabledCapturingTransport(t)
 	p := New(testVersion, "")()
@@ -200,10 +193,8 @@ func TestTelemetryE2E_NamedResourcesLifecycleOverTransport(t *testing.T) {
 	}
 }
 
-// TestTelemetryE2E_ForcedPanicProducesCrashPayload forces a panic in a wrapped
-// resource and asserts the crash payload travels end to end through the enabled
-// reporter and the real transport: the delivered event carries error=true, a trimmed
-// stack trace, and the correct resource type and operation.
+// TestTelemetryE2E_ForcedPanicProducesCrashPayload forces a panic in a wrapped resource and
+// asserts the crash payload reaches the transport with error=true and a trimmed stack trace.
 func TestTelemetryE2E_ForcedPanicProducesCrashPayload(t *testing.T) {
 	got := enabledCapturingTransport(t)
 
