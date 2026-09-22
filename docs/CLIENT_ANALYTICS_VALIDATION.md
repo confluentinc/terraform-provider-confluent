@@ -94,25 +94,28 @@ lines the tests print.
 C2's literal acceptance — a full plan → apply → import → destroy cycle whose events land
 in a real `cc-cli-service` — needs the `terraform-usage/v1` route deployed (Epic A3/A5) and
 a top-level Cloud identity. It cannot run in CI (telemetry is gated off under `TF_ACC*`), so
-perform it manually. As of 2026-09-22 the backend is live in **staging** — `cc-cli-service`
-`CollectTerraformUsage` plus the gateway `/terraform-usage/v1/usages` route — so staging is
-the recommended, fully-verified target.
+perform it manually. As of 2026-09-22 the terraform-usage backend is live end-to-end in
+**production** — the prod gateway (`0.2407.0`) serves `/terraform-usage/v1/usages` and prod
+`cc-cli-service` implements `CollectTerraformUsage` — so **prod is the verified target**. In
+staging the RPC is live but the gateway route has not yet rolled (the staging gateway is on a
+pre-route version), so the staging edge would 404 until that promotion lands.
 
 1. **Build the provider from `master` and point Terraform at it** via a `dev_overrides` block
-   (see [DEVELOPING.md](DEVELOPING.md)). #1266 (staging/devel endpoints) is on `master` but
-   not yet released, so a released/registry provider will not report to staging.
+   (see [DEVELOPING.md](DEVELOPING.md)). The telemetry wiring and #1266 (staging/devel
+   endpoints) are on `master` but not yet released, so a released/registry provider will not
+   report.
 2. **Enable reporting.** Set `CONFLUENT_PROVIDER_ANALYTICS_PREVIEW=1`, leave
    `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` unset, and provide a top-level Cloud API
    key/secret.
-3. **Point at the staging backend.** Set the provider `endpoint` **argument** (in the HCL
-   provider block — not `CONFLUENT_CLOUD_ENDPOINT`, which the provider schema does not read)
-   to exactly `https://api.stag.cpdev.cloud`. Since #1266 this is an enabled endpoint, so **no
-   code change is needed** (the earlier local-patch workaround is obsolete). The gate is an
-   exact-string match with no normalization — a trailing slash, a different scheme, or any
-   other host silently disables. Use a **staging** org's top-level Cloud key/secret; prefer a
-   static key over OAuth/STS, whose snapshotted token can expire mid-apply. (Prod also works
-   with the default `https://api.confluent.cloud` and a throwaway org, but confirm the route
-   is live in prod's `cc-cli-service` first — staging is the verified target.)
+3. **Point at the backend.** Set the provider `endpoint` **argument** (in the HCL provider
+   block — not `CONFLUENT_CLOUD_ENDPOINT`, which the provider schema does not read). Use the
+   default `https://api.confluent.cloud` (**prod — the verified-live target**) with a
+   throwaway/test org, or `https://api.stag.cpdev.cloud` for staging **once its gateway route
+   is rolled** (see above). Both are enabled endpoints since #1266, so no code change is
+   needed (the earlier local-patch workaround is obsolete). The gate is an exact-string match
+   with no normalization — a trailing slash, a different scheme, or any other host silently
+   disables. Use that env's top-level Cloud key/secret; prefer a static key over OAuth/STS,
+   whose snapshotted token can expire mid-apply.
 4. **Drive the lifecycle** for a control-plane and a data-plane resource, e.g.
    `confluent_environment` and `confluent_kafka_topic`:
 
