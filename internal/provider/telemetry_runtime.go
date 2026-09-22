@@ -113,10 +113,8 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 	}
 }
 
-// telemetryDisabledForTestMode reports whether the test mode should suppress
-// telemetry: hermetic acceptance runs (TF_ACC only) stay silent, while
-// live-production runs (TF_ACC_PROD, against real Cloud) are allowed to emit so the
-// live test suite can exercise the enabled path. Mirrors SleepIfNotTestMode.
+// telemetryDisabledForTestMode suppresses telemetry for hermetic acceptance runs
+// (TF_ACC) only; live-production runs (TF_ACC_PROD) may emit.
 func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
 	return acceptanceTestMode && !liveProductionTestMode
 }

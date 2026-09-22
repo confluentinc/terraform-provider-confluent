@@ -19,8 +19,7 @@ global_job_config:
       - 'export "PATH=${GOPATH}/bin:${PATH}"'
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
-      # Enable client-analytics telemetry for the live suite so it exercises the
-      # enabled reporting path against real Cloud (opt-out left unset).
+      # Enable client-analytics telemetry so the live suite exercises the reporting path.
       - 'export "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW=1"'
 
 execution_time_limit:
