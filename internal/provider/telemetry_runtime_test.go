@@ -304,4 +304,27 @@ func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
 	}
 }
 
+// TestTelemetryDisabledForTestMode checks that hermetic acceptance runs suppress
+// telemetry while live-production runs may emit.
+func TestTelemetryDisabledForTestMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		acceptance bool
+		live       bool
+		want       bool
+	}{
+		{"not a test run: not suppressed", false, false, false},
+		{"hermetic acceptance: suppressed", true, false, true},
+		{"live production: not suppressed", true, true, false},
+		{"live flag alone: not suppressed", false, true, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := telemetryDisabledForTestMode(tc.acceptance, tc.live); got != tc.want {
+				t.Errorf("telemetryDisabledForTestMode(%v, %v) = %v, want %v", tc.acceptance, tc.live, got, tc.want)
+			}
+		})
+	}
+}
+
 func strptr(s string) *string { return &s }

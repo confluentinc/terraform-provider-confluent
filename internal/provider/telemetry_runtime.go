@@ -113,6 +113,12 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 	}
 }
 
+// telemetryDisabledForTestMode suppresses telemetry for hermetic acceptance runs
+// (TF_ACC) only; live-production runs (TF_ACC_PROD) may emit.
+func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
+	return acceptanceTestMode && !liveProductionTestMode
+}
+
 // publishTelemetryRuntime decides whether reporting is enabled and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
 // Reporting is enabled only when the preview opt-in is set, the process is not
