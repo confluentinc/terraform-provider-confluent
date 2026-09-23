@@ -23,6 +23,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -31,6 +33,92 @@ import (
 
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 )
+
+// connectorListCacheTTL bounds how long a fetched connector list is reused before a routine
+// refresh will fetch a fresh one. Short enough that a single terraform plan/apply/refresh still
+// benefits (its many confluent_connector resources on the same cluster share one list call
+// instead of each issuing their own — the O(N^2) pattern from INC-13517), but short enough that a
+// long-running apply doesn't act on minutes-stale data.
+const connectorListCacheTTL = 10 * time.Second
+
+// connectorListCacheEntry holds one (environmentId, clusterId)'s most recent
+// ListConnectv1ConnectorsWithExpansions result, and the channel other callers wait on while a
+// fetch for this key is already in flight (closed once the fetch completes).
+type connectorListCacheEntry struct {
+	ready      chan struct{}
+	connectors map[string]connectv1.ConnectV1ConnectorExpansion
+	resp       *http.Response
+	err        error
+	fetchedAt  time.Time
+}
+
+// connectorListCache lets every confluent_connector resource on the same cluster share a single
+// ListConnectv1ConnectorsWithExpansions call per refresh instead of each one re-listing every
+// connector in the cluster. Only routine refreshes (d.IsNewResource() == false) read through
+// this cache; Create and Import always call executeConnectorRead directly so they see
+// uncached, guaranteed-fresh data (e.g. a connector that was just created).
+type connectorListCache struct {
+	mu      sync.Mutex
+	entries map[string]*connectorListCacheEntry
+}
+
+func newConnectorListCache() *connectorListCache {
+	return &connectorListCache{entries: make(map[string]*connectorListCacheEntry)}
+}
+
+func connectorListCacheKey(environmentId, clusterId string) string {
+	return environmentId + "/" + clusterId
+}
+
+// invalidate drops the cached list for (environmentId, clusterId) so the next read fetches fresh
+// data. Call this after any operation that changes what the list endpoint would return for this
+// cluster (create, config/status/offsets update, delete).
+func (cache *connectorListCache) invalidate(environmentId, clusterId string) {
+	cache.mu.Lock()
+	delete(cache.entries, connectorListCacheKey(environmentId, clusterId))
+	cache.mu.Unlock()
+}
+
+// get returns the connector list for (environmentId, clusterId), calling the API at most once
+// per connectorListCacheTTL: concurrent callers for the same cluster wait on the in-flight
+// fetch instead of starting their own, and callers within the TTL window after a fetch
+// completes reuse its result directly.
+func (cache *connectorListCache) get(ctx context.Context, c *Client, environmentId, clusterId string) (map[string]connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
+	key := connectorListCacheKey(environmentId, clusterId)
+
+	cache.mu.Lock()
+	if entry, ok := cache.entries[key]; ok {
+		select {
+		case <-entry.ready:
+			if time.Since(entry.fetchedAt) < connectorListCacheTTL {
+				cache.mu.Unlock()
+				return entry.connectors, entry.resp, entry.err
+			}
+			// Stale: fall through and start a fresh fetch below.
+		default:
+			// A fetch for this key is already in flight; wait for it instead of starting another.
+			cache.mu.Unlock()
+			<-entry.ready
+			return entry.connectors, entry.resp, entry.err
+		}
+	}
+	entry := &connectorListCacheEntry{ready: make(chan struct{})}
+	cache.entries[key] = entry
+	cache.mu.Unlock()
+
+	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(ctx, environmentId, clusterId).Execute()
+	if !ResponseHasExpectedStatusCode(resp, http.StatusForbidden) && err != nil {
+		err = createDescriptiveError(err, resp)
+	}
+
+	entry.connectors = connectors
+	entry.resp = resp
+	entry.err = err
+	entry.fetchedAt = time.Now()
+	close(entry.ready)
+
+	return connectors, resp, err
+}
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
 var ignoredConnectorConfigs = []string{
@@ -160,6 +248,10 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err, resp))
 	}
+	// Drop any cached connector list for this cluster now that it's out of date, so routine
+	// refreshes of other confluent_connector resources on this cluster (and this one, later)
+	// see the newly created connector instead of a stale pre-create list.
+	c.connectorListCache.invalidate(environmentId, clusterId)
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	createdConnectorWithId, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
@@ -245,6 +337,22 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 	return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", displayName)
 }
 
+// executeConnectorReadCached looks up a single connector from the shared, per-cluster cached
+// connector list (see connectorListCache) instead of issuing its own list call. Use this for
+// routine refreshes of a connector that's already in state; use executeConnectorRead when the
+// caller needs guaranteed-fresh data, e.g. discovering a connector's id right after creating it.
+func executeConnectorReadCached(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
+	connectors, resp, err := c.connectorListCache.get(ctx, c, environmentId, clusterId)
+	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) || err != nil {
+		return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
+	}
+	if connector, ok := connectors[displayName]; ok {
+		return connector, resp, nil
+	}
+
+	return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", displayName)
+}
+
 func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
@@ -265,7 +373,16 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	// A routine refresh of a connector we already know about can be served from the shared,
+	// per-cluster cached connector list instead of issuing its own list call (see
+	// connectorListCache). Create/Import (d.IsNewResource() == true) still need guaranteed-fresh
+	// data, since they're discovering a connector's id right after creating it.
+	readFn := executeConnectorReadCached
+	if d.IsNewResource() {
+		readFn = executeConnectorRead
+	}
+
+	connector, resp, err := readFn(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -425,6 +542,11 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 
+	// Drop any cached connector list for this cluster: status/config changes above (pause,
+	// resume, config update) are reflected in the list endpoint too, and the trailing
+	// connectorRead below must see them rather than a pre-update cached list.
+	c.connectorListCache.invalidate(environmentId, clusterId)
+
 	return connectorRead(ctx, d, meta)
 }
 
@@ -447,6 +569,8 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	if deletionError.Error != nil {
 		return diag.Errorf("error deleting Connector %q: %q", d.Id(), deletionError.GetError())
 	}
+
+	c.connectorListCache.invalidate(environmentId, clusterId)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
