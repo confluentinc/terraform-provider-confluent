@@ -87,8 +87,8 @@ func testWrapConfig(reporter telemetryReporter) telemetryWrapConfig {
 func TestWrapResourcesMap_CoversAllManagedResourcesAndExcludesDataSources(t *testing.T) {
 	p := New(testVersion, "")()
 
-	// There are 67 managed resources; bump this pin when ResourcesMap changes.
-	const wantManagedResources = 67
+	// There are 68 managed resources; bump this pin when ResourcesMap changes.
+	const wantManagedResources = 68
 	if got := len(p.ResourcesMap); got != wantManagedResources {
 		t.Errorf("ResourcesMap has %d resources, want %d (update this pin if resources were intentionally added/removed)", got, wantManagedResources)
 	}

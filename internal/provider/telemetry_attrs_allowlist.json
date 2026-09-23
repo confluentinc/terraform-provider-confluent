@@ -52,6 +52,7 @@
   ],
   "confluent_catalog_integration": [
     "aws_glue",
+    "biglake_metastore",
     "credentials",
     "display_name",
     "environment",
@@ -398,6 +399,19 @@
     "network",
     "resource_name"
   ],
+  "confluent_notifications_integration": [
+    "api_version",
+    "description",
+    "display_name",
+    "in_app_target",
+    "kind",
+    "ms_teams_target",
+    "resource_name",
+    "role_email_target",
+    "slack_target",
+    "user_email_target",
+    "webhook_target"
+  ],
   "confluent_peering": [
     "aws",
     "azure",
@@ -447,7 +461,6 @@
     "aws",
     "display_name",
     "environment",
-    "id",
     "usages"
   ],
   "confluent_provider_integration_authorization": [
@@ -461,7 +474,6 @@
     "cloud",
     "display_name",
     "environment",
-    "id",
     "status",
     "usages"
   ],
@@ -610,6 +622,7 @@
     "enable_partitioning",
     "environment",
     "error_handling",
+    "google_cloud_storage",
     "kafka_cluster",
     "managed_storage",
     "metadata_column_naming_scheme",

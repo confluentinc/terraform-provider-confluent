@@ -43,12 +43,13 @@ func catalogIntegrationDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether the Catalog Integration should be suspended.",
 			},
-			paramKafkaCluster: requiredKafkaClusterDataSourceSchema(),
-			paramEnvironment:  environmentDataSourceSchema(),
-			paramCredentials:  credentialsSchema(),
-			paramAwsGlue:      awsGlueDataSourceSchema(),
-			paramSnowflake:    snowflakeDataSourceSchema(),
-			paramUnity:        unityDataSourceSchema(),
+			paramKafkaCluster:     requiredKafkaClusterDataSourceSchema(),
+			paramEnvironment:      environmentDataSourceSchema(),
+			paramCredentials:      credentialsSchema(),
+			paramAwsGlue:          awsGlueDataSourceSchema(),
+			paramSnowflake:        snowflakeDataSourceSchema(),
+			paramUnity:            unityDataSourceSchema(),
+			paramBigLakeMetastore: bigLakeMetastoreDataSourceSchema(),
 		},
 	}
 }
@@ -160,6 +161,36 @@ func unityDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The custom schema name to use in Unity Catalog.",
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func bigLakeMetastoreDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramGcpProjectId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The GCP project id that hosts the BigLake Metastore catalog.",
+				},
+				paramCatalogName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The name of the catalog within BigLake Metastore.",
+				},
+				paramCustomNamespace: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The custom namespace to use in BigLake Metastore.",
 				},
 			},
 		},

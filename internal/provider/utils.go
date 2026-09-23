@@ -67,6 +67,7 @@ import (
 	networkingipv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	notificationsv1 "github.com/confluentinc/ccloud-sdk-go-v2/notifications/v1"
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
@@ -1599,5 +1600,51 @@ func (c *Client) rtceV1ApiContext(ctx context.Context) context.Context {
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for rtceV1 client")
+	return ctx
+}
+
+// normalizeGatewayPhases normalizes phase values to lowercase for API
+func normalizeGatewayPhases(phases []string) []string {
+	if len(phases) == 0 {
+		return phases
+	}
+
+	normalized := make([]string, len(phases))
+	validPhases := map[string]string{
+		"PROVISIONING":   "provisioning",
+		"CREATED":        "created",
+		"ACTIVE":         "active", // API expects "active" but returns "ready" in response, so map "ready" input to "active" for API filter
+		"READY":          "active",
+		"FAILED":         "failed",
+		"DEPROVISIONING": "deprovisioning",
+		"EXPIRED":        "expired",
+	}
+
+	for i, phase := range phases {
+		upperPhase := strings.ToUpper(strings.TrimSpace(phase))
+		if mappedPhase, ok := validPhases[upperPhase]; ok {
+			normalized[i] = mappedPhase
+		} else {
+			normalized[i] = strings.ToLower(upperPhase)
+		}
+	}
+
+	return normalized
+}
+
+func (c *Client) notificationsV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, "Failed to get OAuth token for notificationsV1 client", map[string]interface{}{"error": err.Error()})
+		}
+		return context.WithValue(ctx, notificationsv1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, notificationsv1.ContextBasicAuth, notificationsv1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for notificationsV1 client")
 	return ctx
 }
