@@ -29,6 +29,8 @@ blocks:
             - cat ../go-openssl/patches/*.patch | gpatch -p1
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/nobackend.go
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
+            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/bbig/nobackend.go
+            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/bbig/big.go
             - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
             - cd src/
             - CGO_CFLAGS="-Wno-error=gnu-folding-constant" ./make.bash -v
