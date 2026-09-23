@@ -113,21 +113,34 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 	}
 }
 
+// telemetryDisabledForTestMode suppresses telemetry for acceptance-only runs
+// (TF_ACC set, TF_ACC_PROD unset); live-production runs may emit.
+func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
+	return acceptanceTestMode && !liveProductionTestMode
+}
+
 // publishTelemetryRuntime decides whether reporting is enabled and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
 // Reporting is enabled only when the preview opt-in is set, the process is not
 // opted out and is on an enabled endpoint, a top-level Cloud identity is
-// configured, and the provider is not running a test. When enabled the sink is the
-// bounded-worker transport; otherwise it is nil and every event is dropped.
-func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, testMode bool) {
+// configured, and the run is not a hermetic acceptance test (live-production runs
+// may emit). When enabled the sink is the bounded-worker transport; otherwise it is
+// nil and every event is dropped.
+func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, disabledForTestMode bool) {
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
 	// Temporary opt-in gate: keep reporting off until the preview flag is set.
 	previewOptIn := os.Getenv(previewProviderAnalyticsEnvVar) != ""
-	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || testMode
+	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || disabledForTestMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
 		rt.reporter = telemetry.NewTransport(poster, ctx)
 	}
-	publishedTelemetry.Store(rt)
+	// Close any prior transport so repeated in-process configuration (the test
+	// harness) does not leak worker goroutines; production configures once.
+	if prev := publishedTelemetry.Swap(rt); prev != nil {
+		if closer, ok := prev.reporter.(interface{ Close() }); ok {
+			closer.Close()
+		}
+	}
 }
