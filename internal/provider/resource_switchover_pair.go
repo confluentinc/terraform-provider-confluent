@@ -82,12 +82,17 @@ func switchoverPairResource() *schema.Resource {
 					},
 				},
 			},
-			paramActiveMember: {
+			paramInitialActiveMember: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The name of the member that starts as active; must match one of the `members[].name` values. Use a failover operation to change the active member after creation.",
+				Description:  "The name of the member that starts as active when the pair is created; must match one of the `members[].name` values. Only used on create: the Switchover service owns the active member afterwards, so this value does not drift when a failover moves it (see `active_member`).",
 				ValidateFunc: validation.StringIsNotEmpty,
+			},
+			paramActiveMember: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The name of the member that is currently active. Owned by the Switchover service; use a `confluent_switchover_pair_failover` resource to change it.",
 			},
 			paramFirstActive: {
 				Type:        schema.TypeString,
@@ -119,7 +124,7 @@ func switchoverPairCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	activeMember := d.Get(paramActiveMember).(string)
+	activeMember := d.Get(paramInitialActiveMember).(string)
 	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	members := buildSwitchoverPairMembers(d)
 
@@ -216,6 +221,12 @@ func switchoverPairImport(ctx context.Context, d *schema.ResourceData, meta inte
 	d.MarkNewResource()
 	if _, err := readSwitchoverPairAndSetAttributes(ctx, d, meta, environmentCrn, switchoverPairId); err != nil {
 		return nil, fmt.Errorf("error importing switchover pair %q: %s", d.Id(), err)
+	}
+	// initial_active_member is a create-only input that the API does not echo back. Seed it from
+	// first_active (the member that was active at creation) so an imported pair does not plan a
+	// replacement when the user's config matches how the pair was originally created.
+	if err := d.Set(paramInitialActiveMember, d.Get(paramFirstActive)); err != nil {
+		return nil, err
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil

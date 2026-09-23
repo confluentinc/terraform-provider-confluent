@@ -14,6 +14,8 @@ description: |-
 
 `confluent_switchover_pair` provides a switchover pair resource that models a cluster-level disaster recovery (DR) pairing between two Kafka clusters (an active member and a passive member) on Confluent Cloud.
 
+The member that is active is chosen once, at creation time, via `initial_active_member`. After that the Switchover service owns it: a failover (see `confluent_switchover_pair_failover`) changes the active member on the server, and the resource reports the current value in the computed `active_member` attribute without showing drift or forcing a replacement. Keep the pair, its `confluent_switchover_endpoint`, and the failover resource in the same Terraform configuration; see the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair).
+
 ## Example Usage
 
 ```terraform
@@ -23,8 +25,8 @@ provider "confluent" {
 }
 
 resource "confluent_switchover_pair" "example" {
-  display_name  = "prod-kafka-dr"
-  active_member = "west"
+  display_name          = "prod-kafka-dr"
+  initial_active_member = "west"
 
   # Each member is referenced by its CRN, which carries the member's own
   # environment, so the two members may live in different environments.
@@ -51,7 +53,7 @@ The following arguments are supported:
 - `members` (Required Configuration Block) The two clusters participating in this switchover pair. Must contain exactly 2 members. Each block supports the following:
   - `name` - (Required String) A logical name for this member (for example, `west` or `east`), unique within the pair.
   - `member_crn` - (Required String) The CRN of the cluster this member represents, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123/cloud-cluster=lkc-west01`. The CRN carries the member's own environment, so the two members may live in different environments.
-- `active_member` - (Required String) The name of the member that starts as active; must match one of the `members[].name` values. Use a `confluent_switchover_pair_failover` resource to change the active member after creation.
+- `initial_active_member` - (Required String) The name of the member that starts as active when the pair is created; must match one of the `members[].name` values. Only used on create. Changing it forces a new pair; to change which member is active on an existing pair, use a `confluent_switchover_pair_failover` resource instead.
 - `environment_crn` - (Required String) The CRN of the environment that owns this switchover pair, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123`.
 
 ## Attributes Reference
@@ -59,6 +61,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the switchover pair, for example, `sw-abc123`.
+- `active_member` - (Required String) The name of the member that is currently active. Owned by the Switchover service and updated by failovers; it will differ from `initial_active_member` after an odd number of failovers.
 - `first_active` - (Required String) The name of the member that was active when the pair was first created.
 - `failover_type` - (Required String) The failover semantics most recently applied to this pair (`PLANNED`, `UNPLANNED`, or `RESTORE`). Empty until a failover has been triggered.
 - `phase` - (Required String) The lifecycle phase of the switchover pair, for example, `PROVISIONING`, `READY_TO_FAILOVER`, `UPDATING`, `READY_TO_RESTORE`, `FAILED`, or `DEPROVISIONING`.
@@ -77,5 +80,7 @@ $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_switchover_pair.example crn://confluent.cloud/organization=org-abc/environment=env-abc123/sw-abc123
 ```
+
+On import, `initial_active_member` is populated from the pair's `first_active`, so set `initial_active_member` in your configuration to the member that was active when the pair was created (not the currently active member) to avoid a planned replacement.
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

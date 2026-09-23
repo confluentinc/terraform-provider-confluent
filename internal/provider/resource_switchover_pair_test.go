@@ -31,9 +31,11 @@ const (
 	switchoverPairsUrlPath        = "/switchover/v1/switchover-pairs"
 	switchoverPairReadUrlPath     = "/switchover/v1/switchover-pairs/sw-abc123"
 	switchoverPairScenarioName    = "confluent_switchover_pair Resource Lifecycle"
+	switchoverPairFailoverHook    = "switchover-pair-failover"
 
 	scenarioStateSwitchoverPairHasBeenCreated = "The switchover pair has been created"
 	scenarioStateSwitchoverPairHasBeenUpdated = "The switchover pair has been updated"
+	scenarioStateSwitchoverPairHasFailedOver  = "The switchover pair has failed over"
 	scenarioStateSwitchoverPairHasBeenDeleted = "The switchover pair has been deleted"
 
 	switchoverPairEnvironmentCrn = "crn://confluent.cloud/organization=org-abc/environment=env-abc123"
@@ -97,9 +99,32 @@ func TestAccSwitchoverPair(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(switchoverPairReadUrlPath)).
+	// A failover (triggered outside this resource, e.g. by confluent_switchover_pair_failover) moves
+	// active_member from "west" to "east" while first_active stays "west". The test flips the
+	// scenario into this state out of band, via this hook stub, before the plan-only step below.
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(wiremockScenarioHookPath+switchoverPairFailoverHook)).
 		InScenario(switchoverPairScenarioName).
 		WhenScenarioStateIs(scenarioStateSwitchoverPairHasBeenUpdated).
+		WillSetStateTo(scenarioStateSwitchoverPairHasFailedOver).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	failedOverPairResponse, _ := os.ReadFile("../testdata/switchover/failed_over_pair.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(switchoverPairReadUrlPath)).
+		InScenario(switchoverPairScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverPairHasFailedOver).
+		WillReturn(
+			string(failedOverPairResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(switchoverPairReadUrlPath)).
+		InScenario(switchoverPairScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverPairHasFailedOver).
 		WillSetStateTo(scenarioStateSwitchoverPairHasBeenDeleted).
 		WillReturn(
 			"",
@@ -127,6 +152,7 @@ func TestAccSwitchoverPair(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "id", "sw-abc123"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "display_name", "prod-kafka-dr"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "environment_crn", switchoverPairEnvironmentCrn),
+					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "initial_active_member", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "active_member", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "first_active", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "failover_type", "PLANNED"),
@@ -148,6 +174,30 @@ func TestAccSwitchoverPair(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "environment_crn", switchoverPairEnvironmentCrn),
 				),
 			},
+			{
+				// Regression test: after a failover flips active_member on the server ("west" -> "east"),
+				// re-planning the unchanged config must be a no-op. Before initial_active_member was split
+				// from the server-owned active_member, this step planned a destroy-and-recreate of the
+				// pair (and, via parent_resource_crn, of any endpoint bound to it).
+				PreConfig: func() {
+					if err := triggerWiremockScenarioHook(mockServerUrl, switchoverPairFailoverHook); err != nil {
+						t.Fatal(err)
+					}
+				},
+				Config:             testAccCheckSwitchoverPairConfig(mockServerUrl, "prod-kafka-dr-v2"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				// The refreshed state reflects the server-side failover without a diff on the inputs.
+				Config: testAccCheckSwitchoverPairConfig(mockServerUrl, "prod-kafka-dr-v2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "id", "sw-abc123"),
+					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "initial_active_member", "west"),
+					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "active_member", "east"),
+					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "first_active", "west"),
+				),
+			},
 		},
 	})
 }
@@ -159,9 +209,9 @@ func testAccCheckSwitchoverPairConfig(mockServerUrl, displayName string) string 
 	}
 
 	resource "confluent_switchover_pair" "main" {
-		display_name    = "%s"
-		active_member   = "west"
-		environment_crn = "%s"
+		display_name          = "%s"
+		initial_active_member = "west"
+		environment_crn       = "%s"
 
 		members {
 			name       = "west"

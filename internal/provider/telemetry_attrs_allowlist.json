@@ -578,6 +578,7 @@
   "confluent_switchover_endpoint": [
     "display_name",
     "endpoints",
+    "initial_target",
     "parent_resource_crn",
     "phase",
     "target"
@@ -588,6 +589,7 @@
     "environment_crn",
     "failover_type",
     "first_active",
+    "initial_active_member",
     "members",
     "phase"
   ],

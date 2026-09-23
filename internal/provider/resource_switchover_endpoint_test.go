@@ -31,9 +31,11 @@ const (
 	switchoverEndpointsUrlPath        = "/switchover/v1/switchover-endpoints"
 	switchoverEndpointReadUrlPath     = "/switchover/v1/switchover-endpoints/se-abc123"
 	switchoverEndpointScenarioName    = "confluent_switchover_endpoint Resource Lifecycle"
+	switchoverEndpointFailoverHook    = "switchover-endpoint-failover"
 
 	scenarioStateSwitchoverEndpointHasBeenCreated = "The switchover endpoint has been created"
 	scenarioStateSwitchoverEndpointHasBeenUpdated = "The switchover endpoint has been updated"
+	scenarioStateSwitchoverEndpointHasFailedOver  = "The switchover endpoint has failed over"
 	scenarioStateSwitchoverEndpointHasBeenDeleted = "The switchover endpoint has been deleted"
 
 	switchoverEndpointParentResourceCrn = "crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-abc123"
@@ -97,9 +99,32 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(switchoverEndpointReadUrlPath)).
+	// A failover on the parent pair moves the endpoint's target from "west-platt" to "east-platt".
+	// The test flips the scenario into this state out of band, via this hook stub, before the
+	// plan-only step below.
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(wiremockScenarioHookPath+switchoverEndpointFailoverHook)).
 		InScenario(switchoverEndpointScenarioName).
 		WhenScenarioStateIs(scenarioStateSwitchoverEndpointHasBeenUpdated).
+		WillSetStateTo(scenarioStateSwitchoverEndpointHasFailedOver).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	failedOverEndpointResponse, _ := os.ReadFile("../testdata/switchover/failed_over_endpoint.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(switchoverEndpointReadUrlPath)).
+		InScenario(switchoverEndpointScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverEndpointHasFailedOver).
+		WillReturn(
+			string(failedOverEndpointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(switchoverEndpointReadUrlPath)).
+		InScenario(switchoverEndpointScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverEndpointHasFailedOver).
 		WillSetStateTo(scenarioStateSwitchoverEndpointHasBeenDeleted).
 		WillReturn(
 			"",
@@ -127,6 +152,7 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "id", "se-abc123"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "display_name", "prod-kafka-dr-endpoint"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "parent_resource_crn", switchoverEndpointParentResourceCrn),
+					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "initial_target", "west-platt"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "target", "west-platt"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "phase", "READY"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "endpoints.#", "2"),
@@ -146,6 +172,29 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "parent_resource_crn", switchoverEndpointParentResourceCrn),
 				),
 			},
+			{
+				// Regression test: after a failover flips the server-owned target ("west-platt" ->
+				// "east-platt"), re-planning the unchanged config must be a no-op. Before initial_target
+				// was split from target, this step planned a destroy-and-recreate of the endpoint, which
+				// would hand clients a new hostname.
+				PreConfig: func() {
+					if err := triggerWiremockScenarioHook(mockServerUrl, switchoverEndpointFailoverHook); err != nil {
+						t.Fatal(err)
+					}
+				},
+				Config:             testAccCheckSwitchoverEndpointConfig(mockServerUrl, "prod-kafka-dr-endpoint-v2"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				// The refreshed state reflects the server-side failover without a diff on the inputs.
+				Config: testAccCheckSwitchoverEndpointConfig(mockServerUrl, "prod-kafka-dr-endpoint-v2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "id", "se-abc123"),
+					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "initial_target", "west-platt"),
+					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "target", "east-platt"),
+				),
+			},
 		},
 	})
 }
@@ -159,6 +208,7 @@ func testAccCheckSwitchoverEndpointConfig(mockServerUrl, displayName string) str
 	resource "confluent_switchover_endpoint" "main" {
 		display_name        = "%s"
 		parent_resource_crn = "%s"
+		initial_target      = "west-platt"
 
 		endpoints {
 			name = "west-platt"

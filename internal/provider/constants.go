@@ -364,6 +364,8 @@ const (
 	paramMemberCrn                                       = "member_crn"
 	paramFirstActive                                     = "first_active"
 	paramActiveMember                                    = "active_member"
+	paramInitialActiveMember                             = "initial_active_member"
+	paramInitialTarget                                   = "initial_target"
 	paramFailoverType                                    = "failover_type"
 	paramDistribution                                    = "distribution"
 	paramDistributionBucketCount                         = "bucket_count"
