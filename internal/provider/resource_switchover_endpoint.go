@@ -53,17 +53,10 @@ func switchoverEndpointResource() *schema.Resource {
 				Description:  "The CRN of the switchover pair this endpoint is bound to. The CRN carries the pair's environment.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramInitialTarget: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "The name of the endpoint that should be active when the endpoint is created; must match one of the `endpoints[].name` values. Only used on create: the Switchover service owns the target afterwards (it follows the pair's active member), so this value does not drift when a failover moves it (see `target`). Defaults to the endpoint matching the pair's active member.",
-			},
 			paramTarget: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The name of the endpoint that is currently active. Owned by the Switchover service; it follows the pair's active member across failovers.",
+				Description: "The name of the endpoint that is currently active. Owned by the Switchover service: it starts on the side matching the pair's active member and follows it across failovers.",
 			},
 			paramEndpoints: {
 				Type:        schema.TypeList,
@@ -152,14 +145,12 @@ func switchoverEndpointCreate(ctx context.Context, d *schema.ResourceData, meta 
 	endpoints := buildSwitchoverEndpoints(d)
 
 	// The endpoint's environment travels inside parent_resource_crn (the pair CRN); the create body
-	// does not take a separate environment field.
+	// does not take a separate environment field. target is left unset so the Switchover service
+	// starts the endpoint on the side matching the pair's active member; it owns the value from then on.
 	spec := &switchoverv1.SwitchoverV1SwitchoverEndpointSpec{
 		DisplayName:       switchoverv1.PtrString(displayName),
 		ParentResourceCrn: switchoverv1.PtrString(parentResourceCrn),
 		Endpoints:         &endpoints,
-	}
-	if target := d.Get(paramInitialTarget).(string); target != "" {
-		spec.Target = switchoverv1.PtrString(target)
 	}
 
 	createRequest := switchoverv1.SwitchoverV1SwitchoverEndpoint{Spec: spec}
@@ -248,13 +239,6 @@ func switchoverEndpointImport(ctx context.Context, d *schema.ResourceData, meta 
 	d.MarkNewResource()
 	if _, err := readSwitchoverEndpointAndSetAttributes(ctx, d, meta, parentResourceCrn, switchoverEndpointId); err != nil {
 		return nil, fmt.Errorf("error importing switchover endpoint %q: %s", d.Id(), err)
-	}
-	// initial_target is a create-only input that the API does not echo back (there is no "first
-	// target" field on the endpoint). Seed it from the current target so an imported endpoint does
-	// not plan a replacement: a config that sets initial_target to the current side matches, and a
-	// config that omits it is left alone because the attribute is also Computed.
-	if err := d.Set(paramInitialTarget, d.Get(paramTarget)); err != nil {
-		return nil, err
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil

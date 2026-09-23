@@ -14,7 +14,7 @@ description: |-
 
 `confluent_switchover_endpoint` provides a switchover endpoint resource that models a sticky disaster recovery (DR) endpoint bound to a `confluent_switchover_pair`. The endpoint follows the pair's active member so that clients keep a stable connection target across a failover.
 
-The side the endpoint points at is owned by the Switchover service and reported in the computed `target` attribute; a failover moves it without showing drift or forcing a replacement (which would hand clients a new hostname). The optional `initial_target` is only used when the endpoint is created. Keep the endpoint in the same Terraform configuration as its pair and any `confluent_switchover_pair_failover`; see the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair).
+The side the endpoint points at is owned by the Switchover service and reported in the computed `target` attribute: it starts on the side matching the pair's active member, and a failover moves it without showing drift or forcing a replacement (which would hand clients a new hostname). Keep the endpoint in the same Terraform configuration as its pair and any `confluent_switchover_pair_failover`; see the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair).
 
 -> **Note:** For PrivateLink Attachment (Enterprise) clusters, use `access_point_crn` in the form `crn://confluent.cloud/organization=<org>/environment=<env>/gateway=<platt-id>/access-point=<plattc-id>`. For Dedicated clusters on a Confluent-managed network, use `network_crn`.
 
@@ -57,7 +57,6 @@ The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the switchover endpoint.
 - `parent_resource_crn` - (Required String) The CRN of the switchover pair this endpoint is bound to, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-abc123`. The CRN carries the pair's environment.
-- `initial_target` - (Optional String) The name of the endpoint that should be active when the endpoint is created; must match one of the `endpoints[].name` values. Only used on create; defaults to the side matching the pair's active member. Changing it forces a new endpoint.
 - `endpoints` (Required Configuration Block) The endpoint definitions, one per side (for example, west/east). Must contain exactly 2 entries. Each block supports the following:
   - `name` - (Required String) A logical name for this endpoint side (for example, `west-platt`), unique within the resource.
   - `endpoint_filter` (Required Configuration Block) Filter criteria that identify a network endpoint for this side of the pair. Supports the following:
@@ -70,7 +69,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the switchover endpoint, for example, `se-abc123`.
-- `target` - (Required String) The name of the endpoint that is currently active. Owned by the Switchover service; it follows the pair's active member across failovers.
+- `target` - (Required String) The name of the endpoint that is currently active. Owned by the Switchover service: it starts on the side matching the pair's active member and follows it across failovers.
 - `phase` - (Required String) The lifecycle phase of the switchover endpoint.
 - `endpoints` (Required Configuration Block) In addition to the arguments above, each endpoint exports the following:
   - `hostname` - (Required String) The resolved hostname for this endpoint.

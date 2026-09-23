@@ -36,9 +36,9 @@ resource "confluent_switchover_pair" "example" {
   environment_crn = var.environment_crn
 }
 
-# A switchover endpoint is a sticky DR bootstrap bound to the pair. Its `target`
-# follows the pair's active member across failovers; the optional `initial_target`
-# is only used on create and defaults to the side matching the active member.
+# A switchover endpoint is a sticky DR bootstrap bound to the pair. Its computed
+# `target` starts on the side matching the pair's active member and follows it
+# across failovers.
 resource "confluent_switchover_endpoint" "example" {
   display_name        = "prod-kafka-dr-endpoint"
   parent_resource_crn = "${var.environment_crn}/switchover-pair=${confluent_switchover_pair.example.id}"

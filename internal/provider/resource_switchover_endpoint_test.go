@@ -152,7 +152,6 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "id", "se-abc123"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "display_name", "prod-kafka-dr-endpoint"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "parent_resource_crn", switchoverEndpointParentResourceCrn),
-					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "initial_target", "west-platt"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "target", "west-platt"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "phase", "READY"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "endpoints.#", "2"),
@@ -174,9 +173,9 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 			},
 			{
 				// Regression test: after a failover flips the server-owned target ("west-platt" ->
-				// "east-platt"), re-planning the unchanged config must be a no-op. Before initial_target
-				// was split from target, this step planned a destroy-and-recreate of the endpoint, which
-				// would hand clients a new hostname.
+				// "east-platt"), re-planning the unchanged config must be a no-op. While target was a
+				// ForceNew input written back by Read, this step planned a destroy-and-recreate of the
+				// endpoint, which would hand clients a new hostname.
 				PreConfig: func() {
 					if err := triggerWiremockScenarioHook(mockServerUrl, switchoverEndpointFailoverHook); err != nil {
 						t.Fatal(err)
@@ -191,7 +190,6 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 				Config: testAccCheckSwitchoverEndpointConfig(mockServerUrl, "prod-kafka-dr-endpoint-v2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "id", "se-abc123"),
-					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "initial_target", "west-platt"),
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "target", "east-platt"),
 				),
 			},
@@ -208,7 +206,6 @@ func testAccCheckSwitchoverEndpointConfig(mockServerUrl, displayName string) str
 	resource "confluent_switchover_endpoint" "main" {
 		display_name        = "%s"
 		parent_resource_crn = "%s"
-		initial_target      = "west-platt"
 
 		endpoints {
 			name = "west-platt"

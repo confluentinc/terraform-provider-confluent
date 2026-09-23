@@ -590,7 +590,6 @@
   "confluent_switchover_endpoint": [
     "display_name",
     "endpoints",
-    "initial_target",
     "parent_resource_crn",
     "phase",
     "target"
