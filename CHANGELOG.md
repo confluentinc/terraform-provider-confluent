@@ -1,3 +1,12 @@
+## 2.87.0 (September 23rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.86.0...v2.87.0)
+
+**New features:**
+* Added support for new `confluent_notifications_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_integration) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notifications_integration).
+* Added support for a new optional `google_cloud_storage` configuration block to `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+* Added support for a new optional `biglake_metastore` configuration block to `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration).
+
 ## 2.86.0 (September 10th, 2026) 
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0) 
