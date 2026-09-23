@@ -130,6 +130,8 @@ func TestAccServiceAccount(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "kind", saKind),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saDisplayName),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "description", saDescription),
+					// Fallback: resource_owner isn't set in config, so no owner should be assigned.
+					resource.TestCheckNoResourceAttr(fullSaResourceLabel, paramResourceOwner),
 				),
 			},
 			{
@@ -160,6 +162,116 @@ func TestAccServiceAccount(t *testing.T) {
 	checkStubCount(t, wiremockClient, createSaStub, "POST /iam/v2/service-accounts", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchSaStub, "PATCH /iam/v2/service-accounts/sa-1jjv26", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/service-accounts/sa-1jjv26", expectedCountOne)
+}
+
+// TestAccServiceAccountWithResourceOwner covers the `resource_owner` attribute added for
+// https://confluent.zendesk.com/agent/tickets/361467: the create stub only matches a request
+// that carries `assigned_resource_owner`, so if the provider stopped sending it, this test would
+// fail with a "no stub matched" error rather than silently passing.
+func TestAccServiceAccountWithResourceOwner(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createSaResponse, _ := ioutil.ReadFile("../testdata/service_account/create_sa.json")
+	createSaWithOwnerStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
+		WithQueryParam("assigned_resource_owner", wiremock.EqualTo(saResourceOwnerId)).
+		InScenario(saScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateSaHasBeenCreated).
+		WillReturn(
+			string(createSaResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createSaWithOwnerStub)
+
+	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+		InScenario(saScenarioName).
+		WhenScenarioStateIs(scenarioStateSaHasBeenCreated).
+		WillReturn(
+			string(readCreatedSaResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_deleted_sa.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+		InScenario(saScenarioName).
+		WhenScenarioStateIs(scenarioStateSaHasBeenDeleted).
+		WillReturn(
+			string(readDeletedSaResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	deleteSaStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+		InScenario(saScenarioName).
+		WhenScenarioStateIs(scenarioStateSaHasBeenCreated).
+		WillSetStateTo(scenarioStateSaHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteSaStub)
+
+	saResourceLabel := "test_sa_resource_label"
+	fullSaResourceLabel := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckServiceAccountDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckServiceAccountConfigWithResourceOwner(mockServerUrl, saResourceLabel, saDisplayName, saDescription, saResourceOwnerId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountExists(fullSaResourceLabel),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "id", "sa-1jjv26"),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saDisplayName),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "description", saDescription),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramResourceOwner, saResourceOwnerId),
+				),
+			},
+			{
+				// resource_owner assigns a role binding as a side effect of create; it isn't part
+				// of the service account API response, so it can't be recovered on import.
+				ResourceName:            fullSaResourceLabel,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{paramResourceOwner},
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createSaWithOwnerStub, "POST /iam/v2/service-accounts?assigned_resource_owner="+saResourceOwnerId, expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/service-accounts/sa-1jjv26", expectedCountOne)
+}
+
+func testAccCheckServiceAccountConfigWithResourceOwner(mockServerUrl, saResourceLabel, saDisplayName, saDescription, saResourceOwnerId string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_service_account" "%s" {
+		display_name   = "%s"
+		description    = "%s"
+		resource_owner = "%s"
+	}
+	`, mockServerUrl, saResourceLabel, saDisplayName, saDescription, saResourceOwnerId)
 }
 
 func testAccCheckServiceAccountDestroy(s *terraform.State) error {
