@@ -82,6 +82,20 @@
     "external_identifier",
     "filter"
   ],
+  "confluent_client_request_policy": [
+    "action",
+    "api_version",
+    "error_message",
+    "kind",
+    "mode",
+    "name",
+    "phase",
+    "policy_type",
+    "resource_name",
+    "resource_version",
+    "rules",
+    "uid"
+  ],
   "confluent_cluster_link": [
     "cluster_link_id",
     "config",
