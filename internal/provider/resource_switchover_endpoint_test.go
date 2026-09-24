@@ -33,10 +33,11 @@ const (
 	switchoverEndpointScenarioName    = "confluent_switchover_endpoint Resource Lifecycle"
 	switchoverEndpointFailoverHook    = "switchover-endpoint-failover"
 
-	scenarioStateSwitchoverEndpointHasBeenCreated = "The switchover endpoint has been created"
-	scenarioStateSwitchoverEndpointHasBeenUpdated = "The switchover endpoint has been updated"
-	scenarioStateSwitchoverEndpointHasFailedOver  = "The switchover endpoint has failed over"
-	scenarioStateSwitchoverEndpointHasBeenDeleted = "The switchover endpoint has been deleted"
+	scenarioStateSwitchoverEndpointHasBeenCreated   = "The switchover endpoint has been created"
+	scenarioStateSwitchoverEndpointHasBeenUpdated   = "The switchover endpoint has been updated"
+	scenarioStateSwitchoverEndpointHasFailedOver    = "The switchover endpoint has failed over"
+	scenarioStateSwitchoverEndpointIsDeprovisioning = "The switchover endpoint is deprovisioning"
+	scenarioStateSwitchoverEndpointHasBeenDeleted   = "The switchover endpoint has been deleted"
 
 	switchoverEndpointParentResourceCrn = "crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-abc123"
 	switchoverEndpointWestNetworkCrn    = "crn://confluent.cloud/organization=org-abc/environment=env-abc123/network=n-west01"
@@ -122,14 +123,27 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 			http.StatusOK,
 		))
 
+	// Delete returns 202 while the endpoint is still DEPROVISIONING; the provider polls GET until it
+	// is gone (404). The first poll still sees the endpoint and advances the scenario.
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(switchoverEndpointReadUrlPath)).
 		InScenario(switchoverEndpointScenarioName).
 		WhenScenarioStateIs(scenarioStateSwitchoverEndpointHasFailedOver).
-		WillSetStateTo(scenarioStateSwitchoverEndpointHasBeenDeleted).
+		WillSetStateTo(scenarioStateSwitchoverEndpointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
-			http.StatusNoContent,
+			http.StatusAccepted,
+		))
+
+	deprovisioningEndpointResponse, _ := os.ReadFile("../testdata/switchover/deprovisioning_endpoint.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(switchoverEndpointReadUrlPath)).
+		InScenario(switchoverEndpointScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverEndpointIsDeprovisioning).
+		WillSetStateTo(scenarioStateSwitchoverEndpointHasBeenDeleted).
+		WillReturn(
+			string(deprovisioningEndpointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
 		))
 
 	readDeletedEndpointResponse, _ := os.ReadFile("../testdata/switchover/read_deleted_endpoint.json")

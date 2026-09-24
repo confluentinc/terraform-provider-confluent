@@ -215,6 +215,12 @@ func switchoverEndpointDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error deleting switchover endpoint %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
+	// Delete returns 202; wait until the endpoint is actually gone. Terraform deletes the parent
+	// pair right after this returns, and the API rejects that with a 409 while an endpoint exists.
+	if err := waitForSwitchoverEndpointToBeDeleted(ctx, c, environmentId, d.Id()); err != nil {
+		return diag.Errorf("error waiting for switchover endpoint %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting switchover endpoint %q", d.Id()), map[string]interface{}{switchoverEndpointLoggingKey: d.Id()})
 	return nil
 }

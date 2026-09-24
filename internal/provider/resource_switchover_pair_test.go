@@ -33,6 +33,7 @@ const (
 	switchoverPairScenarioName    = "confluent_switchover_pair Resource Lifecycle"
 	switchoverPairFailoverHook    = "switchover-pair-failover"
 
+	scenarioStateSwitchoverPairIsProvisioning = "The switchover pair is provisioning"
 	scenarioStateSwitchoverPairHasBeenCreated = "The switchover pair has been created"
 	scenarioStateSwitchoverPairHasBeenUpdated = "The switchover pair has been updated"
 	scenarioStateSwitchoverPairHasFailedOver  = "The switchover pair has failed over"
@@ -59,17 +60,31 @@ func TestAccSwitchoverPair(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createPairResponse, _ := os.ReadFile("../testdata/switchover/create_pair.json")
+	// Create returns 202 with the pair still PROVISIONING; the provider polls GET until
+	// READY_TO_FAILOVER. The first poll still sees PROVISIONING and advances the scenario, the
+	// second sees the provisioned pair.
+	provisioningPairResponse, _ := os.ReadFile("../testdata/switchover/provisioning_pair.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(switchoverPairsUrlPath)).
 		InScenario(switchoverPairScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateSwitchoverPairHasBeenCreated).
+		WillSetStateTo(scenarioStateSwitchoverPairIsProvisioning).
 		WillReturn(
-			string(createPairResponse),
+			string(provisioningPairResponse),
 			contentTypeJSONHeader,
-			http.StatusCreated,
+			http.StatusAccepted,
 		))
 
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(switchoverPairReadUrlPath)).
+		InScenario(switchoverPairScenarioName).
+		WhenScenarioStateIs(scenarioStateSwitchoverPairIsProvisioning).
+		WillSetStateTo(scenarioStateSwitchoverPairHasBeenCreated).
+		WillReturn(
+			string(provisioningPairResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	createPairResponse, _ := os.ReadFile("../testdata/switchover/create_pair.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(switchoverPairReadUrlPath)).
 		InScenario(switchoverPairScenarioName).
 		WhenScenarioStateIs(scenarioStateSwitchoverPairHasBeenCreated).
