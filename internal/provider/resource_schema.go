@@ -155,7 +155,7 @@ func rulesetSchema() *schema.Schema {
 
 func ruleSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Optional: true,
 		Computed: false,
 		Elem: &schema.Resource{
@@ -327,10 +327,10 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			ruleset := schemaregistryv1.NewRuleSet()
 			tfRulesetMap := tfRuleset[0].(map[string]interface{})
 			if tfRulesetMap[paramDomainRules] != nil {
-				ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+				ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].([]interface{})))
 			}
 			if tfRulesetMap[paramMigrationRules] != nil {
-				ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
+				ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].([]interface{})))
 			}
 			if tfRulesetMap[paramEncodingRules] != nil {
 				ruleset.SetEncodingRules(buildRules(tfRulesetMap[paramEncodingRules].(*schema.Set).List()))
@@ -553,10 +553,10 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		ruleset := schemaregistryv1.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
-			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].([]interface{})))
 		}
 		if tfRulesetMap[paramMigrationRules] != nil {
-			ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
+			ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].([]interface{})))
 		}
 		if tfRulesetMap[paramEncodingRules] != nil {
 			ruleset.SetEncodingRules(buildRules(tfRulesetMap[paramEncodingRules].(*schema.Set).List()))
