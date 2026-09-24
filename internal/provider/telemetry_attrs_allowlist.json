@@ -600,7 +600,6 @@
     "environment_crn",
     "failover_type",
     "first_active",
-    "initial_active_member",
     "members",
     "phase"
   ],

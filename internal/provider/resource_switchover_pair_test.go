@@ -152,7 +152,6 @@ func TestAccSwitchoverPair(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "id", "sw-abc123"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "display_name", "prod-kafka-dr"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "environment_crn", switchoverPairEnvironmentCrn),
-					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "initial_active_member", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "active_member", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "first_active", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "failover_type", "PLANNED"),
@@ -176,9 +175,9 @@ func TestAccSwitchoverPair(t *testing.T) {
 			},
 			{
 				// Regression test: after a failover flips active_member on the server ("west" -> "east"),
-				// re-planning the unchanged config must be a no-op. Before initial_active_member was split
-				// from the server-owned active_member, this step planned a destroy-and-recreate of the
-				// pair (and, via parent_resource_crn, of any endpoint bound to it).
+				// re-planning the unchanged config must be a no-op. Without the DiffSuppressFunc on
+				// active_member, this step planned a destroy-and-recreate of the pair (and, via
+				// parent_resource_crn, of any endpoint bound to it).
 				PreConfig: func() {
 					if err := triggerWiremockScenarioHook(mockServerUrl, switchoverPairFailoverHook); err != nil {
 						t.Fatal(err)
@@ -193,25 +192,36 @@ func TestAccSwitchoverPair(t *testing.T) {
 				Config: testAccCheckSwitchoverPairConfig(mockServerUrl, "prod-kafka-dr-v2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "id", "sw-abc123"),
-					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "initial_active_member", "west"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "active_member", "east"),
 					resource.TestCheckResourceAttr(switchoverPairResourceLabel, "first_active", "west"),
 				),
+			},
+			{
+				// Documented behavior: once the pair exists, editing active_member in the configuration
+				// has no effect (the diff is suppressed), so this must also be a no-op. Failovers are
+				// driven by confluent_switchover_pair_failover, never by this attribute.
+				Config:             testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, "prod-kafka-dr-v2", "east"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
 }
 
 func testAccCheckSwitchoverPairConfig(mockServerUrl, displayName string) string {
+	return testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName, "west")
+}
+
+func testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName, activeMember string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
 	}
 
 	resource "confluent_switchover_pair" "main" {
-		display_name          = "%s"
-		initial_active_member = "west"
-		environment_crn       = "%s"
+		display_name    = "%s"
+		active_member   = "%s"
+		environment_crn = "%s"
 
 		members {
 			name       = "west"
@@ -223,7 +233,7 @@ func testAccCheckSwitchoverPairConfig(mockServerUrl, displayName string) string 
 			member_crn = "%s"
 		}
 	}
-	`, mockServerUrl, displayName, switchoverPairEnvironmentCrn, switchoverPairWestMemberCrn, switchoverPairEastMemberCrn)
+	`, mockServerUrl, displayName, activeMember, switchoverPairEnvironmentCrn, switchoverPairWestMemberCrn, switchoverPairEastMemberCrn)
 }
 
 func TestAccDataSourceSwitchoverPair(t *testing.T) {

@@ -16,12 +16,13 @@ provider "confluent" {
 # supplied as full CRNs: each member's CRN carries its own environment, so the two
 # members may live in different environments than the pair itself.
 #
-# `initial_active_member` is only used when the pair is created. The Switchover
-# service owns the active member from then on and exposes it as the computed
-# `active_member` attribute, so a failover never shows up as drift on this resource.
+# `active_member` chooses the side that is active when the pair is created. The
+# Switchover service owns it from then on: the resource reads the current value
+# back after a failover without planning any change, and editing it here has no
+# effect. Use the failover resource below to move traffic.
 resource "confluent_switchover_pair" "example" {
-  display_name          = "prod-kafka-dr"
-  initial_active_member = "west"
+  display_name  = "prod-kafka-dr"
+  active_member = "west"
 
   members {
     name       = "west"
