@@ -11,6 +11,11 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
+# This workspace holds the DR *infrastructure*: the switchover pair and its endpoint.
+# It is applied on a schedule by the platform team. Failovers live in the sibling
+# `failover` workspace so that a routine apply here can never trigger one, and an
+# emergency failover does not depend on this plan being clean.
+
 # A switchover pair models a cluster-level DR pairing between two Kafka clusters
 # (an active member and a passive member) for disaster recovery. References are
 # supplied as full CRNs: each member's CRN carries its own environment, so the two
@@ -19,7 +24,7 @@ provider "confluent" {
 # `active_member` chooses the side that is active when the pair is created. The
 # Switchover service owns it from then on: the resource reads the current value
 # back after a failover without planning any change, and editing it here has no
-# effect. Use the failover resource below to move traffic.
+# effect. Use the `failover` workspace to move traffic.
 resource "confluent_switchover_pair" "example" {
   display_name  = "prod-kafka-dr"
   active_member = "west"
@@ -61,32 +66,22 @@ resource "confluent_switchover_endpoint" "example" {
   }
 }
 
-# Failover is an imperative operation, so it is modeled as an action resource that
-# lives in the same configuration as the pair and endpoint. Leave `failover_target`
-# unset for day-to-day applies; set it (for example `-var failover_target=east`) to
-# trigger a failover. Because the pair and endpoint no longer treat the active member
-# or target as inputs, a failover does not cause either of them to be replaced.
-#
-# To trigger another failover later, change `failover_target` (or `failover_type`);
-# all inputs on the failover resource are ForceNew, so the change re-runs the operation.
-resource "confluent_switchover_pair_failover" "example" {
-  count = var.failover_target == null ? 0 : 1
-
-  switchover_pair_id = confluent_switchover_pair.example.id
-  active_member      = var.failover_target
-  failover_type      = var.failover_type
-  environment_crn    = var.environment_crn
-
-  # The endpoint must exist before a failover can be triggered.
-  depends_on = [confluent_switchover_endpoint.example]
+# Consumed by the `failover` workspace (via terraform_remote_state or copied into its
+# variables), so the pair id never has to be typed by hand.
+output "switchover_pair_id" {
+  value = confluent_switchover_pair.example.id
 }
 
-output "switchover_pair_phase" {
-  value = confluent_switchover_pair.example.phase
+output "environment_crn" {
+  value = var.environment_crn
 }
 
 output "switchover_pair_active_member" {
   value = confluent_switchover_pair.example.active_member
+}
+
+output "switchover_pair_phase" {
+  value = confluent_switchover_pair.example.phase
 }
 
 output "switchover_endpoint_target" {
