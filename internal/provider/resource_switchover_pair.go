@@ -154,6 +154,13 @@ func switchoverPairCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	d.SetId(createdPair.GetId())
+
+	// Create returns 202 while the pair is still PROVISIONING. Wait for READY_TO_FAILOVER so that
+	// dependents (an endpoint, a failover) created in the same apply are not rejected with a 409.
+	if err := waitForSwitchoverPairToProvision(ctx, c, extractEnvironmentIdFromCrn(environmentCrn), d.Id()); err != nil {
+		return diag.Errorf("error waiting for switchover pair %q to provision: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating switchover pair %q", d.Id()), map[string]interface{}{switchoverPairLoggingKey: d.Id()})
 	return switchoverPairRead(ctx, d, meta)
 }

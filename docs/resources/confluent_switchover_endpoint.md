@@ -14,6 +14,8 @@ description: |-
 
 `confluent_switchover_endpoint` provides a switchover endpoint resource that models a sticky disaster recovery (DR) endpoint bound to a `confluent_switchover_pair`. The endpoint follows the pair's active member so that clients keep a stable connection target across a failover.
 
+Deleting an endpoint is asynchronous on the API side; the resource waits until the endpoint is gone before completing, so a `terraform destroy` that removes the endpoint and its pair together succeeds in one run (the pair cannot be deleted while an endpoint still exists).
+
 The side the endpoint points at is owned by the Switchover service and reported in the computed `target` attribute: it starts on the side matching the pair's active member, and a failover moves it without showing drift or forcing a replacement (which would hand clients a new hostname). Keep the endpoint in the same Terraform configuration as its pair; failovers are best kept in a separate workspace (see the workspace layout note on `confluent_switchover_pair_failover`). See the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair).
 
 -> **Note:** For PrivateLink Attachment (Enterprise) clusters, use `access_point_crn` in the form `crn://confluent.cloud/organization=<org>/environment=<env>/gateway=<platt-id>/access-point=<plattc-id>`. For Dedicated clusters on a Confluent-managed network, use `network_crn`.

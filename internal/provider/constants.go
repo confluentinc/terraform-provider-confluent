@@ -761,6 +761,7 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	stateProvisioned                         = "PROVISIONED"
 	stateProvisioning                        = "PROVISIONING"
 	stateReady                               = "READY"
+	stateReadyToFailover                     = "READY_TO_FAILOVER"
 	stateRunning                             = "RUNNING"
 	stateStopped                             = "STOPPED"
 	stateStopping                            = "STOPPING"
