@@ -17,12 +17,12 @@ variable "active_member" {
 }
 
 variable "failover_type" {
-  description = "The failover semantics to apply: PLANNED (graceful, waits for replication lag to reach zero), UNPLANNED (immediate), or RESTORE (re-establish the cluster link after an unplanned failover)."
+  description = "The failover semantics to apply: PLANNED (graceful, waits for replication lag to reach zero), UNPLANNED (immediate), or RESTORE (re-establish the cluster link after an unplanned failover). Leave unset to keep the last applied value (PLANNED on first create); a default here would re-trigger a PLANNED failover on the first apply after a RESTORE."
   type        = string
-  default     = "PLANNED"
+  default     = null
 
   validation {
-    condition     = contains(["PLANNED", "UNPLANNED", "RESTORE"], var.failover_type)
+    condition     = var.failover_type == null || contains(["PLANNED", "UNPLANNED", "RESTORE"], var.failover_type)
     error_message = "failover_type must be one of PLANNED, UNPLANNED, or RESTORE."
   }
 }

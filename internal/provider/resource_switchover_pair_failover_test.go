@@ -64,7 +64,8 @@ func TestAccSwitchoverPairFailover(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSwitchoverPairFailoverConfig(mockServerUrl),
+				// failover_type omitted: create sends the PLANNED default and records it in state.
+				Config: testAccCheckSwitchoverPairFailoverConfig(mockServerUrl, `active_member      = "east"`, ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "switchover_pair_id", "sw-abc123"),
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "active_member", "east"),
@@ -73,11 +74,28 @@ func TestAccSwitchoverPairFailover(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "phase", "UPDATING"),
 				),
 			},
+			{
+				// Explicit RESTORE with no member: a deliberate change, so the action re-triggers.
+				Config: testAccCheckSwitchoverPairFailoverConfig(mockServerUrl, "", `failover_type      = "RESTORE"`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(switchoverPairFailoverResourceLabel, "active_member"),
+					resource.TestCheckResourceAttr(switchoverPairFailoverResourceLabel, "failover_type", "RESTORE"),
+				),
+			},
+			{
+				// Regression: after a RESTORE apply, a config that omits failover_type again must NOT plan a
+				// replacement back to PLANNED (that would re-fire a failover on a routine apply). With a
+				// schema Default of "PLANNED" this step planned a -/+; Optional+Computed keeps "RESTORE".
+				Config:             testAccCheckSwitchoverPairFailoverConfig(mockServerUrl, "", ""),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
 		},
 	})
 }
 
-func testAccCheckSwitchoverPairFailoverConfig(mockServerUrl string) string {
+// activeMemberLine and failoverTypeLine are whole HCL lines, or "" to omit the attribute.
+func testAccCheckSwitchoverPairFailoverConfig(mockServerUrl, activeMemberLine, failoverTypeLine string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -85,9 +103,9 @@ func testAccCheckSwitchoverPairFailoverConfig(mockServerUrl string) string {
 
 	resource "confluent_switchover_pair_failover" "main" {
 		switchover_pair_id = "sw-abc123"
-		active_member      = "east"
-		failover_type      = "PLANNED"
+		%s
+		%s
 		environment_crn    = "%s"
 	}
-	`, mockServerUrl, switchoverPairEnvironmentCrn)
+	`, mockServerUrl, activeMemberLine, failoverTypeLine, switchoverPairEnvironmentCrn)
 }

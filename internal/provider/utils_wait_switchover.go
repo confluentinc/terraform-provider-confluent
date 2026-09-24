@@ -124,3 +124,8 @@ const (
 	// Endpoint deletes are quick but asynchronous (202).
 	switchoverEndpointDeleteTimeout = 15 * time.Minute
 )
+
+// defaultSwitchoverFailoverType is applied when a confluent_switchover_pair_failover omits
+// failover_type on create. It is not a schema Default so that omitting the attribute later keeps
+// the recorded value (see the attribute's comment).
+const defaultSwitchoverFailoverType = "PLANNED"

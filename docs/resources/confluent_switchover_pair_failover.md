@@ -73,7 +73,7 @@ The following arguments are supported:
 
 - `switchover_pair_id` - (Required String) The ID of the switchover pair to trigger a failover on, for example, `sw-abc123`.
 - `active_member` - (Optional String) The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`.
-- `failover_type` - (Optional String) The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover). Defaults to `PLANNED`.
+- `failover_type` - (Optional String) The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover). Defaults to `PLANNED` on create. Once applied, omitting it keeps the recorded value, so a routine apply after a `RESTORE` does not re-trigger a `PLANNED` failover; set it explicitly to trigger a different operation.
 - `environment_crn` - (Required String) The CRN of the environment that owns the switchover pair, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123`.
 
 ## Attributes Reference

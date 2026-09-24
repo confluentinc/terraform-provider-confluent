@@ -62,11 +62,14 @@ func switchoverPairFailoverResource() *schema.Resource {
 				Description: "The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`; must be unset when it is `RESTORE`.",
 			},
 			paramFailoverType: {
-				Type:         schema.TypeString,
-				Optional:     true,
+				Type:     schema.TypeString,
+				Optional: true,
+				// Computed rather than Default: "PLANNED", so that omitting the attribute after a RESTORE
+				// (or UNPLANNED) apply keeps the recorded value instead of planning a replacement, which
+				// would re-trigger a PLANNED failover on the next routine apply.
+				Computed:     true,
 				ForceNew:     true,
-				Default:      "PLANNED",
-				Description:  "The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover).",
+				Description:  "The failover semantics to apply: `PLANNED` (graceful, after replication lag reaches zero), `UNPLANNED` (immediate), or `RESTORE` (re-establish the cluster link after an unplanned failover). Defaults to `PLANNED` on create; once set, omitting it keeps the recorded value.",
 				ValidateFunc: validation.StringInSlice([]string{"PLANNED", "UNPLANNED", "RESTORE"}, false),
 			},
 			paramPhase: {
@@ -92,6 +95,9 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 	environmentCrn := d.Get(paramEnvironmentCrn).(string)
 	activeMember := d.Get(paramActiveMember).(string)
 	failoverType := d.Get(paramFailoverType).(string)
+	if failoverType == "" {
+		failoverType = defaultSwitchoverFailoverType
+	}
 
 	// Which combinations of failover_type and active_member are valid (a member is required for
 	// PLANNED/UNPLANNED and rejected for RESTORE) is validated by the Switchover API, so the inputs
@@ -120,6 +126,10 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	d.SetId(switchoverPairId)
+	// Record the type that was actually sent so a later config that omits it does not diff.
+	if err := d.Set(paramFailoverType, failoverType); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
 	status := pair.GetStatus()
 	if err := d.Set(paramPhase, status.GetPhase()); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
