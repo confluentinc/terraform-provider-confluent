@@ -245,6 +245,39 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 	return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", displayName)
 }
 
+// executeConnectorReadByName fetches just the config and status for a single, already-known
+// connector, instead of re-listing (and re-fetching the full expansion of) every connector in
+// the cluster. Use this on routine refreshes of a connector that's already in state; use
+// executeConnectorRead (list+expand) when the connector's id still needs to be discovered
+// (create, import).
+func executeConnectorReadByName(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (map[string]string, string, *http.Response, error) {
+	config, resp, err := c.connectV1Client.ConnectorsConnectV1Api.GetConnectv1ConnectorConfig(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId).Execute()
+	if err != nil {
+		return nil, "", resp, err
+	}
+
+	statusInfo, resp, err := c.connectV1Client.StatusConnectV1Api.ReadConnectv1ConnectorStatus(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId).Execute()
+	if err != nil {
+		return nil, "", resp, err
+	}
+
+	connectorStatus := statusInfo.GetConnector()
+	return config, connectorStatus.GetState(), resp, nil
+}
+
+// handleConnectorReadError reports a read error and, if it's a not-found on an already-created
+// resource, removes it from state and swallows the error (a deleted connector isn't a read
+// failure). Otherwise it returns the original error for the caller to propagate.
+func handleConnectorReadError(ctx context.Context, d *schema.ResourceData, resp *http.Response, err error) error {
+	tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
+	if isNonKafkaRestApiResourceNotFound(resp) && !d.IsNewResource() {
+		tflog.Warn(ctx, fmt.Sprintf("Removing Connector %q in TF state because Connector could not be found on the server", d.Id()))
+		d.SetId("")
+		return nil
+	}
+	return err
+}
+
 func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
@@ -265,17 +298,36 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
-	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
-		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing Connector %q in TF state because Connector could not be found on the server", d.Id()))
-			d.SetId("")
-			return nil, nil
+	// A routine refresh of a connector we already know about only needs its own config and
+	// status, not a full re-list of every connector in the cluster (create/import still need
+	// the list+expand call below to discover the id in the first place).
+	if !d.IsNewResource() {
+		config, state, resp, err := executeConnectorReadByName(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+		if err != nil {
+			return nil, handleConnectorReadError(ctx, d, resp, err)
 		}
 
-		return nil, err
+		if err := d.Set(paramNonSensitiveConfig, extractNonsensitiveConfigs(config)); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, environmentId, d); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, clusterId, d); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+		if err := d.Set(paramStatus, state); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Finished reading Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
+
+		return []*schema.ResourceData{d}, nil
+	}
+
+	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	if err != nil {
+		return nil, handleConnectorReadError(ctx, d, resp, err)
 	}
 	connectorJson, err := json.Marshal(connector)
 	if err != nil {
