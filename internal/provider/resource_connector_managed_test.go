@@ -124,6 +124,32 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readCreatedConnectorStub2)
 
+	// Routine refreshes of an already-existing connector (i.e. any Read where
+	// d.IsNewResource() is false) go through the cheap by-name config+status endpoints
+	// instead of re-listing every connector (see readConnectorAndSetAttributes). Stub those
+	// for every scenario state where such a refresh can happen: right after creation/import,
+	// right after a config update, and right after an offsets update.
+	createdConnectorConfigResponse, _ := os.ReadFile("../testdata/connector/managed/read_connector_config.json")
+	readCreatedConnectorConfigStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
+		WillReturn(
+			string(createdConnectorConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readCreatedConnectorConfigStub)
+
+	readCreatedConnectorStatusStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
+		WillReturn(
+			string(runningConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readCreatedConnectorStatusStub)
+
 	updateConnectorStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
@@ -166,6 +192,51 @@ func TestAccManagedConnector(t *testing.T) {
 			http.StatusOK,
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
+
+	// Same as above: cover routine by-name refreshes after the config update, and again
+	// after the offsets update (offsets don't change config/status, so both states reuse
+	// the same "updated" config+status fixtures). Kept as separate named stubs (rather than
+	// looped) so the counts below can assert on each scenario state independently.
+	updatedConnectorConfigResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connector_config.json")
+	readUpdatedConnectorConfigStubAfterNameUpdate := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillReturn(
+			string(updatedConnectorConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readUpdatedConnectorConfigStubAfterNameUpdate)
+
+	readUpdatedConnectorStatusStubAfterNameUpdate := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillReturn(
+			string(runningConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readUpdatedConnectorStatusStubAfterNameUpdate)
+
+	readUpdatedConnectorConfigStubAfterOffsetUpdate := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorOffsetHasBeenUpdated).
+		WillReturn(
+			string(updatedConnectorConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readUpdatedConnectorConfigStubAfterOffsetUpdate)
+
+	readUpdatedConnectorStatusStubAfterOffsetUpdate := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorOffsetHasBeenUpdated).
+		WillReturn(
+			string(runningConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readUpdatedConnectorStatusStubAfterOffsetUpdate)
 
 	deleteConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
@@ -338,6 +409,33 @@ func TestAccManagedConnector(t *testing.T) {
 			},
 		},
 	})
+
+	// The whole point of the fix in readConnectorAndSetAttributes is that a routine refresh
+	// (d.IsNewResource() == false) uses the cheap by-name config/status endpoints instead of
+	// re-listing every connector in the cluster. The full-list stubs above stay registered at
+	// every scenario state precisely so a regression back to "always list" would still produce
+	// a passing plan (same fixture data either way) -- only a request-count check catches that,
+	// which is why we assert on actual counts here rather than only on resulting state values.
+	//
+	// GetCountRequests matches by request pattern (method + URL), not by which scenario-state
+	// stub variable we reference, so any of the full-list (or by-name) stub variables above
+	// report the same total regardless of which one we pass in here.
+	//
+	// Exactly 5 full-list (?expand=info,status,id) calls are structurally expected no matter how
+	// many extra refresh passes the test framework does internally: 2 from Create (the
+	// ID-discovery call, plus Create's own trailing Read -- both while IsNewResource() is still
+	// true) + 1 per ImportState step (3 in this test), since Import is the only other path that
+	// legitimately needs the list endpoint to discover the connector's LCC id. Every other Read
+	// in this test must go through the by-name endpoints instead, so this count must never grow.
+	checkStubCount(t, wiremockClient, readCreatedConnectorStub2, "GET .../connectors?expand=info,status,id (full-list)", 5)
+
+	// By-name config is only ever reached via the routine-refresh path, so its count is a direct
+	// measure of how many non-Create/non-Import refreshes happened across all three Config steps
+	// (create, name/config update, offsets update) plus the test framework's own
+	// plan-consistency refreshes. By-name status shares its URL with two extra calls from the
+	// create-time provisioning poll (waitForConnectorToProvision), hence the +2 versus config.
+	checkStubCount(t, wiremockClient, readCreatedConnectorConfigStub, "GET .../connectors/test_connector/config (by-name)", 10)
+	checkStubCount(t, wiremockClient, readCreatedConnectorStatusStub, "GET .../connectors/test_connector/status (by-name + provisioning poll)", 12)
 }
 
 func testAccCheckConnectorDestroy(s *terraform.State) error {
