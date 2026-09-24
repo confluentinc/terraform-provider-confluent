@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -207,11 +208,22 @@ func TestAccSwitchoverEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(switchoverEndpointResourceLabel, "target", "east-platt"),
 				),
 			},
+			{
+				// Immutable attributes: renaming an endpoint side on an existing endpoint must fail the plan
+				// (not silently destroy and recreate it, handing clients a new hostname).
+				Config:      testAccCheckSwitchoverEndpointConfigWithWestName(mockServerUrl, "prod-kafka-dr-endpoint-v2", "west-renamed"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`"endpoints" cannot be changed after the switchover endpoint is created`),
+			},
 		},
 	})
 }
 
 func testAccCheckSwitchoverEndpointConfig(mockServerUrl, displayName string) string {
+	return testAccCheckSwitchoverEndpointConfigWithWestName(mockServerUrl, displayName, "west-platt")
+}
+
+func testAccCheckSwitchoverEndpointConfigWithWestName(mockServerUrl, displayName, westName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -222,7 +234,7 @@ func testAccCheckSwitchoverEndpointConfig(mockServerUrl, displayName string) str
 		parent_resource_crn = "%s"
 
 		endpoints {
-			name = "west-platt"
+			name = "%s"
 			endpoint_filter {
 				type        = "private"
 				network_crn = "%s"
@@ -237,7 +249,7 @@ func testAccCheckSwitchoverEndpointConfig(mockServerUrl, displayName string) str
 			}
 		}
 	}
-	`, mockServerUrl, displayName, switchoverEndpointParentResourceCrn, switchoverEndpointWestNetworkCrn, switchoverEndpointEastNetworkCrn)
+	`, mockServerUrl, displayName, switchoverEndpointParentResourceCrn, westName, switchoverEndpointWestNetworkCrn, switchoverEndpointEastNetworkCrn)
 }
 
 func TestAccDataSourceSwitchoverEndpoint(t *testing.T) {

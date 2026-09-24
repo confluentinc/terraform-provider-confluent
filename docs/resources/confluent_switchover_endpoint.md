@@ -57,6 +57,8 @@ resource "confluent_switchover_endpoint" "example" {
 
 The following arguments are supported:
 
+-> **Note:** Only `display_name` can be changed after the endpoint is created. Editing `parent_resource_crn` or `endpoints` (names or filters) on an existing endpoint fails at `terraform plan` (`cannot be changed after the switchover endpoint is created`) rather than replacing the live endpoint, which would give clients a new hostname; destroy and recreate it deliberately instead.
+
 - `display_name` - (Required String) A human-readable name for the switchover endpoint.
 - `parent_resource_crn` - (Required String) The CRN of the switchover pair this endpoint is bound to, for example, `crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-abc123`. The CRN carries the pair's environment.
 - `endpoints` (Required Configuration Block) The endpoint definitions, one per side (for example, west/east). Must contain exactly 2 entries. Each block supports the following:

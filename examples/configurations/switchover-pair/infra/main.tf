@@ -91,3 +91,18 @@ output "switchover_endpoint_target" {
 output "switchover_endpoint_hostnames" {
   value = { for endpoint in confluent_switchover_endpoint.example.endpoints : endpoint.name => endpoint.hostname }
 }
+
+# Everything the service resolved for each side, keyed by endpoint name.
+output "switchover_endpoints" {
+  value = {
+    for endpoint in confluent_switchover_endpoint.example.endpoints : endpoint.name => {
+      hostname         = endpoint.hostname
+      cloud            = endpoint.cloud
+      region           = endpoint.region
+      connection_type  = endpoint.connection_type
+      type             = endpoint.endpoint_filter[0].type
+      access_point_crn = endpoint.endpoint_filter[0].access_point_crn
+      network_crn      = endpoint.endpoint_filter[0].network_crn
+    }
+  }
+}

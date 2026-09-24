@@ -51,6 +51,8 @@ resource "confluent_switchover_pair" "example" {
 
 The following arguments are supported:
 
+-> **Note:** Only `display_name` can be changed after the pair is created. Editing `members` or `environment_crn` on an existing pair fails at `terraform plan` (`cannot be changed after the switchover pair is created`) rather than replacing the live pair; to move to different clusters, destroy the pair and create a new one.
+
 - `display_name` - (Required String) A human-readable name for the switchover pair.
 - `members` (Required Configuration Block) The two clusters participating in this switchover pair. Must contain exactly 2 members. Each block supports the following:
   - `name` - (Required String) A logical name for this member (for example, `west` or `east`), unique within the pair.

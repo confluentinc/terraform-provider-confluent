@@ -39,6 +39,10 @@ func switchoverEndpointResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: switchoverEndpointImport,
 		},
+		// Everything except display_name is immutable once the endpoint exists (target is owned by the
+		// service). Refuse edits at plan time rather than replacing a live endpoint, which would hand
+		// clients a new hostname.
+		CustomizeDiff: rejectSwitchoverImmutableChanges("switchover endpoint", paramParentResourceCrn, paramEndpoints),
 		Schema: map[string]*schema.Schema{
 			paramDisplayName: {
 				Type:         schema.TypeString,

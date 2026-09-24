@@ -22,6 +22,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	switchoverv1 "github.com/confluentinc/ccloud-sdk-go-v2/switchover/v1"
 )
@@ -129,3 +130,23 @@ const (
 // failover_type on create. It is not a schema Default so that omitting the attribute later keeps
 // the recorded value (see the attribute's comment).
 const defaultSwitchoverFailoverType = "PLANNED"
+
+// rejectSwitchoverImmutableChanges is a CustomizeDiff that fails the plan when an attribute the
+// Switchover API cannot change in place is edited on an existing resource. Those attributes are
+// also ForceNew, but for a live DR pair a silent destroy-and-recreate is the wrong outcome: it
+// deletes the pair (and, via parent_resource_crn, its endpoint, handing clients a new hostname).
+// Refusing at plan time makes the user choose deliberately: destroy the resource, then create the
+// new one. `terraform apply -replace=...` still works, since it changes nothing in config.
+func rejectSwitchoverImmutableChanges(resourceName string, immutable ...string) schema.CustomizeDiffFunc {
+	return func(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+		if diff.Id() == "" {
+			return nil
+		}
+		for _, attr := range immutable {
+			if diff.HasChange(attr) {
+				return fmt.Errorf("%q cannot be changed after the %s is created; destroy it and create a new one with the desired %q", attr, resourceName, attr)
+			}
+		}
+		return nil
+	}
+}

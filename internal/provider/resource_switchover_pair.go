@@ -39,6 +39,10 @@ func switchoverPairResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: switchoverPairImport,
 		},
+		// Everything except display_name is immutable once the pair exists (active_member is owned by
+		// the service and its diff is suppressed above). Refuse edits at plan time rather than replacing
+		// a live DR pair.
+		CustomizeDiff: rejectSwitchoverImmutableChanges("switchover pair", paramMembers, paramEnvironmentCrn),
 		Schema: map[string]*schema.Schema{
 			paramDisplayName: {
 				Type:         schema.TypeString,

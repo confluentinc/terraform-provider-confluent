@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -219,15 +220,30 @@ func TestAccSwitchoverPair(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
 			},
+			{
+				// Immutable attributes: renaming a member on an existing pair must fail the plan (not
+				// silently destroy and recreate the live DR pair, which is what ForceNew alone would do).
+				Config:      testAccCheckSwitchoverPairConfigWithMemberName(mockServerUrl, "prod-kafka-dr-v2", "west-renamed"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`"members" cannot be changed after the switchover pair is created`),
+			},
 		},
 	})
 }
 
 func testAccCheckSwitchoverPairConfig(mockServerUrl, displayName string) string {
-	return testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName, "west")
+	return testAccCheckSwitchoverPairConfigFull(mockServerUrl, displayName, "west", "west")
 }
 
 func testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName, activeMember string) string {
+	return testAccCheckSwitchoverPairConfigFull(mockServerUrl, displayName, activeMember, "west")
+}
+
+func testAccCheckSwitchoverPairConfigWithMemberName(mockServerUrl, displayName, westMemberName string) string {
+	return testAccCheckSwitchoverPairConfigFull(mockServerUrl, displayName, "west", westMemberName)
+}
+
+func testAccCheckSwitchoverPairConfigFull(mockServerUrl, displayName, activeMember, westMemberName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -239,7 +255,7 @@ func testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName
 		environment_crn = "%s"
 
 		members {
-			name       = "west"
+			name       = "%s"
 			member_crn = "%s"
 		}
 
@@ -248,7 +264,7 @@ func testAccCheckSwitchoverPairConfigWithActiveMember(mockServerUrl, displayName
 			member_crn = "%s"
 		}
 	}
-	`, mockServerUrl, displayName, activeMember, switchoverPairEnvironmentCrn, switchoverPairWestMemberCrn, switchoverPairEastMemberCrn)
+	`, mockServerUrl, displayName, activeMember, switchoverPairEnvironmentCrn, westMemberName, switchoverPairWestMemberCrn, switchoverPairEastMemberCrn)
 }
 
 func TestAccDataSourceSwitchoverPair(t *testing.T) {
