@@ -59,7 +59,7 @@ func switchoverPairFailoverResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`.",
+				Description: "The name of the member to promote to active. Required when `failover_type` is `PLANNED` or `UNPLANNED`; must be unset when it is `RESTORE`.",
 			},
 			paramFailoverType: {
 				Type:         schema.TypeString,
@@ -93,10 +93,9 @@ func switchoverPairFailoverCreate(ctx context.Context, d *schema.ResourceData, m
 	activeMember := d.Get(paramActiveMember).(string)
 	failoverType := d.Get(paramFailoverType).(string)
 
-	if (failoverType == "PLANNED" || failoverType == "UNPLANNED") && activeMember == "" {
-		return diag.Errorf("error triggering switchover pair failover: %q is required when %q is %q or %q", paramActiveMember, paramFailoverType, "PLANNED", "UNPLANNED")
-	}
-
+	// Which combinations of failover_type and active_member are valid (a member is required for
+	// PLANNED/UNPLANNED and rejected for RESTORE) is validated by the Switchover API, so the inputs
+	// are passed through as given.
 	// The :failover body carries the environment as a CRN (ORC-9794), unlike other operations which
 	// take it as a bare query parameter.
 	failoverSpec := switchoverv1.SwitchoverV1SwitchoverPairFailoverRequestSpec{

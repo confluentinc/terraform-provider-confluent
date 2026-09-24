@@ -11,8 +11,9 @@ variable "confluent_cloud_api_secret" {
 }
 
 variable "active_member" {
-  description = "The member to promote to active (for example 'east'). Required for PLANNED and UNPLANNED failovers."
+  description = "The member to promote to active (for example 'east'). Required for PLANNED and UNPLANNED failovers; must be left unset for RESTORE."
   type        = string
+  default     = null
 }
 
 variable "failover_type" {

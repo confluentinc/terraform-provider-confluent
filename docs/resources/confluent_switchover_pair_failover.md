@@ -38,8 +38,9 @@ data "terraform_remote_state" "infra" {
 }
 
 variable "active_member" {
-  description = "The member to promote (e.g. -var active_member=east)."
+  description = "The member to promote (e.g. -var active_member=east). Leave unset for RESTORE."
   type        = string
+  default     = null
 }
 
 resource "confluent_switchover_pair_failover" "example" {
@@ -51,8 +52,10 @@ resource "confluent_switchover_pair_failover" "example" {
 ```
 
 ```shell
-$ terraform apply -var active_member=east    # fail over to east
-$ terraform apply -var active_member=west    # later: fail back
+$ terraform apply -var active_member=east                                # PLANNED failover to east
+$ terraform apply -var active_member=west                                # later: fail back
+$ terraform apply -var active_member=east -var failover_type=UNPLANNED   # immediate failover
+$ terraform apply -var failover_type=RESTORE                             # after an UNPLANNED failover; active_member must be unset
 ```
 
 Because every argument is `ForceNew`, a changed value recreates the resource and triggers the new failover. See the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair) (`infra/` and `failover/` workspaces).

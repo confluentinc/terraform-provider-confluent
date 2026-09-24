@@ -31,10 +31,10 @@ data "terraform_remote_state" "infra" {
 
 # Applying this workspace performs the failover:
 #
-#   terraform apply -var active_member=east                        # PLANNED failover to east
-#   terraform apply -var active_member=west                        # later: fail back
-#   terraform apply -var active_member=east -var failover_type=UNPLANNED
-#   terraform apply -var failover_type=RESTORE -var active_member=east   # after an UNPLANNED failover
+#   terraform apply -var active_member=east                                # PLANNED failover to east
+#   terraform apply -var active_member=west                                # later: fail back
+#   terraform apply -var active_member=east -var failover_type=UNPLANNED   # immediate failover
+#   terraform apply -var failover_type=RESTORE                             # after an UNPLANNED failover; no active_member
 #
 # Every argument is ForceNew, so a changed value recreates the resource, which
 # re-triggers the operation. Destroying it only removes it from state; a failover
