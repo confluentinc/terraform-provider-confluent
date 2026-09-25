@@ -18,9 +18,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -196,6 +198,55 @@ func TestSDKPoster_Non2xxIsError(t *testing.T) {
 	p := NewSDKPoster(srv.URL, srv.Client(), "ua", nil)
 	if err := p.Post(context.Background(), sampleUsage()); err == nil {
 		t.Fatal("expected an error for a 500 response, got nil")
+	}
+}
+
+// TestSDKPoster_Non2xxCarriesStatusCode asserts a non-2xx response is returned as
+// a *statusError with the response's code, which the transport uses to tell an
+// overloaded backend (429 or 5xx) apart from other failures.
+func TestSDKPoster_Non2xxCarriesStatusCode(t *testing.T) {
+	for _, code := range []int{
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
+		http.StatusNotFound,
+		http.StatusTooManyRequests,
+		http.StatusInternalServerError,
+		http.StatusServiceUnavailable,
+	} {
+		t.Run(strconv.Itoa(code), func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(code)
+			}))
+			defer srv.Close()
+
+			err := NewSDKPoster(srv.URL, srv.Client(), "ua", nil).Post(context.Background(), sampleUsage())
+			var se *statusError
+			if !errors.As(err, &se) {
+				t.Fatalf("Post error = %v (%T), want a *statusError", err, err)
+			}
+			if se.code != code {
+				t.Errorf("status code = %d, want %d", se.code, code)
+			}
+		})
+	}
+}
+
+// TestSDKPoster_ConnectionErrorIsNotStatusError asserts a failure with no response
+// is not mistaken for a status code, so it counts toward consecutive failures
+// rather than stopping the run at once.
+func TestSDKPoster_ConnectionErrorIsNotStatusError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	url := srv.URL
+	srv.Close() // nothing listens at url any more
+
+	err := NewSDKPoster(url, &http.Client{}, "ua", nil).Post(context.Background(), sampleUsage())
+	if err == nil {
+		t.Fatal("expected an error with no server listening, got nil")
+	}
+	var se *statusError
+	if errors.As(err, &se) {
+		t.Fatalf("a connection failure was reported as status %d", se.code)
 	}
 }
 
