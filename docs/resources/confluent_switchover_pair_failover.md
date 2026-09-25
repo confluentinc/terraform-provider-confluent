@@ -20,7 +20,7 @@ The Switchover API exposes failover as an imperative operation (a `POST .../{id}
 
 ## Example Usage
 
-Keep the failover resource in its **own workspace**, separate from the pair and endpoint (see [Workspace layout](#workspace-layout)). Applying that workspace performs the failover; the pair id comes from the infrastructure workspace's state:
+Keep the failover resource in its **own workspace**, separate from the pair and endpoint (see [Workspace layout](#workspace-layout)). Applying that workspace performs the failover. `switchover_pair_id` and `environment_crn` are ordinary inputs — pass them directly, or read them from the infrastructure workspace's state when the variables are left unset:
 
 ```terraform
 provider "confluent" {
@@ -28,13 +28,16 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-# The workspace that manages confluent_switchover_pair / confluent_switchover_endpoint
-# exports the pair id and environment CRN as outputs.
-data "terraform_remote_state" "infra" {
-  backend = "local"
-  config = {
-    path = "${path.module}/../infra/terraform.tfstate"
-  }
+variable "switchover_pair_id" {
+  description = "The pair to fail over (e.g. sw-abc123). Leave unset to read it from the infra workspace's state."
+  type        = string
+  default     = null
+}
+
+variable "environment_crn" {
+  description = "The pair's environment CRN. Leave unset to read it from the infra workspace's state."
+  type        = string
+  default     = null
 }
 
 variable "active_member" {
@@ -43,11 +46,27 @@ variable "active_member" {
   default     = null
 }
 
+# Fallback: the workspace that manages confluent_switchover_pair / confluent_switchover_endpoint
+# exports the pair id and environment CRN as outputs. Only read when the variables are unset.
+data "terraform_remote_state" "infra" {
+  count = var.switchover_pair_id == null || var.environment_crn == null ? 1 : 0
+
+  backend = "local"
+  config = {
+    path = "${path.module}/../infra/terraform.tfstate"
+  }
+}
+
+locals {
+  switchover_pair_id = coalesce(var.switchover_pair_id, try(data.terraform_remote_state.infra[0].outputs.switchover_pair_id, null))
+  environment_crn    = coalesce(var.environment_crn, try(data.terraform_remote_state.infra[0].outputs.environment_crn, null))
+}
+
 resource "confluent_switchover_pair_failover" "example" {
-  switchover_pair_id = data.terraform_remote_state.infra.outputs.switchover_pair_id
+  switchover_pair_id = local.switchover_pair_id
   active_member      = var.active_member
   failover_type      = "PLANNED"
-  environment_crn    = data.terraform_remote_state.infra.outputs.environment_crn
+  environment_crn    = local.environment_crn
 }
 ```
 
@@ -56,6 +75,9 @@ $ terraform apply -var active_member=east                                # PLANN
 $ terraform apply -var active_member=west                                # later: fail back
 $ terraform apply -var active_member=east -var failover_type=UNPLANNED   # immediate failover
 $ terraform apply -var failover_type=RESTORE                             # after an UNPLANNED failover; active_member must be unset
+$ terraform apply -var switchover_pair_id=sw-abc123 \
+    -var environment_crn=crn://confluent.cloud/organization=org-abc/environment=env-abc123 \
+    -var active_member=east                                              # name the pair directly; no infra state needed
 ```
 
 Because every argument is `ForceNew`, a changed value recreates the resource and triggers the new failover. See the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair) (`infra/` and `failover/` workspaces).

@@ -1,0 +1,42 @@
+{
+  "api_version": "switchover/v1",
+  "kind": "SwitchoverPairList",
+  "metadata": {
+    "pagination": {
+      "page_size": 99,
+      "total_size": 2
+    }
+  },
+  "data": [
+    {
+      "api_version": "switchover/v1",
+      "kind": "SwitchoverPair",
+      "id": "sw-def456",
+      "metadata": {
+        "created_at": "2026-08-02T10:00:00.000000Z",
+        "resource_name": "crn://confluent.cloud/organization=org-abc/environment=env-abc123/switchover-pair=sw-def456",
+        "self": "https://api.confluent.cloud/switchover/v1/switchover-pairs/sw-def456?environment=env-abc123",
+        "updated_at": "2026-08-02T10:00:00.000000Z"
+      },
+      "spec": {
+        "display_name": "staging-kafka-dr",
+        "environment_crn": "crn://confluent.cloud/organization=org-abc/environment=env-abc123",
+        "members": [
+          {
+            "name": "west",
+            "member_crn": "crn://confluent.cloud/organization=org-abc/environment=env-abc123/cloud-cluster=lkc-west02",
+            "location": { "cloud": "AWS", "region": "us-west-2" }
+          },
+          {
+            "name": "east",
+            "member_crn": "crn://confluent.cloud/organization=org-abc/environment=env-abc123/cloud-cluster=lkc-east02",
+            "location": { "cloud": "AWS", "region": "us-east-2" }
+          }
+        ],
+        "active_member": "west",
+        "first_active": "west"
+      },
+      "status": { "phase": "PROVISIONING" }
+    }
+  ]
+}
