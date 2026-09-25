@@ -74,6 +74,7 @@ type Client struct {
 	camV1Client                     *camv1.APIClient
 	cmkV2Client                     *cmkv2.APIClient
 	connectV1Client                 *connectv1.APIClient
+	connectorListCache              *connectorListCache
 	dataCatalogV1Client             *datacatalogv1.APIClient
 	catalogRestClientFactory        *CatalogRestClientFactory
 	flinkV2Client                   *flinkv2.APIClient
@@ -782,6 +783,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		camV1Client:                     camv1.NewAPIClient(camV1Cfg),
 		cmkV2Client:                     cmkv2.NewAPIClient(cmkV2Cfg),
 		connectV1Client:                 connectv1.NewAPIClient(connectV1Cfg),
+		connectorListCache:              newConnectorListCache(),
 		flinkArtifactV1Client:           flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
 		flinkV2Client:                   flinkv2.NewAPIClient(flinkV2Cfg),
 		iamV2Client:                     iamv2.NewAPIClient(iamV2Cfg),
