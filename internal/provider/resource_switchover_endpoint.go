@@ -60,7 +60,7 @@ func switchoverEndpointResource() *schema.Resource {
 			paramTarget: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The name of the endpoint that is currently active. Owned by the Switchover service: it starts on the side matching the pair's active member and follows it across failovers.",
+				Description: "Read-only. The name of the endpoint that is currently active. The Switchover service derives it from the pair's active member at create time and moves it on every failover; it cannot be set (the API marks it `readOnly`).",
 			},
 			paramEndpoints: {
 				Type:        schema.TypeList,

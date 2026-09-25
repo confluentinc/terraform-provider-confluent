@@ -73,7 +73,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the switchover endpoint, for example, `se-abc123`.
-- `target` - (Required String) The name of the endpoint that is currently active. Owned by the Switchover service: it starts on the side matching the pair's active member and follows it across failovers.
+- `target` - (Required String) Read-only. The name of the endpoint that is currently active. The Switchover service derives it from the pair's active member at create time and moves it on every failover; it cannot be set (the API marks it `readOnly`).
 - `phase` - (Required String) The lifecycle phase of the switchover endpoint.
 - `endpoints` (Required Configuration Block) In addition to the arguments above, each endpoint exports the following:
   - `hostname` - (Required String) The resolved hostname for this endpoint.

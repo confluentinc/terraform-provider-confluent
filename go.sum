@@ -139,8 +139,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1 h1:WZJYfgXJrvTIYQpCFps/qHF7T
 github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1/go.mod h1:kB+MXWYYg9ohrTCb27LlfpTbuexAzyYAmum105ow0ho=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUfu2Hnq9PfnI/1H62wEs=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
-github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.0 h1:RQY2jcbUo8ZhqLRKkugtIfDLY/FFBqMdi1AibooP4EA=
-github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.0/go.mod h1:sZ2nAt/EbWwYmnjIckI+dpi02MuE4AGX8K2f/0bfD5s=
+github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1 h1:dkwRPO/UTsBPvHTZVGkcke3Z7EGffBPYhyX/iREUAlE=
+github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1/go.mod h1:sZ2nAt/EbWwYmnjIckI+dpi02MuE4AGX8K2f/0bfD5s=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0 h1:b5s9pHopcsLeBSfvkj3j4SdAsiPwigY0x6jdkXnzAbo=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0/go.mod h1:NqM6aLdXeXhf+JMc0Y39fZjU9pWSHfhosfYRp/DKHxk=
 github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0 h1:mjGRU9RhUy5loUE0rnFzjRvtIQX8Xjrr0GX/3wvMquU=
