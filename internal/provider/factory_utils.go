@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -210,8 +212,9 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 	return c
 }
 
-// CreateRetryableClient creates retryable HTTP client that performs automatic retries with exponential backoff for 429
-// and 5** (except 501) errors. Otherwise, the response is returned and left to the caller to interpret.
+// CreateRetryableClient creates retryable HTTP client that performs automatic retries with
+// exponential backoff for 429 and 5** (except 501) errors. Otherwise, the response is returned
+// and left to the caller to interpret.
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
@@ -222,6 +225,7 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// defaultRetryMax     = 4
 
 	retryClient := retryablehttp.NewClient()
+	retryClient.Backoff = retryBackoff
 	logger := retryClientLogger{f.ctx}
 
 	if f.maxRetries != nil {
@@ -242,6 +246,47 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	}
 
 	return standardClient
+}
+
+// retryBackoff scopes jitter to 429s specifically: a 429 means many callers are sharing (and just
+// exceeded) a rate limit, so many confluent_connector (or other) resources can hit it at the same
+// moment and, on deterministic backoff, retry in lockstep and re-trip the same limit (INC-13517).
+// Every other retryable status (5xx) is left on the SDK's unmodified DefaultBackoff, so this
+// change's blast radius is scoped to the failure class it's actually fixing.
+func retryBackoff(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+		return minFloorFullJitterBackoff(min, max, attemptNum, resp)
+	}
+	return retryablehttp.DefaultBackoff(min, max, attemptNum, resp)
+}
+
+// minFloorFullJitterBackoff applies AWS's "full jitter" pattern on top of DefaultBackoff's capped
+// exponential envelope, floored at min: the wait is a uniform random draw in [min, capWait]
+// instead of always being exactly capWait, so concurrent callers retrying the same 429 at the same
+// attempt number don't all land on the same instant. capWait's ceiling is exactly today's
+// production wait (same min/max/RetryMax), so the worst case is unchanged from not jittering at
+// all — only the average case improves.
+//
+// The floor at min (rather than 0) is deliberate: a wait close to 0s gives a rate limiter no real
+// time to recover, so it's very likely to fail again immediately, wasting one of a limited number
+// of retry attempts for no real chance of success rather than trading anything meaningful for the
+// extra spread. The cost is that attempt 1 (attemptNum=0) is deterministic — capWait there already
+// equals min, so [min, capWait] collapses to a single point and jitter only starts contributing
+// from attempt 2 onward.
+//
+// Caveats:
+//   - This assumes the API never returns a Retry-After header on a 429. If it does, DefaultBackoff
+//     already returns that value verbatim as capWait, and jittering it (or, below, clamping it up
+//     to min) here would not honor the server's exact instruction — this would need to check for
+//     that header itself and return it as-is before falling through to this logic.
+//   - Whether min=1s is actually long enough for the real rate limiter to recover is unverified;
+//     see RETRY-BACKOFF-COMPARISON.md's Open Items.
+func minFloorFullJitterBackoff(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	capWait := retryablehttp.DefaultBackoff(min, max, attemptNum, resp)
+	if capWait <= min {
+		return capWait
+	}
+	return min + time.Duration(rand.Int63n(int64(capWait-min)+1))
 }
 
 func customErrorHandler(resp *http.Response, err error, retries int) (*http.Response, error) {
