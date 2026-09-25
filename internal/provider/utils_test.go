@@ -29,7 +29,10 @@ import (
 	"time"
 
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
@@ -60,6 +63,127 @@ func TestKafkaAclResourceStateUpgradeV0(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+}
+
+func TestCCPMV1ApiContextUsesCCPMOAuthContextKey(t *testing.T) {
+	const expectedAccessToken = "test-access-token"
+
+	c := &Client{
+		oauthToken: &OAuthToken{},
+		stsToken: &STSToken{
+			AccessToken: expectedAccessToken,
+			ValidUntil:  time.Now().Add(time.Hour),
+		},
+	}
+
+	ctx := c.ccpmV1ApiContext(context.Background())
+	accessToken, ok := ctx.Value(ccpmv1.ContextAccessToken).(string)
+	if !ok || accessToken != expectedAccessToken {
+		t.Fatalf("CCPM context access token = %q, want %q", accessToken, expectedAccessToken)
+	}
+}
+
+func TestRestClientApiContextUsesCachedOAuthTokenOnRefreshError(t *testing.T) {
+	tests := []struct {
+		name        string
+		call        func(context.Context, *OAuthToken) (context.Context, *OAuthToken)
+		accessToken func(context.Context) interface{}
+	}{
+		{
+			name: "Kafka",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &KafkaRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(kafkarestv3.ContextAccessToken)
+			},
+		},
+		{
+			name: "Schema Registry",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &SchemaRegistryRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(schemaregistryv1.ContextAccessToken)
+			},
+		},
+		{
+			name: "Schema Registry Data Catalog",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &SchemaRegistryRestClient{externalAccessToken: token}
+				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(datacatalogv1.ContextAccessToken)
+			},
+		},
+		{
+			name: "Catalog",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &CatalogRestClient{externalAccessToken: token}
+				return c.dataCatalogV1ApiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(datacatalogv1.ContextAccessToken)
+			},
+		},
+		{
+			name: "Flink",
+			call: func(ctx context.Context, token *OAuthToken) (context.Context, *OAuthToken) {
+				c := &FlinkRestClient{externalAccessToken: token}
+				return c.apiContext(ctx), c.externalAccessToken
+			},
+			accessToken: func(ctx context.Context) interface{} {
+				return ctx.Value(flinkgatewayv1.ContextAccessToken)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := &OAuthToken{
+				AccessToken: "existing-access-token",
+				TokenUrl:    "https://example.com/oauth/token",
+				ValidUntil:  time.Now().Add(-time.Hour),
+			}
+			ctx := context.WithValue(context.Background(), struct{}{}, "test-value")
+
+			gotContext, gotToken := tt.call(ctx, token)
+			if got := tt.accessToken(gotContext); got != token.AccessToken {
+				t.Fatalf("context access token = %v, want %q", got, token.AccessToken)
+			}
+			if gotToken != token {
+				t.Fatal("expected the cached token to remain after OAuth refresh failure")
+			}
+		})
+	}
+}
+
+func TestCamV1ApiContextPreservesCallerContext(t *testing.T) {
+	type contextKey string
+
+	key := contextKey("test-key")
+	baseContext := context.WithValue(context.Background(), key, "test-value")
+	ctx, cancel := context.WithCancel(baseContext)
+	cancel()
+
+	c := &Client{cloudApiKey: "test-key", cloudApiSecret: "test-secret"}
+	gotContext := c.camV1ApiContext(ctx)
+
+	if got := gotContext.Value(key); got != "test-value" {
+		t.Fatalf("CAM context value = %v, want test-value", got)
+	}
+	select {
+	case <-gotContext.Done():
+	default:
+		t.Fatal("expected CAM context to remain cancelled")
+	}
+	auth, ok := gotContext.Value(camv1.ContextBasicAuth).(camv1.BasicAuth)
+	if !ok || auth.UserName != "test-key" || auth.Password != "test-secret" {
+		t.Fatalf("CAM basic auth = %#v, want test credentials", auth)
 	}
 }
 
