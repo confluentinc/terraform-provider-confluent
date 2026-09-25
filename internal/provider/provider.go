@@ -381,7 +381,9 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 				"confluent_switchover_pair":                    switchoverPairDataSource(),
+				"confluent_switchover_pairs":                   switchoverPairsDataSource(),
 				"confluent_switchover_endpoint":                switchoverEndpointDataSource(),
+				"confluent_switchover_endpoints":               switchoverEndpointsDataSource(),
 				"confluent_notifications_integration":          integrationDataSource(),
 				// cli-tfgen:tf-datasources
 			},

@@ -10,6 +10,18 @@ variable "confluent_cloud_api_secret" {
   sensitive   = true
 }
 
+variable "switchover_pair_id" {
+  description = "The ID of the switchover pair to fail over (e.g. sw-abc123). Leave unset to read it from the infra workspace's state."
+  type        = string
+  default     = null
+}
+
+variable "environment_crn" {
+  description = "The CRN of the environment that owns the switchover pair (e.g. crn://confluent.cloud/organization=.../environment=env-abc123). Leave unset to read it from the infra workspace's state."
+  type        = string
+  default     = null
+}
+
 variable "active_member" {
   description = "The member to promote to active (for example 'east'). Required for PLANNED and UNPLANNED failovers; must be left unset for RESTORE."
   type        = string

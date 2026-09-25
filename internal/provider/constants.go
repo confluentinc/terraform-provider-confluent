@@ -396,6 +396,8 @@ const (
 	paramEndpointFilter                                  = "endpoint_filter"
 	paramEndpointSuffix                                  = "endpoint_suffix"
 	paramSwitchoverPairId                                = "switchover_pair_id"
+	paramSwitchoverPairs                                 = "switchover_pairs"
+	paramSwitchoverEndpoints                             = "switchover_endpoints"
 	paramParentResourceCrn                               = "parent_resource_crn"
 	paramNetworkCrn                                      = "network_crn"
 	paramAccessPointCrn                                  = "access_point_crn"
