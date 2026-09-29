@@ -33,10 +33,11 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// capWarnings returns the cap-warning entries logged to a tflogtest root logger.
+// capWarnings returns the cap-warning entries logged so far to a tflogtest root
+// logger, leaving the buffer intact.
 func capWarnings(t *testing.T, logs *bytes.Buffer) []map[string]interface{} {
 	t.Helper()
-	entries, err := tflogtest.MultilineJSONDecode(logs)
+	entries, err := tflogtest.MultilineJSONDecode(bytes.NewReader(logs.Bytes()))
 	if err != nil {
 		t.Fatalf("decoding log output: %v", err)
 	}
@@ -71,7 +72,13 @@ func TestPublishedTelemetryReporter_EventCap(t *testing.T) {
 			logCtx:    tflogtest.RootLogger(context.Background(), &logs),
 		})
 
-		for seq := int64(1); seq <= 6; seq++ {
+		for seq := int64(1); seq <= 3; seq++ {
+			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
+		}
+		if warnings := capWarnings(t, &logs); len(warnings) != 0 {
+			t.Errorf("cap warning logged %d times with no event past the cap, want 0", len(warnings))
+		}
+		for seq := int64(4); seq <= 6; seq++ {
 			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
 		}
 
@@ -89,13 +96,21 @@ func TestPublishedTelemetryReporter_EventCap(t *testing.T) {
 
 	t.Run("zero cap leaves the run uncapped", func(t *testing.T) {
 		restorePublishedTelemetry(t)
+		var logs bytes.Buffer
 		rec := &recordingReporter{}
-		publishedTelemetry.Store(&telemetryRuntime{config: telemetry.NewConfig(false), reporter: rec})
+		publishedTelemetry.Store(&telemetryRuntime{
+			config:   telemetry.NewConfig(false),
+			reporter: rec,
+			logCtx:   tflogtest.RootLogger(context.Background(), &logs),
+		})
 
 		publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: math.MaxInt32})
 
 		if rec.count() != 1 {
 			t.Errorf("uncapped runtime forwarded %d events, want 1", rec.count())
+		}
+		if warnings := capWarnings(t, &logs); len(warnings) != 0 {
+			t.Errorf("uncapped runtime logged %d cap warnings, want 0", len(warnings))
 		}
 	})
 
@@ -149,7 +164,8 @@ func TestTelemetryMaxEventsPerRun(t *testing.T) {
 }
 
 // TestPublishTelemetryRuntime_SetsEventCap checks that configuration publishes the
-// default cap, or the env override, with a logger for the cap warning.
+// default cap, or the env override, and that an event past it logs the cap warning
+// to the provider logger.
 func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -165,8 +181,9 @@ func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 			t.Setenv(disableProviderAnalyticsEnvVar, "")
 			t.Setenv(previewProviderAnalyticsEnvVar, "1")
 			t.Setenv(maxEventsPerRunEnvVar, tc.value)
+			var logs bytes.Buffer
 
-			publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+			publishTelemetryRuntime(tflogtest.RootLogger(context.Background(), &logs), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 
 			rt := publishedTelemetry.Load()
 			if rt == nil || rt.config.Disabled || rt.reporter == nil {
@@ -178,8 +195,10 @@ func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 			if rt.maxEvents != tc.want {
 				t.Errorf("published maxEvents = %d, want %d", rt.maxEvents, tc.want)
 			}
-			if rt.logCtx == nil {
-				t.Error("published runtime has no logger context for the cap warning")
+			// Dropped before the transport, so nothing is sent.
+			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: tc.want + 1})
+			if warnings := capWarnings(t, &logs); len(warnings) != 1 {
+				t.Errorf("cap warning logged %d times to the configured logger, want once", len(warnings))
 			}
 		})
 	}
@@ -207,7 +226,8 @@ func TestTelemetryEventCap_SendsExactlyNRequests(t *testing.T) {
 	defer transport.Close()
 
 	// Cap the run n sequence numbers past the current one, so the next n
-	// operations are reported and the one after is not.
+	// operations are reported and the one after is not. The cap is relative to
+	// the process-wide counter, so this test must not run in parallel.
 	var logs bytes.Buffer
 	base := telemetry.NextSequence()
 	publishedTelemetry.Store(&telemetryRuntime{
@@ -219,7 +239,8 @@ func TestTelemetryEventCap_SendsExactlyNRequests(t *testing.T) {
 
 	r := New(testVersion, "")().ResourcesMap["confluent_environment"]
 	for i := 1; i <= n; i++ {
-		// nil args fail the read without a network call; the wrapper still reports.
+		// The nil ResourceData panics the read before any network call; the
+		// wrapper recovers and still reports.
 		_ = r.ReadContext(context.Background(), nil, nil)
 		// Wait for each request so the shallow transport queue never drops one.
 		select {
@@ -257,6 +278,7 @@ func TestTelemetryEventCap_ConcurrentOperations(t *testing.T) {
 	r := newTestResource()
 	wrapResourcesMapForTelemetry(map[string]*schema.Resource{"confluent_thing": r}, testWrapConfig(publishedTelemetryReporter{}))
 
+	// Relative to the process-wide counter, so this test must not run in parallel.
 	var logs bytes.Buffer
 	rec := &recordingReporter{}
 	base := telemetry.NextSequence()
