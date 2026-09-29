@@ -108,6 +108,7 @@ func TestAccServiceAccount(t *testing.T) {
 
 	saDisplayName := "test_service_account_display_name"
 	saDescription := "The initial description of service account"
+	saAssignedResourceOwner := "u-a83k9b"
 	// in order to test tf update (step #3)
 	saUpdatedDisplayName := "test_service_account_updated_display_name"
 	saUpdatedDescription := "The updated description of service account"
@@ -122,7 +123,7 @@ func TestAccServiceAccount(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saDescription),
+				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saDescription, saAssignedResourceOwner),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckServiceAccountExists(fullSaResourceLabel),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "id", "sa-1jjv26"),
@@ -139,7 +140,7 @@ func TestAccServiceAccount(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saUpdatedDisplayName, saUpdatedDescription),
+				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saUpdatedDisplayName, saUpdatedDescription, saAssignedResourceOwner),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckServiceAccountExists(fullSaResourceLabel),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "id", "sa-1jjv26"),
@@ -187,7 +188,7 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saDescription string) string {
+func testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saDescription, saAssignedResourceOwner string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -195,8 +196,9 @@ func testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayN
 	resource "confluent_service_account" "%s" {
 		display_name = "%s"
 		description = "%s"
+		assigned_resource_owner = %q
 	}
-	`, mockServerUrl, saResourceLabel, saDisplayName, saDescription)
+	`, mockServerUrl, saResourceLabel, saDisplayName, saDescription, saAssignedResourceOwner)
 }
 
 func testAccCheckServiceAccountExists(n string) resource.TestCheckFunc {
