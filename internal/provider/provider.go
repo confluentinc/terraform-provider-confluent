@@ -59,6 +59,7 @@ import (
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
+	switchoverv1 "github.com/confluentinc/ccloud-sdk-go-v2/switchover/v1"
 	// cli-tfgen:tf-imports
 )
 
@@ -133,6 +134,7 @@ type Client struct {
 	isOAuthEnabled                  bool
 	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
+	switchoverV1Client              *switchoverv1.APIClient
 	// cli-tfgen:tf-client-fields
 }
 
@@ -378,6 +380,10 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_rtce_topic":                         rtceTopicDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
+				"confluent_switchover_pair":                    switchoverPairDataSource(),
+				"confluent_switchover_pairs":                   switchoverPairsDataSource(),
+				"confluent_switchover_endpoint":                switchoverEndpointDataSource(),
+				"confluent_switchover_endpoints":               switchoverEndpointsDataSource(),
 				"confluent_notifications_integration":          integrationDataSource(),
 				// cli-tfgen:tf-datasources
 			},
@@ -446,6 +452,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                         rtceTopicResource(),
+				"confluent_switchover_pair":                    switchoverPairResource(),
+				"confluent_switchover_endpoint":                switchoverEndpointResource(),
 				"confluent_notifications_integration":          integrationResource(),
 				// cli-tfgen:tf-resources
 			},
@@ -615,6 +623,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
+	switchoverV1Cfg := switchoverv1.NewConfiguration()
 	// cli-tfgen:tf-client-cfg
 
 	apiKeysV2Cfg.Servers[0].URL = endpoint
@@ -649,6 +658,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
+	switchoverV1Cfg.Servers[0].URL = endpoint
 	// cli-tfgen:tf-client-endpoint
 
 	apiKeysV2Cfg.UserAgent = userAgent
@@ -684,6 +694,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
+	switchoverV1Cfg.UserAgent = userAgent
 	// cli-tfgen:tf-client-useragent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
@@ -731,6 +742,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	switchoverV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	// cli-tfgen:tf-client-httpclient
 
 	secureTokenServiceClient := stsv1.NewAPIClient(stsV1Cfg)
@@ -811,6 +823,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
+		switchoverV1Client:              switchoverv1.NewAPIClient(switchoverV1Cfg),
 		// cli-tfgen:tf-client-literal
 		userAgent:                  userAgent,
 		catalogRestEndpoint:        catalogRestEndpoint,
