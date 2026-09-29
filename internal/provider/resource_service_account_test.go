@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -42,8 +43,15 @@ func TestAccServiceAccount(t *testing.T) {
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
+	// Declared before the stubs because the create stub matches on it. The spec's own example.
+	saAssignedResourceOwner := "u-a83k9b"
+
 	createSaResponse, _ := ioutil.ReadFile("../testdata/service_account/create_sa.json")
+	// The query-param matcher is the assertion: assigned_resource_owner is never returned by the
+	// API, so without matching on it here the test would still pass if the provider accepted the
+	// attribute and then dropped it from the create request.
 	createSaStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(saAssignedResourceOwner)).
 		InScenario(saScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSaHasBeenCreated).
@@ -108,12 +116,19 @@ func TestAccServiceAccount(t *testing.T) {
 
 	saDisplayName := "test_service_account_display_name"
 	saDescription := "The initial description of service account"
-	saAssignedResourceOwner := "u-a83k9b"
 	// in order to test tf update (step #3)
 	saUpdatedDisplayName := "test_service_account_updated_display_name"
 	saUpdatedDescription := "The updated description of service account"
 	saResourceLabel := "test_sa_resource_label"
 	fullSaResourceLabel := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
+
+	// The import steps below read this. assigned_resource_owner is create-only and never returned,
+	// so serviceAccountImport seeds it from this variable; without it the imported state would hold
+	// "" against a configured "u-a83k9b" and ImportStateVerify would fail.
+	_ = os.Setenv("IMPORT_ASSIGNED_RESOURCE_OWNER", saAssignedResourceOwner)
+	defer func() {
+		_ = os.Unsetenv("IMPORT_ASSIGNED_RESOURCE_OWNER")
+	}()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -131,6 +146,7 @@ func TestAccServiceAccount(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "kind", saKind),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saDisplayName),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "description", saDescription),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "assigned_resource_owner", saAssignedResourceOwner),
 				),
 			},
 			{
@@ -148,6 +164,7 @@ func TestAccServiceAccount(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "kind", saKind),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "description", saUpdatedDescription),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "assigned_resource_owner", saAssignedResourceOwner),
 				),
 			},
 			{
