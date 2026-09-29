@@ -72,15 +72,22 @@ func TestPublishedTelemetryReporter_EventCap(t *testing.T) {
 			logCtx:    tflogtest.RootLogger(context.Background(), &logs),
 		})
 
-		for seq := int64(1); seq <= 3; seq++ {
-			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
+		report := func(seqs ...int64) {
+			for _, seq := range seqs {
+				publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
+			}
 		}
+		report(1, 2, 3)
 		if warnings := capWarnings(t, &logs); len(warnings) != 0 {
 			t.Errorf("cap warning logged %d times with no event past the cap, want 0", len(warnings))
 		}
-		for seq := int64(4); seq <= 6; seq++ {
-			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
+		// Event 5 finishes before event 4, as after a slower operation; the first
+		// drop warns.
+		report(5)
+		if warnings := capWarnings(t, &logs); len(warnings) != 1 {
+			t.Errorf("cap warning logged %d times after the first drop, want once", len(warnings))
 		}
+		report(4, 6)
 
 		if got := forwardedSequences(rec); !reflect.DeepEqual(got, []int64{1, 2, 3}) {
 			t.Errorf("forwarded sequences = %v, want [1 2 3]", got)
@@ -140,6 +147,9 @@ func TestTelemetryMaxEventsPerRun(t *testing.T) {
 	if defaultMaxEventsPerRun != 10000 {
 		t.Errorf("defaultMaxEventsPerRun = %d, want 10000", defaultMaxEventsPerRun)
 	}
+	if maxEventsPerRunEnvVar != "CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN" {
+		t.Errorf("maxEventsPerRunEnvVar = %q, want CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN", maxEventsPerRunEnvVar)
+	}
 	tests := []struct {
 		name  string
 		value string
@@ -164,8 +174,7 @@ func TestTelemetryMaxEventsPerRun(t *testing.T) {
 }
 
 // TestPublishTelemetryRuntime_SetsEventCap checks that configuration publishes the
-// default cap, or the env override, and that an event past it logs the cap warning
-// to the provider logger.
+// default cap, or the env override, with the configured logger for the cap warning.
 func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -174,6 +183,7 @@ func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 	}{
 		{"default cap", "", defaultMaxEventsPerRun},
 		{"env override", "42", 42},
+		{"cap of one", "1", 1},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -189,14 +199,26 @@ func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 			if rt == nil || rt.config.Disabled || rt.reporter == nil {
 				t.Fatalf("expected an enabled runtime, got %+v", rt)
 			}
+			// Stop the production-endpoint transport before anything is reported.
 			if c, ok := rt.reporter.(interface{ Close() }); ok {
-				t.Cleanup(c.Close)
+				c.Close()
 			}
 			if rt.maxEvents != tc.want {
 				t.Errorf("published maxEvents = %d, want %d", rt.maxEvents, tc.want)
 			}
-			// Dropped before the transport, so nothing is sent.
+			if rt.logCtx == nil {
+				t.Fatal("published runtime has no logger context for the cap warning")
+			}
+
+			// Put the published cap and logger in front of a local sink, so the event
+			// past the cap can never reach a real endpoint.
+			rec := &recordingReporter{}
+			publishedTelemetry.Store(&telemetryRuntime{config: rt.config, reporter: rec, maxEvents: rt.maxEvents, logCtx: rt.logCtx})
 			publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: tc.want + 1})
+
+			if rec.count() != 0 {
+				t.Errorf("an event past the published cap was forwarded")
+			}
 			if warnings := capWarnings(t, &logs); len(warnings) != 1 {
 				t.Errorf("cap warning logged %d times to the configured logger, want once", len(warnings))
 			}
