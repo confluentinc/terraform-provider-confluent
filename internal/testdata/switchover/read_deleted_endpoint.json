@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "0f9e8d7c6b5a493827160fedcba98765",
+      "status": "404",
+      "detail": "The switchover endpoint se-abc123 was not found.",
+      "source": {}
+    }
+  ]
+}

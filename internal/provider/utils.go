@@ -74,6 +74,7 @@ import (
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	switchoverv1 "github.com/confluentinc/ccloud-sdk-go-v2/switchover/v1"
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
@@ -112,6 +113,25 @@ func (c *Client) byokV1ApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for BYOK client")
+	return ctx
+}
+
+func (c *Client) switchoverV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Switchover client: %v", err))
+		}
+		return context.WithValue(ctx, switchoverv1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, switchoverv1.ContextBasicAuth, switchoverv1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Switchover client")
 	return ctx
 }
 
