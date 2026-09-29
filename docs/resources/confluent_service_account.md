@@ -28,6 +28,7 @@ The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the Service Account. Must be 64 characters or fewer.
 - `description` - (Optional String) A free-form description of the Service Account.
+- `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created service account. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
 ## Attributes Reference
 
@@ -41,11 +42,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Service Account.
 
+-> **Note:** Set the `IMPORT_ASSIGNED_RESOURCE_OWNER` environment variable to the `assigned_resource_owner` value used when the Service Account was created. The API never returns that value, so without it the attribute is empty in imported state and the first plan after importing will want to replace the Service Account. Terraform cannot verify the value you supply.
+
 You can import a Service Account by using Service Account ID, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+$ export IMPORT_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_service_account.my_sa sa-abc123
 ```
 
