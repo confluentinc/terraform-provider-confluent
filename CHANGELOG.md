@@ -1,3 +1,10 @@
+## 2.88.0 (September 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.87.0...v2.88.0)
+
+**New features:**
+* Added new `confluent_switchover_pair` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_switchover_pair) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_pair), `confluent_switchover_pairs` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_pairs), `confluent_switchover_endpoint` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_switchover_endpoint) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_endpoint), and `confluent_switchover_endpoints` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_endpoints) to support Kafka cluster disaster recovery switchover in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
 ## 2.87.0 (September 23rd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.86.0...v2.87.0)
