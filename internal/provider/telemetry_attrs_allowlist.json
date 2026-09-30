@@ -566,6 +566,7 @@
   ],
   "confluent_service_account": [
     "api_version",
+    "assigned_resource_owner",
     "description",
     "display_name",
     "kind"
