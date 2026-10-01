@@ -253,6 +253,7 @@
     "filter"
   ],
   "confluent_identity_pool": [
+    "assigned_resource_owner",
     "description",
     "display_name",
     "filter",
