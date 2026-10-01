@@ -77,6 +77,7 @@ const (
 	configOperationDelete                     = "DELETE"
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
+	connectorListCacheTTL                     = 60 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"
 	connectionModeConfigKey                   = "connection.mode"
 	connectionModeInbound                     = "INBOUND"
