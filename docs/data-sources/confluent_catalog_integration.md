@@ -95,4 +95,9 @@ In addition to the preceding arguments, the following attributes are exported:
     - `workspace_endpoint` - (Required String) The Databricks workspace URL associated with the Unity Catalog.
     - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
     - `custom_schema` - (Computed String) The custom schema name to use in Unity Catalog.
+- `biglake_metastore` (Optional Configuration Block) supports the following:
+    - `provider_integration_id` - (Required String) The provider integration id.
+    - `gcp_project_id` - (Computed String) The GCP project id that hosts the BigLake Metastore catalog.
+    - `catalog_name` - (Computed String) The name of the catalog within BigLake Metastore.
+    - `custom_namespace` - (Computed String) The custom namespace to use in BigLake Metastore.
 - `suspended` - (Optional Boolean) Indicates whether the Catalog Integration should be suspended.

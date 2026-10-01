@@ -105,4 +105,8 @@ In addition to the preceding arguments, the following attributes are exported:
     - `storage_account_name` - (Required String) The storage account name.
     - `provider_integration_id` - (Required String) The provider integration id.
     - `storage_region` - (Required String) The storage region.
+- `google_cloud_storage` (Optional Configuration Block) supports the following:
+    - `bucket_name` - (Required String) The bucket name.
+    - `bucket_region` - (Required String) The bucket region.
+    - `provider_integration_id` - (Required String) The provider integration id.
 
