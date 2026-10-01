@@ -63,7 +63,6 @@ func apiKeyResource() *schema.Resource {
 			paramExpiresAt: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				ForceNew:    true,
 				Description: "The date on which this API key expires, as an ISO 8601 UTC date (for example, \"2026-12-31\"). The key remains valid through the end of this date. If not set, the API key never expires.",
 				ValidateFunc: func(i interface{}, k string) ([]string, []error) {
