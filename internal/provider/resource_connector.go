@@ -160,9 +160,10 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err, resp))
 	}
+	c.connectorListCache.invalidate(connectorListCacheKey(environmentId, clusterId))
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
-	createdConnectorWithId, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	createdConnectorWithId, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, false)
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -229,8 +230,20 @@ func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, e
 	return req.Execute()
 }
 
-func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
-	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
+// executeConnectorRead lists every connector in the cluster and picks displayName out of it. With
+// allowCached, the list is shared with other reads of the same cluster in this run.
+func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string, allowCached bool) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
+	fetch := func() (connectorList, *http.Response, error) {
+		return c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
+	}
+	var connectors connectorList
+	var resp *http.Response
+	var err error
+	if allowCached {
+		connectors, resp, err = c.connectorListCache.get(connectorListCacheKey(environmentId, clusterId), fetch)
+	} else {
+		connectors, resp, err = fetch()
+	}
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
 		return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
 	}
@@ -265,7 +278,8 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	// Create and import (IsNewResource) need a fresh read; routine refreshes can share the cluster's list.
+	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, !d.IsNewResource())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -425,6 +439,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 
+	c.connectorListCache.invalidate(connectorListCacheKey(environmentId, clusterId))
 	return connectorRead(ctx, d, meta)
 }
 
@@ -440,6 +455,7 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 
 	req := c.connectV1Client.ConnectorsConnectV1Api.DeleteConnectv1Connector(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId)
 	deletionError, resp, err := req.Execute()
+	c.connectorListCache.invalidate(connectorListCacheKey(environmentId, clusterId))
 
 	if err != nil {
 		return diag.Errorf("error deleting Connector %q: %s", d.Id(), createDescriptiveError(err, resp))

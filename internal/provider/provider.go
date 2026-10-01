@@ -135,6 +135,7 @@ type Client struct {
 	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
 	switchoverV1Client              *switchoverv1.APIClient
+	connectorListCache              *connectorListCache
 	// cli-tfgen:tf-client-fields
 }
 
@@ -794,6 +795,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		camV1Client:                     camv1.NewAPIClient(camV1Cfg),
 		cmkV2Client:                     cmkv2.NewAPIClient(cmkV2Cfg),
 		connectV1Client:                 connectv1.NewAPIClient(connectV1Cfg),
+		connectorListCache:              newConnectorListCache(connectorListCacheTTL),
 		flinkArtifactV1Client:           flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
 		flinkV2Client:                   flinkv2.NewAPIClient(flinkV2Cfg),
 		iamV2Client:                     iamv2.NewAPIClient(iamV2Cfg),
