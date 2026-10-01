@@ -37,16 +37,20 @@ The following arguments are supported:
 - `description` - (Required String) A description of the Certificate Pool.
 - `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identity for audit logging.
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate pool.
+- `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created certificate identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Certificate Pool.
+
+-> **Note:** Set the `IMPORT_ASSIGNED_RESOURCE_OWNER` environment variable to the `assigned_resource_owner` value used when the Certificate Pool was created. The API never returns that value, so without it the attribute is empty in imported state and the first plan after importing will want to replace the Certificate Pool. Terraform cannot verify the value you supply.
 
 You can import a Certificate Pool by using Certificate Authority ID and Certificate Pool ID, in the format `<Certificate Authority ID>/<Certificate Pool ID>`. The following example shows how to import a Certificate Pool:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+$ export IMPORT_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_certificate_pool.main op-abc123/pool-abc123
 ```
 

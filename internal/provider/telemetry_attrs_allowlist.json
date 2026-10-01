@@ -76,6 +76,7 @@
     "serial_numbers"
   ],
   "confluent_certificate_pool": [
+    "assigned_resource_owner",
     "certificate_authority",
     "description",
     "display_name",
