@@ -166,7 +166,6 @@ func TestAccServiceAccountMinimalLive(t *testing.T) {
 					testAccCheckServiceAccountLiveExists(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "display_name", serviceAccountDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "description", ""),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "assigned_resource_owner", ""),
 				),
 			},
 		},

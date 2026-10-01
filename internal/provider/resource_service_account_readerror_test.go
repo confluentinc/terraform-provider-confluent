@@ -91,7 +91,7 @@ func TestAccServiceAccountReadErrorSurfacesResponseBody(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckServiceAccountConfig(mockServerUrl, "sa_read_error", "test_sa_read_error", "desc", ""),
+				Config:      testAccCheckServiceAccountConfig(mockServerUrl, "sa_read_error", "test_sa_read_error", "desc"),
 				ExpectError: regexp.MustCompile(readErrorMarker),
 			},
 		},
