@@ -151,7 +151,7 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	// Wait for the Connect Artifact to be ready
 	if err := waitForConnectArtifactToProvision(ctx, c, environmentId, d.Id(), cloud); err != nil {
-		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err, res))
+		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err))
 	}
 
 	return connectArtifactRead(ctx, d, meta)
