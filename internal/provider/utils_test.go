@@ -186,10 +186,10 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 			name: "SR API Key with api_version=srcm/v3",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(schemaRegistryKind),
 						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -198,10 +198,10 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 			name: "SR API Key with api_version=srcm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(schemaRegistryKind),
 						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -210,10 +210,10 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 			name: "Kafka API Key",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(schemaRegistryKind),
 						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -222,10 +222,10 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 			name: "Cloud API Key",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString("Cloud"),
 						ApiVersion: apikeysv2.PtrString(iamApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -2963,10 +2963,10 @@ func TestIsKafkaApiKey(t *testing.T) {
 			name: "Kafka API Key with Cluster kind and cmk/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(clusterKind),
 						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -2975,10 +2975,10 @@ func TestIsKafkaApiKey(t *testing.T) {
 			name: "Not Kafka - SR kind with srcm/v3",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(schemaRegistryKind),
 						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -2987,10 +2987,10 @@ func TestIsKafkaApiKey(t *testing.T) {
 			name: "Not Kafka - Cluster kind but wrong api version",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(clusterKind),
 						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -2999,10 +2999,10 @@ func TestIsKafkaApiKey(t *testing.T) {
 			name: "Not Kafka - Region kind with fcpm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(regionKind),
 						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3028,10 +3028,10 @@ func TestIsFlinkApiKey(t *testing.T) {
 			name: "Flink API Key with Region kind and fcpm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(regionKind),
 						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -3040,10 +3040,10 @@ func TestIsFlinkApiKey(t *testing.T) {
 			name: "Not Flink - Cluster kind with cmk/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(clusterKind),
 						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3052,10 +3052,10 @@ func TestIsFlinkApiKey(t *testing.T) {
 			name: "Not Flink - Region kind but wrong api version",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(regionKind),
 						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3081,10 +3081,10 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 			name: "ksqlDB API Key with ksqlDB kind and ksqldbcm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(ksqlDbKind),
 						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -3093,10 +3093,10 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 			name: "ksqlDB API Key with Cluster kind and ksqldbcm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(clusterKind),
 						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -3105,10 +3105,10 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 			name: "Not ksqlDB - ksqlDB kind but wrong api version",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(ksqlDbKind),
 						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3117,10 +3117,10 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 			name: "Not ksqlDB - Region kind with ksqldbcm/v2",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind:       apikeysv2.PtrString(regionKind),
 						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3146,10 +3146,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 			name: "Tableflow API Key",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   tableflowKindInLowercase,
-					},
+					}),
 				},
 			},
 			expected: true,
@@ -3158,10 +3158,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 			name: "Not Tableflow - wrong kind",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind: apikeysv2.PtrString(clusterKind),
 						Id:   tableflowKindInLowercase,
-					},
+					}),
 				},
 			},
 			expected: false,
@@ -3170,10 +3170,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 			name: "Not Tableflow - wrong id",
 			apiKey: apikeysv2.IamV2ApiKey{
 				Spec: &apikeysv2.IamV2ApiKeySpec{
-					Resource: &apikeysv2.ObjectReference{
+					Resource: *apikeysv2.NewNullableTypedEnvScopedObjectReference(&apikeysv2.TypedEnvScopedObjectReference{
 						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   "wrong-id",
-					},
+					}),
 				},
 			},
 			expected: false,
