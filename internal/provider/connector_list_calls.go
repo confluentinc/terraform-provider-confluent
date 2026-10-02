@@ -16,12 +16,15 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 )
+
+var errConnectorListCallIncomplete = errors.New("connector list call did not complete")
 
 type connectorList = map[string]connectv1.ConnectV1ConnectorExpansion
 
@@ -65,16 +68,18 @@ func (g *connectorListCalls) do(ctx context.Context, key string, fetch connector
 			return nil, nil, true, ctx.Err()
 		}
 	}
-	call := &connectorListCall{done: make(chan struct{})}
+	// The error stays set only if fetch panics, so joined callers fall back to their own call instead of waiting forever.
+	call := &connectorListCall{done: make(chan struct{}), err: errConnectorListCallIncomplete}
 	g.inflight[key] = call
 	g.mu.Unlock()
 
+	defer func() {
+		g.mu.Lock()
+		delete(g.inflight, key)
+		g.mu.Unlock()
+		close(call.done)
+	}()
 	call.connectors, call.resp, call.err = fetch()
-
-	g.mu.Lock()
-	delete(g.inflight, key)
-	g.mu.Unlock()
-	close(call.done)
 
 	return call.connectors, call.resp, false, call.err
 }
