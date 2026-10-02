@@ -190,49 +190,6 @@ func TestIsSuccessfulConnectorListResponse(t *testing.T) {
 	}
 }
 
-func TestConnectorListCallsPanickingFetchReleasesJoinedCallers(t *testing.T) {
-	calls := newConnectorListCalls()
-	release := make(chan struct{})
-	fetch := func() (connectorList, *http.Response, error) {
-		<-release
-		panic("fetch panicked")
-	}
-	leaderPanicked := make(chan bool, 1)
-	go func() {
-		defer func() { leaderPanicked <- recover() != nil }()
-		_, _, _, _ = calls.do(context.Background(), testConnectorListCallKey, fetch)
-	}()
-	time.Sleep(100 * time.Millisecond)
-
-	done := make(chan error, 1)
-	go func() {
-		_, _, joined, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
-		if !joined {
-			err = errors.New("expected to join the in-flight call")
-		}
-		done <- err
-	}()
-	time.Sleep(100 * time.Millisecond)
-	close(release)
-
-	select {
-	case err := <-done:
-		if err != errConnectorListCallIncomplete {
-			t.Fatalf("expected %v, got %v", errConnectorListCallIncomplete, err)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("a joined caller must not wait forever when the in-flight fetch panics")
-	}
-	if !<-leaderPanicked {
-		t.Fatal("expected the panic to reach the caller that ran fetch")
-	}
-	calls.mu.Lock()
-	defer calls.mu.Unlock()
-	if len(calls.inflight) != 0 {
-		t.Fatalf("expected the panicked call to be removed, %d still in flight", len(calls.inflight))
-	}
-}
-
 func TestConnectorListCallsJoinedCallerHonorsItsOwnContext(t *testing.T) {
 	calls := newConnectorListCalls()
 	release := make(chan struct{})

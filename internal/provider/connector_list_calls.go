@@ -16,35 +16,30 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"sync"
+	"sync/atomic"
 
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	"golang.org/x/sync/singleflight"
 )
-
-var errConnectorListCallIncomplete = errors.New("connector list call did not complete")
 
 type connectorList = map[string]connectv1.ConnectV1ConnectorExpansion
 
 type connectorListFetchFunc func() (connectorList, *http.Response, error)
 
-type connectorListCall struct {
-	done       chan struct{}
+type connectorListResult struct {
 	connectors connectorList
 	resp       *http.Response
-	err        error
 }
 
 // connectorListCalls lets concurrent refreshes of one cluster share an in-flight list call; nothing is kept after it returns.
 type connectorListCalls struct {
-	mu       sync.Mutex
-	inflight map[string]*connectorListCall
+	group singleflight.Group
 }
 
 func newConnectorListCalls() *connectorListCalls {
-	return &connectorListCalls{inflight: make(map[string]*connectorListCall)}
+	return &connectorListCalls{}
 }
 
 func connectorListCallKey(environmentId, clusterId string) string {
@@ -58,30 +53,20 @@ func (g *connectorListCalls) do(ctx context.Context, key string, fetch connector
 		return connectors, resp, false, err
 	}
 
-	g.mu.Lock()
-	if call, ok := g.inflight[key]; ok {
-		g.mu.Unlock()
-		select {
-		case <-call.done:
-			return call.connectors, call.resp, true, call.err
-		case <-ctx.Done():
-			return nil, nil, true, ctx.Err()
-		}
+	// singleflight runs fn only for the caller that starts the call, so ran tells that caller apart from those that joined it.
+	var ran atomic.Bool
+	ch := g.group.DoChan(key, func() (interface{}, error) {
+		ran.Store(true)
+		connectors, resp, err := fetch()
+		return connectorListResult{connectors, resp}, err
+	})
+	select {
+	case r := <-ch:
+		result := r.Val.(connectorListResult)
+		return result.connectors, result.resp, !ran.Load(), r.Err
+	case <-ctx.Done():
+		return nil, nil, !ran.Load(), ctx.Err()
 	}
-	// The error stays set only if fetch panics, so joined callers fall back to their own call instead of waiting forever.
-	call := &connectorListCall{done: make(chan struct{}), err: errConnectorListCallIncomplete}
-	g.inflight[key] = call
-	g.mu.Unlock()
-
-	defer func() {
-		g.mu.Lock()
-		delete(g.inflight, key)
-		g.mu.Unlock()
-		close(call.done)
-	}()
-	call.connectors, call.resp, call.err = fetch()
-
-	return call.connectors, call.resp, false, call.err
 }
 
 func isSuccessfulConnectorListResponse(resp *http.Response, err error) bool {
