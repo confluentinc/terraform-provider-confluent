@@ -33,8 +33,7 @@ type connectorListCall struct {
 	err        error
 }
 
-// connectorListCalls lets concurrent confluent_connector refreshes of the same Kafka cluster share one
-// in-flight list-connectors call. Nothing is kept once a call returns: the next read makes a new call.
+// connectorListCalls lets concurrent refreshes of one cluster share an in-flight list call; nothing is kept after it returns.
 type connectorListCalls struct {
 	mu       sync.Mutex
 	inflight map[string]*connectorListCall
@@ -48,8 +47,7 @@ func connectorListCallKey(environmentId, clusterId string) string {
 	return fmt.Sprintf("%s/%s", environmentId, clusterId)
 }
 
-// do runs fetch, or waits for the identical fetch already in flight for key; joined reports the latter.
-// Callers must treat the returned connectors as read-only since joined callers share them.
+// do runs fetch or joins the one in flight for key (joined); the returned list is shared, so treat it as read-only.
 func (g *connectorListCalls) do(key string, fetch connectorListFetchFunc) (connectors connectorList, resp *http.Response, joined bool, err error) {
 	if g == nil {
 		connectors, resp, err = fetch()

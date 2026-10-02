@@ -229,8 +229,7 @@ func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, e
 	return req.Execute()
 }
 
-// executeConnectorRead lists every connector in the cluster and picks displayName out of it. With
-// shareInFlightList, it can join another read's identical list call that is already in flight.
+// executeConnectorRead lists the cluster's connectors (optionally joining an in-flight list call) and picks displayName.
 func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string, shareInFlightList bool) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
 	fetch := func() (connectorList, *http.Response, error) {
 		return c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
@@ -266,8 +265,7 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return readConnector(ctx, d, meta, true)
 }
 
-// readConnector reads the connector into state. Reads right after a create or update pass
-// shareInFlightList=false so they can't pick up a list call that started before the write.
+// Reads right after a create or update pass shareInFlightList=false so they can't see a list call that predates the write.
 func readConnector(ctx context.Context, d *schema.ResourceData, meta interface{}, shareInFlightList bool) diag.Diagnostics {
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
