@@ -162,7 +162,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
-	createdConnectorWithId, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	createdConnectorWithId, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, false)
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -187,7 +187,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	// We don't save offsets in connectorRead because the backend can arbitrarily change them.
 	// You can create a connector without offsets—initially, initially the backend returns "offsets": [],
 	// but after some time, it may return a non-empty list of offsets.
-	return connectorRead(ctx, d, meta)
+	return readConnector(ctx, d, meta, false)
 }
 
 func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, environmentId, clusterId string) error {
@@ -229,8 +229,24 @@ func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, e
 	return req.Execute()
 }
 
-func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
-	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
+// executeConnectorRead lists the cluster's connectors (optionally joining an in-flight list call) and picks displayName.
+func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string, shareInFlightList bool) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
+	fetch := func() (connectorList, *http.Response, error) {
+		return c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
+	}
+	var connectors connectorList
+	var resp *http.Response
+	var err error
+	if shareInFlightList {
+		var joined bool
+		connectors, resp, joined, err = c.connectorListCalls.do(connectorListCallKey(environmentId, clusterId), fetch)
+		// A read that only joined another read's call gets its own attempt (and retry budget) if that call failed.
+		if joined && !isSuccessfulConnectorListResponse(resp, err) {
+			connectors, resp, err = fetch()
+		}
+	} else {
+		connectors, resp, err = fetch()
+	}
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
 		return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
 	}
@@ -246,6 +262,11 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 }
 
 func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return readConnector(ctx, d, meta, true)
+}
+
+// Reads right after a create or update pass shareInFlightList=false so they can't see a list call that predates the write.
+func readConnector(ctx context.Context, d *schema.ResourceData, meta interface{}, shareInFlightList bool) diag.Diagnostics {
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error reading Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -255,17 +276,17 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Connector %q", displayName))
 
-	if _, err := readConnectorAndSetAttributes(ctx, d, meta, displayName, environmentId, clusterId); err != nil {
+	if _, err := readConnectorAndSetAttributes(ctx, d, meta, displayName, environmentId, clusterId, shareInFlightList); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Connector %q: %s", displayName, createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
+func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string, shareInFlightList bool) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, shareInFlightList)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -425,7 +446,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 
-	return connectorRead(ctx, d, meta)
+	return readConnector(ctx, d, meta, false)
 }
 
 func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -470,7 +491,7 @@ func connectorImport(ctx context.Context, d *schema.ResourceData, meta interface
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readConnectorAndSetAttributes(ctx, d, meta, connectorName, environmentId, clusterId); err != nil {
+	if _, err := readConnectorAndSetAttributes(ctx, d, meta, connectorName, environmentId, clusterId, false); err != nil {
 		return nil, fmt.Errorf("error importing Connector %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	if err := d.Set(paramSensitiveConfig, make(map[string]string)); err != nil {
