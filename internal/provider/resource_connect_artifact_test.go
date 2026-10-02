@@ -362,3 +362,102 @@ func testAccCheckConnectArtifactExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+func TestAccConnectArtifactFailed(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createArtifactPresignedUrlResponse, _ := os.ReadFile("../testdata/connect_artifact/read_presigned_url.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/cam/v1/presigned-upload-url")).
+		InScenario(connectArtifactScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioConnectArtifactPresignedUrlHasBeenCreated).
+		WillReturn(
+			string(createArtifactPresignedUrlResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/cam/v1/connect-artifacts")).
+		InScenario(connectArtifactScenarioName).
+		WhenScenarioStateIs(scenarioConnectArtifactPresignedUrlHasBeenCreated).
+		WillSetStateTo(scenarioStateConnectArtifactIsProvisioning).
+		WillReturn(
+			string(createArtifactResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	// The provisioning poll returns a FAILED artifact with an error_message, so
+	// `terraform apply` surfaces the reason instead of a bare FAILED status.
+	readFailedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_failed_artifact.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+		InScenario(connectArtifactScenarioName).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloudAPIResponse)+"$")).
+		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
+		WillReturn(
+			string(readFailedArtifactResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	// The failed apply leaves a tainted resource in state (the ID is set before
+	// provisioning fails), so the framework's post-test destroy issues a DELETE.
+	// Stub the DELETE and the follow-up read so cleanup succeeds. The resource
+	// never reached READY, so its cloud is still the un-normalized API value.
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+		InScenario(connectArtifactScenarioName).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloudAPIResponse)+"$")).
+		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
+		WillSetStateTo(scenarioStateConnectArtifactHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+		InScenario(connectArtifactScenarioName).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloudAPIResponse)+"$")).
+		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenDeleted).
+		WillReturn(
+			string(readDeletedArtifactResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	connectArtifactResourceLabel := "test"
+
+	_ = os.Setenv("IMPORT_ARTIFACT_FILENAME", "abc.jar")
+	defer func() {
+		_ = os.Unsetenv("IMPORT_ARTIFACT_FILENAME")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckConnectArtifactDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckConnectArtifactConfig(mockServerUrl, connectArtifactResourceLabel),
+				ExpectError: regexp.MustCompile("No transforms found in the uploaded artifact"),
+			},
+		},
+	})
+}
