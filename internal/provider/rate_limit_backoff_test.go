@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -72,6 +73,7 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 		{"integer seconds above the exponential wait", "20", 20 * time.Second, 30 * time.Second},
 		{"fractional seconds", "2.5", 2500 * time.Millisecond, 5 * time.Second},
 		{"longer than the cap", "120", testRetryWaitMax, testRetryWaitMax},
+		{"too large for a Duration", "1e300", testRetryWaitMax, testRetryWaitMax},
 		{"HTTP date", time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat), 8 * time.Second, 20 * time.Second},
 	}
 	for _, tc := range cases {
@@ -119,6 +121,7 @@ func TestParseRetryAfter(t *testing.T) {
 		" 3 ":                           {3 * time.Second, true},
 		"0.5":                           {500 * time.Millisecond, true},
 		"0":                             {0, true},
+		"1e300":                         {time.Duration(math.MaxInt64), true},
 		"Fri, 31 Dec 1999 23:59:59 GMT": {0, true},
 		"":                              {0, false},
 		"-1":                            {0, false},

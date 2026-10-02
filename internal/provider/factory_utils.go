@@ -233,7 +233,7 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
-	// (15-30 seconds for 429/503 with WithRateLimitBackoff, which adds jitter on top of each wait)
+	// With WithRateLimitBackoff (the Connect client), 429/503 waits are jittered: 15-30s over 4 retries, 75-150s over 8.
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
@@ -293,6 +293,10 @@ func parseRetryAfter(value string) (time.Duration, bool) {
 	if seconds, err := strconv.ParseFloat(value, 64); err == nil {
 		if seconds < 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
 			return 0, false
+		}
+		// Converting an out-of-range float to an int64 Duration is implementation-defined, so saturate.
+		if seconds >= float64(math.MaxInt64)/float64(time.Second) {
+			return time.Duration(math.MaxInt64), true
 		}
 		return time.Duration(seconds * float64(time.Second)), true
 	}
