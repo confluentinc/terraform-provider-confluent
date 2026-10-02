@@ -27,7 +27,7 @@ func responseWithRetryAfter(statusCode int, retryAfter string) *http.Response {
 }
 
 func sampleBackoff(attemptNum int, resp *http.Response) (time.Duration, time.Duration) {
-	lowest, highest := time.Duration(1<<62), time.Duration(0)
+	lowest, highest := time.Duration(math.MaxInt64), time.Duration(0)
 	for i := 0; i < backoffSamples; i++ {
 		wait := rateLimitBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
 		lowest, highest = min(lowest, wait), max(highest, wait)
@@ -72,8 +72,8 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 	}{
 		{"integer seconds above the exponential wait", "20", 20 * time.Second, 30 * time.Second},
 		{"fractional seconds", "2.5", 2500 * time.Millisecond, 5 * time.Second},
-		{"longer than the cap", "120", testRetryWaitMax, testRetryWaitMax},
-		{"too large for a Duration", "1e300", testRetryWaitMax, testRetryWaitMax},
+		{"longer than RetryWaitMax is honored as-is", "120", 120 * time.Second, 120 * time.Second},
+		{"exactly RetryWaitMax", "30", testRetryWaitMax, testRetryWaitMax},
 		{"HTTP date", time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat), 8 * time.Second, 20 * time.Second},
 	}
 	for _, tc := range cases {
@@ -87,7 +87,7 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 }
 
 func TestRateLimitBackoffIgnoresInvalidRetryAfter(t *testing.T) {
-	for _, retryAfter := range []string{"soon", "-5", "NaN", "Inf"} {
+	for _, retryAfter := range []string{"soon", "-5", "NaN", "Inf", "1e300"} {
 		lowest, highest := sampleBackoff(2, responseWithRetryAfter(http.StatusTooManyRequests, retryAfter))
 		if lowest < 4*time.Second || highest > 8*time.Second {
 			t.Errorf("Retry-After %q: waits ranged %v-%v, want the exponential 4s-8s", retryAfter, lowest, highest)
@@ -121,7 +121,7 @@ func TestParseRetryAfter(t *testing.T) {
 		" 3 ":                           {3 * time.Second, true},
 		"0.5":                           {500 * time.Millisecond, true},
 		"0":                             {0, true},
-		"1e300":                         {time.Duration(math.MaxInt64), true},
+		"1e300":                         {0, false},
 		"Fri, 31 Dec 1999 23:59:59 GMT": {0, true},
 		"":                              {0, false},
 		"-1":                            {0, false},

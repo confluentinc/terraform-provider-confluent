@@ -266,7 +266,7 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// rateLimitBackoff uses Retry-After only as a floor under the exponential schedule (Confluent Cloud sends 1s) and adds jitter on top.
+// rateLimitBackoff uses Retry-After as a floor under the exponential schedule (Confluent Cloud sends 1s) and adds jitter on top.
 func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
 		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
@@ -277,8 +277,9 @@ func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http
 	if retryAfter, ok := parseRetryAfter(resp.Header.Get("Retry-After")); ok && retryAfter > lower {
 		lower = retryAfter
 	}
+	// A Retry-After at or beyond maxWait is honored as-is, like DefaultBackoff, so no wait is shorter than before.
 	if lower >= maxWait {
-		return maxWait
+		return lower
 	}
 	upper := min(2*lower, maxWait)
 	return lower + rand.N(upper-lower+1)
@@ -294,9 +295,9 @@ func parseRetryAfter(value string) (time.Duration, bool) {
 		if seconds < 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
 			return 0, false
 		}
-		// Converting an out-of-range float to an int64 Duration is implementation-defined, so saturate.
+		// Too large for a Duration (converting it would be implementation-defined): treat as invalid.
 		if seconds >= float64(math.MaxInt64)/float64(time.Second) {
-			return time.Duration(math.MaxInt64), true
+			return 0, false
 		}
 		return time.Duration(seconds * float64(time.Second)), true
 	}
