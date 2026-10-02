@@ -261,18 +261,13 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// rateLimitBackoff keeps the exponential schedule on 429/503 even when the server sends a short
-// Retry-After (Confluent Cloud sends "Retry-After: 1" for its per-second limits, which DefaultBackoff
-// would honor verbatim on every attempt), treats Retry-After as a floor, and adds jitter on top so
-// concurrent clients throttled by the same limit don't all retry at the same instant.
-// Every other retryable response keeps DefaultBackoff's behavior.
+// rateLimitBackoff uses Retry-After only as a floor under the exponential schedule (Confluent Cloud sends 1s) and adds jitter on top.
 func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
 		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
 	}
 
-	// Jitter range is [lower, 2*lower], capped at maxWait; lower is capped at maxWait/2 so that
-	// late attempts stay jittered instead of all landing exactly on maxWait.
+	// lower is capped at maxWait/2 so late attempts stay jittered instead of all landing on maxWait.
 	lower := min(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
 	if retryAfter, ok := parseRetryAfter(resp.Header.Get("Retry-After")); ok && retryAfter > lower {
 		lower = retryAfter
