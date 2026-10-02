@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"sync"
@@ -49,7 +50,7 @@ func TestConnectorListCallsShareInFlightCall(t *testing.T) {
 		go func() {
 			defer finished.Done()
 			started.Done()
-			connectors, _, joined, err := calls.do(testConnectorListCallKey, fetch)
+			connectors, _, joined, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -62,7 +63,7 @@ func TestConnectorListCallsShareInFlightCall(t *testing.T) {
 		}()
 	}
 	started.Wait()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	close(release)
 	finished.Wait()
 
@@ -83,7 +84,7 @@ func TestConnectorListCallsKeepNothingAfterCallReturns(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		if _, _, joined, _ := calls.do(testConnectorListCallKey, fetch); joined {
+		if _, _, joined, _ := calls.do(context.Background(), testConnectorListCallKey, fetch); joined {
 			t.Fatalf("read %d: a sequential read must not reuse a completed call", i)
 		}
 	}
@@ -107,10 +108,10 @@ func TestConnectorListCallsKeyByCluster(t *testing.T) {
 		wg.Add(1)
 		go func(key string) {
 			defer wg.Done()
-			_, _, _, _ = calls.do(key, fetch)
+			_, _, _, _ = calls.do(context.Background(), key, fetch)
 		}(key)
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	close(release)
 	wg.Wait()
 
@@ -136,11 +137,11 @@ func TestConnectorListCallsPassFailuresToJoinedCallers(t *testing.T) {
 	results := make(chan result, 2)
 	for i := 0; i < 2; i++ {
 		go func() {
-			_, resp, joined, err := calls.do(testConnectorListCallKey, fetch)
+			_, resp, joined, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
 			results <- result{resp, joined, err}
 		}()
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	close(release)
 
 	joinedSeen := false
@@ -164,7 +165,7 @@ func TestConnectorListCallsNilIsPassThrough(t *testing.T) {
 		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
 	}
 
-	_, _, joined, _ := calls.do(testConnectorListCallKey, fetch)
+	_, _, joined, _ := calls.do(context.Background(), testConnectorListCallKey, fetch)
 	if joined || fetches != 1 {
 		t.Fatalf("expected a nil connectorListCalls to call fetch directly, got joined=%v fetches=%d", joined, fetches)
 	}
@@ -186,5 +187,36 @@ func TestIsSuccessfulConnectorListResponse(t *testing.T) {
 		if got := isSuccessfulConnectorListResponse(tc.resp, tc.err); got != tc.want {
 			t.Errorf("case %d: got %v, want %v", i, got, tc.want)
 		}
+	}
+}
+
+func TestConnectorListCallsJoinedCallerHonorsItsOwnContext(t *testing.T) {
+	calls := newConnectorListCalls()
+	release := make(chan struct{})
+	defer close(release)
+	fetch := func() (connectorList, *http.Response, error) {
+		<-release
+		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
+	}
+	go func() { _, _, _, _ = calls.do(context.Background(), testConnectorListCallKey, fetch) }()
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	done := make(chan error, 1)
+	go func() {
+		_, _, joined, err := calls.do(ctx, testConnectorListCallKey, fetch)
+		if !joined {
+			err = errors.New("expected to join the in-flight call")
+		}
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("a joined caller whose context is canceled must not wait for the in-flight call")
 	}
 }

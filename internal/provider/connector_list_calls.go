@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -48,7 +49,7 @@ func connectorListCallKey(environmentId, clusterId string) string {
 }
 
 // do runs fetch or joins the one in flight for key (joined); the returned list is shared, so treat it as read-only.
-func (g *connectorListCalls) do(key string, fetch connectorListFetchFunc) (connectors connectorList, resp *http.Response, joined bool, err error) {
+func (g *connectorListCalls) do(ctx context.Context, key string, fetch connectorListFetchFunc) (connectors connectorList, resp *http.Response, joined bool, err error) {
 	if g == nil {
 		connectors, resp, err = fetch()
 		return connectors, resp, false, err
@@ -57,8 +58,12 @@ func (g *connectorListCalls) do(key string, fetch connectorListFetchFunc) (conne
 	g.mu.Lock()
 	if call, ok := g.inflight[key]; ok {
 		g.mu.Unlock()
-		<-call.done
-		return call.connectors, call.resp, true, call.err
+		select {
+		case <-call.done:
+			return call.connectors, call.resp, true, call.err
+		case <-ctx.Done():
+			return nil, nil, true, ctx.Err()
+		}
 	}
 	call := &connectorListCall{done: make(chan struct{})}
 	g.inflight[key] = call

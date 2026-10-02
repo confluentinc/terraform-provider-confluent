@@ -102,7 +102,7 @@ func newListCallsTestResourceData(t *testing.T, name string) *schema.ResourceDat
 }
 
 func TestConnectorRefreshesShareOneInFlightListCall(t *testing.T) {
-	server := newListCallsTestServer(t, 100*time.Millisecond, false)
+	server := newListCallsTestServer(t, 500*time.Millisecond, false)
 	defer server.Close()
 	client := newListCallsTestClient(server.URL)
 
@@ -149,7 +149,7 @@ func TestConnectorSequentialRefreshesEachMakeTheirOwnListCall(t *testing.T) {
 }
 
 func TestConnectorReadAfterWriteDoesNotJoinInFlightListCall(t *testing.T) {
-	server := newListCallsTestServer(t, 200*time.Millisecond, false)
+	server := newListCallsTestServer(t, 500*time.Millisecond, false)
 	defer server.Close()
 	client := newListCallsTestClient(server.URL)
 
@@ -159,7 +159,7 @@ func TestConnectorReadAfterWriteDoesNotJoinInFlightListCall(t *testing.T) {
 		defer wg.Done()
 		_ = connectorRead(context.Background(), newListCallsTestResourceData(t, listCallsTestConnectorName(0)), client)
 	}()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	go func() {
 		defer wg.Done()
 		// The read at the end of connectorCreate/connectorUpdate.
@@ -175,7 +175,7 @@ func TestConnectorReadAfterWriteDoesNotJoinInFlightListCall(t *testing.T) {
 }
 
 func TestConnectorRefreshRetriesOnItsOwnWhenSharedListCallFails(t *testing.T) {
-	server := newListCallsTestServer(t, 200*time.Millisecond, true)
+	server := newListCallsTestServer(t, 500*time.Millisecond, true)
 	defer server.Close()
 	client := newListCallsTestClient(server.URL)
 
@@ -183,7 +183,7 @@ func TestConnectorRefreshRetriesOnItsOwnWhenSharedListCallFails(t *testing.T) {
 	go func() {
 		leaderDone <- connectorRead(context.Background(), newListCallsTestResourceData(t, listCallsTestConnectorName(0)), client).HasError()
 	}()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	const joiners = 4
 	var wg sync.WaitGroup
