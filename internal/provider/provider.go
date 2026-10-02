@@ -305,7 +305,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:     true,
 					DefaultFunc:  schema.EnvDefaultFunc("TF_PROVIDER_CONFLUENT_MAX_RETRIES", 4),
 					ValidateFunc: validation.IntAtLeast(4),
-					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
+					Description:  "Maximum number of retries of HTTP client. Defaults to 4. Connect API requests retry at least 8 times.",
 				},
 				"user_agent_suffix": {
 					Type:        schema.TypeString,
@@ -717,7 +717,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries), WithRateLimitBackoff()).CreateRetryableClient()
+	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(connectAPIMaxRetries(maxRetries)), WithRateLimitBackoff()).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()

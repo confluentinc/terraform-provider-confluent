@@ -171,3 +171,11 @@ func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
 		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }
+
+func TestConnectAPIMaxRetries(t *testing.T) {
+	for configured, want := range map[int]int{4: 8, 6: 8, 8: 8, 12: 12} {
+		if got := connectAPIMaxRetries(configured); got != want {
+			t.Errorf("connectAPIMaxRetries(%d) = %d, want %d", configured, got, want)
+		}
+	}
+}

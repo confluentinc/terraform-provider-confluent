@@ -206,6 +206,11 @@ func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
 	}
 }
 
+// connectAPIMaxRetries gives Connect API requests a longer retry budget, since many connectors share one per-second limit.
+func connectAPIMaxRetries(configuredMaxRetries int) int {
+	return max(configuredMaxRetries, connectAPIMinMaxRetries)
+}
+
 // WithRateLimitBackoff makes 429/503 retries use rateLimitBackoff instead of DefaultBackoff.
 func WithRateLimitBackoff() RetryableClientFactoryOption {
 	return func(c *RetryableClientFactory) {
