@@ -132,7 +132,8 @@ func TestParseRetryAfter(t *testing.T) {
 	}
 }
 
-func TestCreateRetryableClientBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
+// timeTwoRateLimitedRetries returns how long a client takes to get through two "429, Retry-After: 1" responses.
+func timeTwoRateLimitedRetries(t *testing.T, opts ...RetryableClientFactoryOption) time.Duration {
 	var requests int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if atomic.AddInt32(&requests, 1) <= 2 {
@@ -144,7 +145,7 @@ func TestCreateRetryableClientBacksOffExponentiallyDespiteRetryAfter(t *testing.
 	}))
 	defer server.Close()
 
-	client := NewRetryableClientFactory(context.Background()).CreateRetryableClient()
+	client := NewRetryableClientFactory(context.Background(), opts...).CreateRetryableClient()
 	start := time.Now()
 	resp, err := client.Get(server.URL)
 	elapsed := time.Since(start)
@@ -152,12 +153,21 @@ func TestCreateRetryableClientBacksOffExponentiallyDespiteRetryAfter(t *testing.
 		t.Fatalf("unexpected error: %v", err)
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK || requests != 3 {
 		t.Fatalf("expected success on the 3rd request, got status %d after %d requests", resp.StatusCode, requests)
 	}
+	return elapsed
+}
+
+func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
 	// Honoring "Retry-After: 1" verbatim would wait 1s + 1s; the exponential floor waits at least 1s + 2s.
-	if elapsed < 3*time.Second {
+	if elapsed := timeTwoRateLimitedRetries(t, WithRateLimitBackoff()); elapsed < 3*time.Second {
 		t.Fatalf("expected at least 3s of backoff across two 429s, waited %v", elapsed)
+	}
+}
+
+func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
+	if elapsed := timeTwoRateLimitedRetries(t); elapsed >= 3*time.Second {
+		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }
