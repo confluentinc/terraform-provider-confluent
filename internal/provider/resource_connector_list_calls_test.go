@@ -174,6 +174,35 @@ func TestConnectorReadAfterWriteDoesNotJoinInFlightListCall(t *testing.T) {
 	}
 }
 
+func TestConnectorJoinedRefreshReturnsItsOwnContextError(t *testing.T) {
+	server := newListCallsTestServer(t, 500*time.Millisecond, false)
+	defer server.Close()
+	client := newListCallsTestClient(server.URL)
+
+	leaderDone := make(chan struct{})
+	go func() {
+		defer close(leaderDone)
+		_ = connectorRead(context.Background(), newListCallsTestResourceData(t, listCallsTestConnectorName(0)), client)
+	}()
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	start := time.Now()
+	_, _, err := executeConnectorRead(ctx, client, listCallsTestConnectorName(1), listCallsTestEnvironmentId, listCallsTestClusterId, true)
+	// executeConnectorRead wraps errors with createDescriptiveError, so match the message.
+	if err == nil || err.Error() != context.Canceled.Error() {
+		t.Fatalf("expected the joined read to return its own context error, got %v", err)
+	}
+	if elapsed := time.Since(start); elapsed > 200*time.Millisecond {
+		t.Fatalf("expected the joined read to return without waiting for the in-flight call, took %s", elapsed)
+	}
+	<-leaderDone
+	if server.calls != 1 {
+		t.Fatalf("expected a canceled joined read not to make its own list call (1 call), got %d", server.calls)
+	}
+}
+
 func TestConnectorRefreshRetriesOnItsOwnWhenSharedListCallFails(t *testing.T) {
 	server := newListCallsTestServer(t, 500*time.Millisecond, true)
 	defer server.Close()
