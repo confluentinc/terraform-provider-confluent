@@ -1,0 +1,60 @@
+version: v1.0
+name: Relevant Live Tests (PR, manual)
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+# A newer push to the PR cancels an in-flight scoped run (unlike nightly, which never cancels).
+auto_cancel:
+  running:
+    when: "true"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.25.12
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+# Scoped runs are a subset of the 24h nightly. Tune once you see real durations.
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Relevant Live Tests"
+    task:
+      jobs:
+        - name: "Detect affected groups & run"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - |
+              set -e
+              GROUPS="$(BASE_REF=origin/master bash scripts/live-test-affected-groups.sh)"
+              echo "Affected live-test groups: $GROUPS"
+              if [ "$GROUPS" = "NONE" ]; then
+                echo "No provider code changed; skipping live tests."
+              elif [ "$GROUPS" = "all" ]; then
+                make live-test
+                make live-test-rtce
+              else
+                make live-test TF_LIVE_TEST_GROUPS="$GROUPS"
+                # RTCE tests are tagged core but skipped by live-test (-skip=Rtce);
+                # run them separately when core is in scope, matching the nightly.
+                case ",$GROUPS," in *,core,*) make live-test-rtce ;; esac
+              fi
+      epilogue:
+        always:
+          commands:
+            - test-results publish live-report.xml live-rtce-report.xml -N "live-tests-pr" --ignore-missing --trim-output-to 20000
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          - test-results gen-pipeline-report || echo "no test results available"
