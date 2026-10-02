@@ -46,14 +46,15 @@ func connectorListCallKey(environmentId, clusterId string) string {
 	return fmt.Sprintf("%s/%s", environmentId, clusterId)
 }
 
-// do runs fetch or joins the one in flight for key (joined); the returned list is shared, so treat it as read-only.
-func (g *connectorListCalls) do(ctx context.Context, key string, fetch connectorListFetchFunc) (connectors connectorList, resp *http.Response, joined bool, err error) {
+// do returns fetch's result, sharing one call among concurrent callers with the same key. A caller that joined a call
+// that failed makes its own call (with its own retry budget), unless its context has ended. The caller that made the
+// failed call returns its error as is. The returned list is shared, so treat it as read-only.
+func (g *connectorListCalls) do(ctx context.Context, key string, fetch connectorListFetchFunc) (connectorList, *http.Response, error) {
 	if g == nil {
-		connectors, resp, err = fetch()
-		return connectors, resp, false, err
+		return fetch()
 	}
 
-	// singleflight runs fn only for the caller that starts the call, so ran tells that caller apart from those that joined it.
+	// singleflight runs fn only for the caller that starts the call, which tells that caller apart from those that joined.
 	var ran atomic.Bool
 	ch := g.group.DoChan(key, func() (interface{}, error) {
 		ran.Store(true)
@@ -61,11 +62,14 @@ func (g *connectorListCalls) do(ctx context.Context, key string, fetch connector
 		return connectorListResult{connectors, resp}, err
 	})
 	select {
+	case <-ctx.Done():
+		return nil, nil, ctx.Err()
 	case r := <-ch:
 		result := r.Val.(connectorListResult)
-		return result.connectors, result.resp, !ran.Load(), r.Err
-	case <-ctx.Done():
-		return nil, nil, !ran.Load(), ctx.Err()
+		if !ran.Load() && !isSuccessfulConnectorListResponse(result.resp, r.Err) && ctx.Err() == nil {
+			return fetch()
+		}
+		return result.connectors, result.resp, r.Err
 	}
 }
 

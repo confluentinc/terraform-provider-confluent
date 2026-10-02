@@ -238,13 +238,7 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 	var resp *http.Response
 	var err error
 	if shareInFlightList {
-		var joined bool
-		connectors, resp, joined, err = c.connectorListCalls.do(ctx, connectorListCallKey(environmentId, clusterId), fetch)
-		// A read that only joined another read's call gets its own attempt (and retry budget) if that call failed,
-		// unless it stopped waiting because its own context ended; then it returns that error as is.
-		if joined && !isSuccessfulConnectorListResponse(resp, err) && ctx.Err() == nil {
-			connectors, resp, err = fetch()
-		}
+		connectors, resp, err = c.connectorListCalls.do(ctx, connectorListCallKey(environmentId, clusterId), fetch)
 	} else {
 		connectors, resp, err = fetch()
 	}

@@ -32,15 +32,21 @@ func testConnectorList(name string) connectorList {
 	return connectorList{name: *connectv1.NewConnectV1ConnectorExpansionWithDefaults()}
 }
 
-func TestConnectorListCallsShareInFlightCall(t *testing.T) {
-	calls := newConnectorListCalls()
-	var fetches, joinedCount int32
-	release := make(chan struct{})
-	fetch := func() (connectorList, *http.Response, error) {
-		atomic.AddInt32(&fetches, 1)
-		<-release
+func okConnectorListFetch(fetches *int32, release <-chan struct{}) connectorListFetchFunc {
+	return func() (connectorList, *http.Response, error) {
+		atomic.AddInt32(fetches, 1)
+		if release != nil {
+			<-release
+		}
 		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
 	}
+}
+
+func TestConnectorListCallsShareInFlightCall(t *testing.T) {
+	calls := newConnectorListCalls()
+	var fetches int32
+	release := make(chan struct{})
+	fetch := okConnectorListFetch(&fetches, release)
 
 	const readers = 50
 	var started, finished sync.WaitGroup
@@ -50,15 +56,12 @@ func TestConnectorListCallsShareInFlightCall(t *testing.T) {
 		go func() {
 			defer finished.Done()
 			started.Done()
-			connectors, _, joined, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
+			connectors, _, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if _, ok := connectors["a"]; !ok {
 				t.Errorf("expected connector %q in the shared list", "a")
-			}
-			if joined {
-				atomic.AddInt32(&joinedCount, 1)
 			}
 		}()
 	}
@@ -70,22 +73,16 @@ func TestConnectorListCallsShareInFlightCall(t *testing.T) {
 	if fetches != 1 {
 		t.Fatalf("expected %d concurrent readers to share 1 list call, got %d", readers, fetches)
 	}
-	if joinedCount != readers-1 {
-		t.Fatalf("expected %d readers to report joining the in-flight call, got %d", readers-1, joinedCount)
-	}
 }
 
 func TestConnectorListCallsKeepNothingAfterCallReturns(t *testing.T) {
 	calls := newConnectorListCalls()
 	var fetches int32
-	fetch := func() (connectorList, *http.Response, error) {
-		atomic.AddInt32(&fetches, 1)
-		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
-	}
+	fetch := okConnectorListFetch(&fetches, nil)
 
 	for i := 0; i < 3; i++ {
-		if _, _, joined, _ := calls.do(context.Background(), testConnectorListCallKey, fetch); joined {
-			t.Fatalf("read %d: a sequential read must not reuse a completed call", i)
+		if _, _, err := calls.do(context.Background(), testConnectorListCallKey, fetch); err != nil {
+			t.Fatalf("read %d: unexpected error: %v", i, err)
 		}
 	}
 	if fetches != 3 {
@@ -97,18 +94,14 @@ func TestConnectorListCallsKeyByCluster(t *testing.T) {
 	calls := newConnectorListCalls()
 	var fetches int32
 	release := make(chan struct{})
-	fetch := func() (connectorList, *http.Response, error) {
-		atomic.AddInt32(&fetches, 1)
-		<-release
-		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
-	}
+	fetch := okConnectorListFetch(&fetches, release)
 
 	var wg sync.WaitGroup
 	for _, key := range []string{connectorListCallKey("env-1", "lkc-1"), connectorListCallKey("env-1", "lkc-2")} {
 		wg.Add(1)
 		go func(key string) {
 			defer wg.Done()
-			_, _, _, _ = calls.do(context.Background(), key, fetch)
+			_, _, _ = calls.do(context.Background(), key, fetch)
 		}(key)
 	}
 	time.Sleep(200 * time.Millisecond)
@@ -120,54 +113,79 @@ func TestConnectorListCallsKeyByCluster(t *testing.T) {
 	}
 }
 
-func TestConnectorListCallsPassFailuresToJoinedCallers(t *testing.T) {
+func TestConnectorListCallsJoinedCallerRetriesWhenSharedCallFails(t *testing.T) {
 	calls := newConnectorListCalls()
+	var fetches int32
 	release := make(chan struct{})
 	listErr := errors.New("429 Too Many Requests")
 	fetch := func() (connectorList, *http.Response, error) {
-		<-release
-		return nil, &http.Response{StatusCode: http.StatusTooManyRequests}, listErr
+		if atomic.AddInt32(&fetches, 1) == 1 {
+			<-release
+			return nil, &http.Response{StatusCode: http.StatusTooManyRequests}, listErr
+		}
+		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
 	}
 
-	type result struct {
-		resp   *http.Response
-		joined bool
-		err    error
-	}
-	results := make(chan result, 2)
-	for i := 0; i < 2; i++ {
-		go func() {
-			_, resp, joined, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
-			results <- result{resp, joined, err}
-		}()
-	}
-	time.Sleep(200 * time.Millisecond)
+	leaderErr := make(chan error, 1)
+	go func() {
+		_, _, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
+		leaderErr <- err
+	}()
+	time.Sleep(100 * time.Millisecond)
+	joinerErr := make(chan error, 1)
+	go func() {
+		_, _, err := calls.do(context.Background(), testConnectorListCallKey, fetch)
+		joinerErr <- err
+	}()
+	time.Sleep(100 * time.Millisecond)
 	close(release)
 
-	joinedSeen := false
-	for i := 0; i < 2; i++ {
-		r := <-results
-		if r.err != listErr || r.resp.StatusCode != http.StatusTooManyRequests {
-			t.Fatalf("expected the failure to be returned unchanged, got status=%d err=%v", r.resp.StatusCode, r.err)
-		}
-		joinedSeen = joinedSeen || r.joined
+	if err := <-leaderErr; err != listErr {
+		t.Fatalf("expected the caller that made the failed call to get its error unchanged, got %v", err)
 	}
-	if !joinedSeen {
-		t.Fatal("expected one caller to report joining the failed call, so it can retry on its own")
+	if err := <-joinerErr; err != nil {
+		t.Fatalf("expected the joined caller to succeed on its own call, got %v", err)
+	}
+	if fetches != 2 {
+		t.Fatalf("expected the failed call plus one call by the joined caller (2), got %d", fetches)
+	}
+}
+
+func TestConnectorListCallsJoinedCallerHonorsItsOwnContext(t *testing.T) {
+	calls := newConnectorListCalls()
+	var fetches int32
+	release := make(chan struct{})
+	defer close(release)
+	fetch := okConnectorListFetch(&fetches, release)
+	go func() { _, _, _ = calls.do(context.Background(), testConnectorListCallKey, fetch) }()
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	done := make(chan error, 1)
+	go func() {
+		_, _, err := calls.do(ctx, testConnectorListCallKey, fetch)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("a joined caller whose context is canceled must not wait for the in-flight call")
+	}
+	if n := atomic.LoadInt32(&fetches); n != 1 {
+		t.Fatalf("expected a canceled joined caller not to make its own call (1 call), got %d", n)
 	}
 }
 
 func TestConnectorListCallsNilIsPassThrough(t *testing.T) {
 	var calls *connectorListCalls
 	var fetches int32
-	fetch := func() (connectorList, *http.Response, error) {
-		atomic.AddInt32(&fetches, 1)
-		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
-	}
 
-	_, _, joined, _ := calls.do(context.Background(), testConnectorListCallKey, fetch)
-	if joined || fetches != 1 {
-		t.Fatalf("expected a nil connectorListCalls to call fetch directly, got joined=%v fetches=%d", joined, fetches)
+	if _, _, err := calls.do(context.Background(), testConnectorListCallKey, okConnectorListFetch(&fetches, nil)); err != nil || fetches != 1 {
+		t.Fatalf("expected a nil connectorListCalls to call fetch directly, got err=%v fetches=%d", err, fetches)
 	}
 }
 
@@ -187,36 +205,5 @@ func TestIsSuccessfulConnectorListResponse(t *testing.T) {
 		if got := isSuccessfulConnectorListResponse(tc.resp, tc.err); got != tc.want {
 			t.Errorf("case %d: got %v, want %v", i, got, tc.want)
 		}
-	}
-}
-
-func TestConnectorListCallsJoinedCallerHonorsItsOwnContext(t *testing.T) {
-	calls := newConnectorListCalls()
-	release := make(chan struct{})
-	defer close(release)
-	fetch := func() (connectorList, *http.Response, error) {
-		<-release
-		return testConnectorList("a"), &http.Response{StatusCode: http.StatusOK}, nil
-	}
-	go func() { _, _, _, _ = calls.do(context.Background(), testConnectorListCallKey, fetch) }()
-	time.Sleep(100 * time.Millisecond)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	done := make(chan error, 1)
-	go func() {
-		_, _, joined, err := calls.do(ctx, testConnectorListCallKey, fetch)
-		if !joined {
-			err = errors.New("expected to join the in-flight call")
-		}
-		done <- err
-	}()
-	select {
-	case err := <-done:
-		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("expected context.Canceled, got %v", err)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("a joined caller whose context is canceled must not wait for the in-flight call")
 	}
 }
