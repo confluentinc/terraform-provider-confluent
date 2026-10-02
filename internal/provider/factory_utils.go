@@ -3,7 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"math"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -190,13 +195,21 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 type RetryableClientFactoryOption = func(c *RetryableClientFactory)
 
 type RetryableClientFactory struct {
-	ctx        context.Context
-	maxRetries *int
+	ctx                 context.Context
+	maxRetries          *int
+	useRateLimitBackoff bool
 }
 
 func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
 	return func(c *RetryableClientFactory) {
 		c.maxRetries = &maxRetries
+	}
+}
+
+// WithRateLimitBackoff makes 429/503 retries use rateLimitBackoff instead of DefaultBackoff.
+func WithRateLimitBackoff() RetryableClientFactoryOption {
+	return func(c *RetryableClientFactory) {
+		c.useRateLimitBackoff = true
 	}
 }
 
@@ -215,6 +228,7 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
+	// (15-30 seconds for 429/503 with WithRateLimitBackoff, which adds jitter on top of each wait)
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
@@ -229,6 +243,9 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	}
 
 	retryClient.ErrorHandler = customErrorHandler
+	if f.useRateLimitBackoff {
+		retryClient.Backoff = rateLimitBackoff
+	}
 
 	// Create a logger for retryablehttp
 	// This logger will be used to send retryablehttp's internal logs to tflog
@@ -242,6 +259,42 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	}
 
 	return standardClient
+}
+
+// rateLimitBackoff uses Retry-After only as a floor under the exponential schedule (Confluent Cloud sends 1s) and adds jitter on top.
+func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
+		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
+	}
+
+	// lower is capped at maxWait/2 so late attempts stay jittered instead of all landing on maxWait.
+	lower := min(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
+	if retryAfter, ok := parseRetryAfter(resp.Header.Get("Retry-After")); ok && retryAfter > lower {
+		lower = retryAfter
+	}
+	if lower >= maxWait {
+		return maxWait
+	}
+	upper := min(2*lower, maxWait)
+	return lower + rand.N(upper-lower+1)
+}
+
+// parseRetryAfter accepts delay-seconds (integer or fractional) and HTTP-date values.
+func parseRetryAfter(value string) (time.Duration, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, false
+	}
+	if seconds, err := strconv.ParseFloat(value, 64); err == nil {
+		if seconds < 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
+			return 0, false
+		}
+		return time.Duration(seconds * float64(time.Second)), true
+	}
+	if retryTime, err := http.ParseTime(value); err == nil {
+		return max(time.Until(retryTime), 0), true
+	}
+	return 0, false
 }
 
 func customErrorHandler(resp *http.Response, err error, retries int) (*http.Response, error) {
