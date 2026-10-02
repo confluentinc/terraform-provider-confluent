@@ -247,15 +247,10 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact camv1.CamV1Co
 		}
 	}
 
-	// Set the status attribute if it exists in the schema
-	if _, ok := d.GetOk(paramStatus); ok && artifact.Status != nil {
+	if artifact.Status != nil {
 		if err := d.Set(paramStatus, artifact.Status.GetPhase()); err != nil {
 			return nil, err
 		}
-	}
-
-	// Set the error_message attribute if it exists in the schema
-	if _, ok := d.GetOk(paramErrorMessage); ok && artifact.Status != nil {
 		if err := d.Set(paramErrorMessage, artifact.Status.GetErrorMessage()); err != nil {
 			return nil, err
 		}

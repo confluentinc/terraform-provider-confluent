@@ -131,6 +131,8 @@ func TestAccConnectArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramArtifactFile, "abc.jar"),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramContentFormat, connectArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramDescription, connectArtifactDescription),
+					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramStatus, "READY"),
+					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramErrorMessage, ""),
 				),
 			},
 			{

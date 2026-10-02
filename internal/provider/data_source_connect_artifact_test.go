@@ -79,6 +79,67 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramCloud, connectArtifactCloud),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramContentFormat, connectArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramDescription, connectArtifactDescription),
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramStatus, "PROVISIONED"),
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramErrorMessage, ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccConnectArtifactDataSourceFailed(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// A FAILED artifact with an error_message, so the data source surfaces both.
+	failedConnectArtifactResponse, _ := json.Marshal(map[string]interface{}{
+		"id": connectArtifactId,
+		"spec": map[string]interface{}{
+			"display_name":   connectArtifactUniqueName,
+			"cloud":          connectArtifactCloud,
+			"environment":    connectArtifactEnvironmentId,
+			"content_format": connectArtifactContentFormat,
+			"description":    connectArtifactDescription,
+		},
+		"status": map[string]interface{}{
+			"phase":         "FAILED",
+			"error_message": "No transforms found in the uploaded artifact",
+		},
+	})
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/cam/v1/connect-artifacts/%s", connectArtifactId))).
+		InScenario(connectArtifactDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(failedConnectArtifactResponse),
+			map[string]string{"Content-Type": "application/json"},
+			http.StatusOK,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckConnectArtifactDataSourceConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramId, connectArtifactId),
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramStatus, "FAILED"),
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramErrorMessage, "No transforms found in the uploaded artifact"),
 				),
 			},
 		},
