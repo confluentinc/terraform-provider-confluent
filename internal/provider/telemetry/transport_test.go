@@ -570,8 +570,8 @@ func TestNewTransport_UsesDefaults(t *testing.T) {
 	if tr.maxEvents != maxEventsPerRun {
 		t.Errorf("per-run cap = %d, want %d", tr.maxEvents, maxEventsPerRun)
 	}
-	if maxEventsPerRun != 10000 {
-		t.Errorf("maxEventsPerRun = %d, want 10000", maxEventsPerRun)
+	if maxEventsPerRun != 20000 {
+		t.Errorf("maxEventsPerRun = %d, want 20000", maxEventsPerRun)
 	}
 	if maxConsecutiveFailures != 5 {
 		t.Errorf("maxConsecutiveFailures = %d, want 5", maxConsecutiveFailures)

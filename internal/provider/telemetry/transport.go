@@ -52,7 +52,7 @@ const (
 	// backstop against an unusually large or runaway run, set well above an
 	// ordinary run's one event per managed resource per refresh; it is not a
 	// sampling policy.
-	maxEventsPerRun = 10000
+	maxEventsPerRun = 20000
 
 	// maxConsecutiveFailures is how many sends in a row may fail before the run
 	// stops reporting; a 429 or 5xx response stops it at once instead. It exceeds
