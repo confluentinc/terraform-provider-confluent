@@ -174,6 +174,112 @@ func TestAccIPFilter(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteIPFilterStub, "DELETE /iam/v2/ip-filters/ipg-wyorq", expectedCountOne)
 }
 
+// TestAccIPFilterManagementScopeOperationGroups covers a resource_group: "management"
+// filter, which has no operation_groups at all -- the spec states outright that an empty
+// list is "not supported" there. The WithBodyPattern assertion on the PATCH stub is
+// load-bearing: with no other stub registered for this path, a request that sends an
+// explicit "operation_groups":[] gets WireMock's default 404, and the test fails there
+// rather than the Check step ever running.
+func TestAccIPFilterManagementScopeOperationGroups(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const managementScenarioName = "confluent_ip_filter management scope, no operation_groups"
+	const managementIPFilterID = "ipf-mgmt01"
+	managementIpGroups := []string{"ipg-3o91o"}
+	var noOperationGroups []string
+
+	createResponse, _ := ioutil.ReadFile("../testdata/ip_filter/create_ip_filter_management.json")
+	createStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/ip-filters")).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateIpFilterHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(createStub)
+
+	readCreatedResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_created_ip_filter_management.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", managementIPFilterID))).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
+		WillReturn(string(readCreatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	readUpdatedResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_updated_ip_filter_management.json")
+	patchStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", managementIPFilterID))).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
+		WillSetStateTo(scenarioStateIpFilterHasBeenUpdated).
+		// The regression this guards: a filter_name-only update on a management-scoped
+		// filter must never send operation_groups at all, not even as [].
+		WithBodyPattern(wiremock.NotMatching(`.*operation_groups.*`)).
+		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK)
+	_ = wiremockClient.StubFor(patchStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", managementIPFilterID))).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenUpdated).
+		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	readDeletedResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_deleted_ip_filter.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", managementIPFilterID))).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	deleteStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", managementIPFilterID))).
+		InScenario(managementScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenUpdated).
+		WillSetStateTo(scenarioStateIpFilterHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteStub)
+
+	resourceLabel := "test_ip_filter_management"
+	fullResourceLabel := fmt.Sprintf("confluent_ip_filter.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckIPFilterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckIPFilterConfig(mockServerUrl, resourceLabel, "Management Filter", "management",
+					"", noOperationGroups, managementIpGroups),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIPFilterExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramResourceGroup, "management"),
+					resource.TestCheckResourceAttr(fullResourceLabel, fmt.Sprintf("%s.#", paramOperationGroups), "0"),
+				),
+			},
+			{
+				// Only filter_name changes -- operation_groups stays absent throughout,
+				// exactly the "resource_group: management" case the spec's docs lead with.
+				Config: testAccCheckIPFilterConfig(mockServerUrl, resourceLabel, "Management Filter Updated", "management",
+					"", noOperationGroups, managementIpGroups),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIPFilterExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramFilterName, "Management Filter Updated"),
+					resource.TestCheckResourceAttr(fullResourceLabel, fmt.Sprintf("%s.#", paramOperationGroups), "0"),
+				),
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createStub, "POST /iam/v2/ip-filters", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchStub, fmt.Sprintf("PATCH /iam/v2/ip-filters/%s", managementIPFilterID), expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE /iam/v2/ip-filters/%s", managementIPFilterID), expectedCountOne)
+}
+
 func testAccCheckIPFilterDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each IP Group is destroyed

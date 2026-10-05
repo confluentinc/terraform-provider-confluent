@@ -35,9 +35,11 @@ import (
 //
 // It walks the runtime ResourcesMap rather than scanning source text for an
 // xResource() naming convention, so a resource whose constructor doesn't follow
-// that convention (for example "confluent_rtce_topic": rtceTopic()) is still
-// covered. Data sources are excluded — v1 telemetry scope is the managed
-// resources only.
+// that convention is still covered. Every constructor happens to follow it
+// today — "confluent_rtce_topic": rtceTopic() was the last exception, renamed
+// to rtceTopicResource() when that resource's codegen marker was stamped — but
+// nothing enforces it, so the map stays the source of truth. Data sources are
+// excluded — v1 telemetry scope is the managed resources only.
 //
 // Every string in the result is a key of some resource's schema map, so the
 // output can never contain a map attribute's dynamic keys or any attribute

@@ -45,7 +45,7 @@ func TestAccDataSourceIpAddresses(t *testing.T) {
 
 	readIpAddressesPageOneResponse, _ := ioutil.ReadFile("../testdata/network_ip/read_ips_page_1.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/ip-addresses")).
-		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listIPAddressesPageSize))).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listIpAddressesPageSize))).
 		InScenario(ipAddressesDataSourceScenarioName).
 		WillReturn(
 			string(readIpAddressesPageOneResponse),
@@ -55,7 +55,7 @@ func TestAccDataSourceIpAddresses(t *testing.T) {
 
 	readIpAddressesPageTwoResponse, _ := ioutil.ReadFile("../testdata/network_ip/read_ips_page_2.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/ip-addresses")).
-		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listIPAddressesPageSize))).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listIpAddressesPageSize))).
 		WithQueryParam("page_token", wiremock.EqualTo(ipAddressLastPagePageToken)).
 		InScenario(ipAddressesDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).

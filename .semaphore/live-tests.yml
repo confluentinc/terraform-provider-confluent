@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.25.12
+      - sem-version go 1.26.7
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
@@ -19,6 +19,8 @@ global_job_config:
       - 'export "PATH=${GOPATH}/bin:${PATH}"'
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
+      # Enable client-analytics telemetry so the live suite exercises the reporting path.
+      - 'export "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW=1"'
 
 execution_time_limit:
   hours: 24

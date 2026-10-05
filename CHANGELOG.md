@@ -1,3 +1,31 @@
+## 2.88.0 (September 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.87.0...v2.88.0)
+
+**New features:**
+* Added new `confluent_switchover_pair` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_switchover_pair) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_pair), `confluent_switchover_pairs` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_pairs), `confluent_switchover_endpoint` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_switchover_endpoint) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_endpoint), and `confluent_switchover_endpoints` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_switchover_endpoints) to support Kafka cluster disaster recovery switchover in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 2.87.0 (September 23rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.86.0...v2.87.0)
+
+**New features:**
+* Added support for new `confluent_notifications_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_integration) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notifications_integration).
+* Added support for a new optional `google_cloud_storage` configuration block to `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+* Added support for a new optional `biglake_metastore` configuration block to `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration).
+
+## 2.86.0 (September 10th, 2026) 
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.85.0...v2.86.0) 
+
+**New features:**
+* Added a new `confluent_dns_forwarder` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_dns_forwarder). 
+* Added a new `confluent_plugin` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_plugin) that looks up a Custom Connect Plugin by `id` within an environment.
+
+**Bug fixes:**
+* Changed a field inside the `forward_via_ip` and `forward_via_gcp_dns_zones` block, so `confluent_dns_forwarder` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_dns_forwarder) now correctly plans a resource replacement. 
+* Fixed a 403 error relating to `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) refresh caused by an invalid Cloud API key.
+
 ## 2.85.0 (August 28th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.84.0...v2.85.0)
