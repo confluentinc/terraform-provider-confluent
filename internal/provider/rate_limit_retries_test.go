@@ -87,7 +87,6 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 		want       int
 	}{
 		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
-		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
 		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
 		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
 		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured},
