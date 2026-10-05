@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"sync/atomic"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 	c := meta.(*Client)
 	configured := d.Get("max_retries").(int)
 
-	retryMax := func(name string, httpClient *http.Client) int {
+	retryClient := func(name string, httpClient *http.Client) *retryablehttp.Client {
 		logging, ok := httpClient.Transport.(*loggingTransport)
 		if !ok {
 			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
@@ -80,20 +81,25 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 		if !ok {
 			t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
 		}
-		return roundTripper.Client.RetryMax
+		return roundTripper.Client
 	}
 	for name, tc := range map[string]struct {
 		httpClient *http.Client
 		want       int
+		jitter     bool
 	}{
-		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
-		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
-		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
-		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
-		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured},
+		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
+		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), true},
+		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
+		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
+		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, false},
 	} {
-		if got := retryMax(name, tc.httpClient); got != tc.want {
-			t.Errorf("%s client: RetryMax = %d, want %d", name, got, tc.want)
+		client := retryClient(name, tc.httpClient)
+		if client.RetryMax != tc.want {
+			t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
+		}
+		if jitter := reflect.ValueOf(client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
+			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
 		}
 	}
 }
