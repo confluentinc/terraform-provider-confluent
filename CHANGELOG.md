@@ -1,3 +1,10 @@
+## 2.89.0 (October 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.88.0...v2.89.0)
+
+**Bug fixes:**
+* Fixed an issue where large plans could fail with `429 Too Many Requests` errors. Rate-limited requests to the Connect, IAM, API Key, and RBAC APIs are now retried at least 12 times instead of 4, and Connect API retries now back off with jitter.
+
 ## 2.88.0 (September 30th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.87.0...v2.88.0)
