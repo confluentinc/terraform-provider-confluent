@@ -44,24 +44,7 @@ func TestRateLimitBackoffJittersAboveExponentialSchedule(t *testing.T) {
 		"503 with Retry-After: 1": responseWithRetryAfter(http.StatusServiceUnavailable, "1"),
 	} {
 		t.Run(name, func(t *testing.T) {
-			expected := []struct{ lower, upper time.Duration }{
-				{1 * time.Second, 2 * time.Second},
-				{2 * time.Second, 4 * time.Second},
-				{4 * time.Second, 8 * time.Second},
-				{8 * time.Second, 16 * time.Second},
-				{15 * time.Second, 30 * time.Second},
-				{15 * time.Second, 30 * time.Second},
-				{15 * time.Second, 30 * time.Second},
-			}
-			for attemptNum, want := range expected {
-				lowest, highest := sampleBackoff(attemptNum, resp)
-				if lowest < want.lower || highest > want.upper {
-					t.Errorf("attempt %d: waits ranged %v-%v, want within %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
-				}
-				if highest-lowest < (want.upper-want.lower)/2 {
-					t.Errorf("attempt %d: waits ranged only %v-%v, expected jitter across %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
-				}
-			}
+			checkJitteredSchedule(t, resp)
 		})
 	}
 }
@@ -89,9 +72,36 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 
 func TestRateLimitBackoffIgnoresInvalidRetryAfter(t *testing.T) {
 	for _, retryAfter := range []string{"soon", "-5", "NaN", "Inf", "1e300"} {
-		lowest, highest := sampleBackoff(2, responseWithRetryAfter(http.StatusTooManyRequests, retryAfter))
-		if lowest < 4*time.Second || highest > 8*time.Second {
-			t.Errorf("Retry-After %q: waits ranged %v-%v, want the exponential 4s-8s", retryAfter, lowest, highest)
+		t.Run(retryAfter, func(t *testing.T) {
+			checkJitteredSchedule(t, responseWithRetryAfter(http.StatusTooManyRequests, retryAfter))
+		})
+	}
+}
+
+// checkJitteredSchedule checks every attempt's waits: within 1-2s, 2-4s, 4-8s, 8-16s, then 15-30s, and spread out.
+func checkJitteredSchedule(t *testing.T, resp *http.Response) {
+	t.Helper()
+	expected := []struct{ lower, upper time.Duration }{
+		{1 * time.Second, 2 * time.Second},
+		{2 * time.Second, 4 * time.Second},
+		{4 * time.Second, 8 * time.Second},
+		{8 * time.Second, 16 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+		{15 * time.Second, 30 * time.Second},
+	}
+	for attemptNum, want := range expected {
+		lowest, highest := sampleBackoff(attemptNum, resp)
+		if lowest < want.lower || highest > want.upper {
+			t.Errorf("attempt %d: waits ranged %v-%v, want within %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
+		}
+		if highest-lowest < (want.upper-want.lower)/2 {
+			t.Errorf("attempt %d: waits ranged only %v-%v, expected jitter across %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
 		}
 	}
 }

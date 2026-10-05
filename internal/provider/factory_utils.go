@@ -263,10 +263,11 @@ func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
 		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
 	}
-	// DefaultBackoff returns the exponential wait without a response, and a valid Retry-After as-is with one.
+	// DefaultBackoff returns the exponential wait without a response, and a valid Retry-After as-is with one. The header
+	// is read with attempt 0, so an invalid Retry-After falls back to minWait instead of an unjittered exponential wait.
 	lower := min(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
 	if resp.Header.Get("Retry-After") != "" {
-		lower = max(lower, retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp))
+		lower = max(lower, retryablehttp.DefaultBackoff(minWait, maxWait, 0, resp))
 	}
 	if lower >= maxWait {
 		return lower
