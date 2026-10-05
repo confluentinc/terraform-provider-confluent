@@ -145,16 +145,26 @@ func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T
 	}
 }
 
+func TestWithRateLimitHandlingBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
+	f := NewRetryableClientFactory(context.Background(), WithRateLimitHandling(4))
+	if f.maxRetries == nil || *f.maxRetries != rateLimitedAPIMinMaxRetries || !f.useRateLimitBackoff {
+		t.Fatalf("expected WithRateLimitHandling(4) to set %d retries and the rate-limit backoff, got %+v", rateLimitedAPIMinMaxRetries, f)
+	}
+	if elapsed := timeTwoRateLimitedRetries(t, WithRateLimitHandling(4)); elapsed < 3*time.Second {
+		t.Fatalf("expected at least 3s of backoff across two 429s, waited %v", elapsed)
+	}
+}
+
 func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
 	if elapsed := timeTwoRateLimitedRetries(t); elapsed >= 3*time.Second {
 		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }
 
-func TestConnectAPIMaxRetries(t *testing.T) {
+func TestRateLimitedAPIMaxRetries(t *testing.T) {
 	for configured, want := range map[int]int{4: 8, 6: 8, 8: 8, 12: 12} {
-		if got := connectAPIMaxRetries(configured); got != want {
-			t.Errorf("connectAPIMaxRetries(%d) = %d, want %d", configured, got, want)
+		if got := rateLimitedAPIMaxRetries(configured); got != want {
+			t.Errorf("rateLimitedAPIMaxRetries(%d) = %d, want %d", configured, got, want)
 		}
 	}
 }
