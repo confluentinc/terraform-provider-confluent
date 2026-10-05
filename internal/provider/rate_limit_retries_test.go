@@ -12,7 +12,7 @@ import (
 )
 
 func TestRateLimitedAPIMaxRetries(t *testing.T) {
-	for configured, want := range map[int]int{4: 20, 10: 20, 20: 20, 25: 25} {
+	for configured, want := range map[int]int{4: 12, 8: 12, 12: 12, 20: 20} {
 		if got := rateLimitedAPIMaxRetries(configured); got != want {
 			t.Errorf("rateLimitedAPIMaxRetries(%d) = %d, want %d", configured, got, want)
 		}

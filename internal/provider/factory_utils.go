@@ -223,8 +223,8 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
-	// Connect, IAM, API keys and RBAC clients retry at least 20 times (rateLimitedAPIMaxRetries): about 20s on 429s
-	// (Retry-After: 1), and about 8 minutes on other retryable errors (1 + 2 + 4 + 8 + 16, then 30s each).
+	// Connect, IAM, API keys and RBAC clients retry at least 12 times (rateLimitedAPIMaxRetries): about 12s on 429s
+	// (Retry-After: 1), and about 4 minutes on other retryable errors (1 + 2 + 4 + 8 + 16, then 30s each).
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second

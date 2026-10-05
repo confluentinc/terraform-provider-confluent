@@ -305,7 +305,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:     true,
 					DefaultFunc:  schema.EnvDefaultFunc("TF_PROVIDER_CONFLUENT_MAX_RETRIES", 4),
 					ValidateFunc: validation.IntAtLeast(4),
-					Description:  "Maximum number of retries of HTTP client. Defaults to 4. Connect, IAM, API keys and RBAC API requests retry at least 20 times.",
+					Description:  "Maximum number of retries of HTTP client. Defaults to 4. Connect, IAM, API keys and RBAC API requests retry at least 12 times.",
 				},
 				"user_agent_suffix": {
 					Type:        schema.TypeString,
