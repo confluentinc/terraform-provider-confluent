@@ -203,6 +203,11 @@ func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
 	}
 }
 
+// rateLimitedAPIMaxRetries gives the Connect, IAM, API keys and RBAC clients extra retries for 429s under load.
+func rateLimitedAPIMaxRetries(configuredMaxRetries int) int {
+	return max(configuredMaxRetries, rateLimitedAPIMinMaxRetries)
+}
+
 func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFactoryOption) *RetryableClientFactory {
 	c := &RetryableClientFactory{
 		ctx: ctx,
@@ -225,6 +230,7 @@ func WithRateLimitBackoff() RetryableClientFactoryOption {
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
+	// Connect, IAM, API keys and RBAC clients retry at least 12 times; Connect's 429/503 waits are also jittered.
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second

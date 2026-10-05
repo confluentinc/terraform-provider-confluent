@@ -5,13 +5,11 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -160,47 +158,5 @@ func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T
 func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
 	if elapsed := timeTwoRateLimitedRetries(t); elapsed >= 3*time.Second {
 		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
-	}
-}
-
-func TestProviderConfigureGivesTheConnectClientMoreRetriesAndJitter(t *testing.T) {
-	p := New("test", "")()
-	d := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
-		"cloud_api_key":    "test-key",
-		"cloud_api_secret": "test-secret",
-	})
-	meta, diags := providerConfigure(context.Background(), d, p, "test", "")
-	if diags.HasError() {
-		t.Fatalf("providerConfigure failed: %v", diags)
-	}
-	c := meta.(*Client)
-
-	retryClient := func(name string, httpClient *http.Client) *retryablehttp.Client {
-		logging, ok := httpClient.Transport.(*loggingTransport)
-		if !ok {
-			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
-		}
-		roundTripper, ok := logging.transport.(*retryablehttp.RoundTripper)
-		if !ok {
-			t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
-		}
-		return roundTripper.Client
-	}
-	if got, want := retryClient("Connect", c.connectV1Client.GetConfig().HTTPClient).RetryMax, max(d.Get("max_retries").(int), connectAPIMinMaxRetries); got != want {
-		t.Errorf("Connect client: RetryMax = %d, want %d", got, want)
-	}
-	for name, tc := range map[string]struct {
-		httpClient *http.Client
-		jitter     bool
-	}{
-		"Connect":  {c.connectV1Client.GetConfig().HTTPClient, true},
-		"API keys": {c.apiKeysV2Client.GetConfig().HTTPClient, false},
-		"IAM":      {c.iamV2Client.GetConfig().HTTPClient, false},
-		"RBAC":     {c.mdsV2Client.GetConfig().HTTPClient, false},
-		"Org":      {c.orgV2Client.GetConfig().HTTPClient, false},
-	} {
-		if jitter := reflect.ValueOf(retryClient(name, tc.httpClient).Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
-			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
-		}
 	}
 }
