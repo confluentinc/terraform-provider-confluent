@@ -153,7 +153,7 @@ func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
 	}
 }
 
-func TestProviderConfigureGivesOnlyTheConnectClientTheJitteredBackoff(t *testing.T) {
+func TestProviderConfigureGivesTheConnectClientMoreRetriesAndJitter(t *testing.T) {
 	p := New("test", "")()
 	d := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
 		"cloud_api_key":    "test-key",
@@ -164,6 +164,21 @@ func TestProviderConfigureGivesOnlyTheConnectClientTheJitteredBackoff(t *testing
 		t.Fatalf("providerConfigure failed: %v", diags)
 	}
 	c := meta.(*Client)
+
+	retryClient := func(name string, httpClient *http.Client) *retryablehttp.Client {
+		logging, ok := httpClient.Transport.(*loggingTransport)
+		if !ok {
+			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
+		}
+		roundTripper, ok := logging.transport.(*retryablehttp.RoundTripper)
+		if !ok {
+			t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
+		}
+		return roundTripper.Client
+	}
+	if got, want := retryClient("Connect", c.connectV1Client.GetConfig().HTTPClient).RetryMax, max(d.Get("max_retries").(int), connectAPIMinMaxRetries); got != want {
+		t.Errorf("Connect client: RetryMax = %d, want %d", got, want)
+	}
 	for name, tc := range map[string]struct {
 		httpClient *http.Client
 		jitter     bool
@@ -174,15 +189,7 @@ func TestProviderConfigureGivesOnlyTheConnectClientTheJitteredBackoff(t *testing
 		"RBAC":     {c.mdsV2Client.GetConfig().HTTPClient, false},
 		"Org":      {c.orgV2Client.GetConfig().HTTPClient, false},
 	} {
-		logging, ok := tc.httpClient.Transport.(*loggingTransport)
-		if !ok {
-			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, tc.httpClient.Transport)
-		}
-		roundTripper, ok := logging.transport.(*retryablehttp.RoundTripper)
-		if !ok {
-			t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
-		}
-		if jitter := reflect.ValueOf(roundTripper.Client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
+		if jitter := reflect.ValueOf(retryClient(name, tc.httpClient).Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
 			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
 		}
 	}
