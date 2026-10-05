@@ -20,7 +20,7 @@ func TestRateLimitedAPIMaxRetries(t *testing.T) {
 }
 
 func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
-	// Ten "429, Retry-After: 0" responses in a row: more than the default 4 retries get through, fewer than the floor.
+	// More 429s in a row than the default 4 retries outlast, but fewer than the floor.
 	const rejections = 10
 	tests := map[string]struct {
 		maxRetries   int
