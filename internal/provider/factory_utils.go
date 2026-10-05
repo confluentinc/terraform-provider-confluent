@@ -3,11 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand/v2"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -266,16 +263,18 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// rateLimitBackoff uses Retry-After as a floor under the exponential schedule (Confluent Cloud sends 1s) and adds jitter on top.
+// rateLimitBackoff adds jitter to the exponential schedule on 429/503, using Retry-After (Confluent Cloud sends 1s) only as a floor.
 func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
 		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
 	}
 
-	// lower is capped at maxWait/2 so late attempts stay jittered instead of all landing on maxWait.
+	// Without a response, DefaultBackoff ignores Retry-After and returns the exponential wait. It's capped at maxWait/2
+	// so late attempts stay jittered instead of all landing on maxWait.
 	lower := min(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
-	if retryAfter, ok := parseRetryAfter(resp.Header.Get("Retry-After")); ok && retryAfter > lower {
-		lower = retryAfter
+	if resp.Header.Get("Retry-After") != "" {
+		// With a response, DefaultBackoff returns a valid Retry-After as-is.
+		lower = max(lower, retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp))
 	}
 	// A Retry-After at or beyond maxWait is honored as-is, like DefaultBackoff, so no wait is shorter than before.
 	if lower >= maxWait {
@@ -283,28 +282,6 @@ func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http
 	}
 	upper := min(2*lower, maxWait)
 	return lower + rand.N(upper-lower+1)
-}
-
-// parseRetryAfter accepts delay-seconds (integer or fractional) and HTTP-date values.
-func parseRetryAfter(value string) (time.Duration, bool) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0, false
-	}
-	if seconds, err := strconv.ParseFloat(value, 64); err == nil {
-		if seconds < 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
-			return 0, false
-		}
-		// Too large for a Duration (converting it would be implementation-defined): treat as invalid.
-		if seconds >= float64(math.MaxInt64)/float64(time.Second) {
-			return 0, false
-		}
-		return time.Duration(seconds * float64(time.Second)), true
-	}
-	if retryTime, err := http.ParseTime(value); err == nil {
-		return max(time.Until(retryTime), 0), true
-	}
-	return 0, false
 }
 
 func customErrorHandler(resp *http.Response, err error, retries int) (*http.Response, error) {

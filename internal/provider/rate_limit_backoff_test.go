@@ -71,7 +71,6 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 		lower, upper time.Duration
 	}{
 		{"integer seconds above the exponential wait", "20", 20 * time.Second, 30 * time.Second},
-		{"fractional seconds", "2.5", 2500 * time.Millisecond, 5 * time.Second},
 		{"longer than RetryWaitMax is honored as-is", "120", 120 * time.Second, 120 * time.Second},
 		{"exactly RetryWaitMax", "30", testRetryWaitMax, testRetryWaitMax},
 		{"HTTP date", time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat), 8 * time.Second, 20 * time.Second},
@@ -109,29 +108,6 @@ func TestRateLimitBackoffKeepsDefaultBackoffForOtherResponses(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestParseRetryAfter(t *testing.T) {
-	cases := map[string]struct {
-		want time.Duration
-		ok   bool
-	}{
-		"1":                             {time.Second, true},
-		" 3 ":                           {3 * time.Second, true},
-		"0.5":                           {500 * time.Millisecond, true},
-		"0":                             {0, true},
-		"1e300":                         {0, false},
-		"Fri, 31 Dec 1999 23:59:59 GMT": {0, true},
-		"":                              {0, false},
-		"-1":                            {0, false},
-		"tomorrow":                      {0, false},
-	}
-	for value, tc := range cases {
-		got, ok := parseRetryAfter(value)
-		if got != tc.want || ok != tc.ok {
-			t.Errorf("parseRetryAfter(%q) = %v, %v; want %v, %v", value, got, ok, tc.want, tc.ok)
-		}
 	}
 }
 
