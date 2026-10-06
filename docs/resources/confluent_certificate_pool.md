@@ -39,7 +39,7 @@ The following arguments are supported:
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate pool.
 - `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created certificate identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
--> **Note:** `assigned_resource_owner` takes effect only when the Certificate Pool is created. Changing it replaces the Certificate Pool; removing it from the configuration leaves the Certificate Pool unchanged.
+-> **Note:** `assigned_resource_owner` takes effect only when the Certificate Pool is created. Adding it to the configuration of an existing Certificate Pool, or changing it, replaces the Certificate Pool; removing it from the configuration leaves the Certificate Pool unchanged. To add it to a Certificate Pool that already exists without replacing it, re-import the Certificate Pool instead; see [Import](#import).
 
 ## Import
 
@@ -56,5 +56,20 @@ $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export IMPORT_CERTIFICATE_POOL_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_certificate_pool.main op-abc123/pool-abc123
 ```
+
+To add `assigned_resource_owner` to a Certificate Pool that Terraform already manages, re-import the Certificate Pool. Adding the attribute to its configuration alone plans a replacement:
+
+```shell
+# 1. Add assigned_resource_owner to the Certificate Pool's configuration.
+# 2. Remove the Certificate Pool from Terraform state. This does not delete it.
+$ terraform state rm confluent_certificate_pool.main
+# 3. With the credentials above still exported, import it again with the variable set to the configured value.
+$ export IMPORT_CERTIFICATE_POOL_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
+$ terraform import confluent_certificate_pool.main op-abc123/pool-abc123
+# 4. Confirm that the plan shows no changes.
+$ terraform plan
+```
+
+Re-importing only records the value in Terraform state; it does not grant ownership. Set it to the principal that already owns the Certificate Pool, for example the one assigned when the Certificate Pool was created outside Terraform.
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

@@ -30,7 +30,7 @@ The following arguments are supported:
 - `description` - (Optional String) A free-form description of the Service Account.
 - `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created service account. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
--> **Note:** `assigned_resource_owner` takes effect only when the Service Account is created. Changing it replaces the Service Account; removing it from the configuration leaves the Service Account unchanged.
+-> **Note:** `assigned_resource_owner` takes effect only when the Service Account is created. Adding it to the configuration of an existing Service Account, or changing it, replaces the Service Account; removing it from the configuration leaves the Service Account unchanged. To add it to a Service Account that already exists without replacing it, re-import the Service Account instead; see [Import](#import).
 
 ## Attributes Reference
 
@@ -55,6 +55,21 @@ $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_service_account.my_sa sa-abc123
 ```
+
+To add `assigned_resource_owner` to a Service Account that Terraform already manages, re-import the Service Account. Adding the attribute to its configuration alone plans a replacement:
+
+```shell
+# 1. Add assigned_resource_owner to the Service Account's configuration.
+# 2. Remove the Service Account from Terraform state. This does not delete it.
+$ terraform state rm confluent_service_account.my_sa
+# 3. With the credentials above still exported, import it again with the variable set to the configured value.
+$ export IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
+$ terraform import confluent_service_account.my_sa sa-abc123
+# 4. Confirm that the plan shows no changes.
+$ terraform plan
+```
+
+Re-importing only records the value in Terraform state; it does not grant ownership. Set it to the principal that already owns the Service Account, for example the one assigned when the Service Account was created outside Terraform.
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 

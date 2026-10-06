@@ -69,7 +69,7 @@ The following arguments are supported:
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).
 - `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
--> **Note:** `assigned_resource_owner` takes effect only when the Identity Pool is created. Changing it replaces the Identity Pool; removing it from the configuration leaves the Identity Pool unchanged.
+-> **Note:** `assigned_resource_owner` takes effect only when the Identity Pool is created. Adding it to the configuration of an existing Identity Pool, or changing it, replaces the Identity Pool; removing it from the configuration leaves the Identity Pool unchanged. To add it to an Identity Pool that already exists without replacing it, re-import the Identity Pool instead; see [Import](#import).
 
 ## Attributes Reference
 
@@ -92,6 +92,21 @@ $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
 $ terraform import confluent_identity_pool.example op-abc123/pool-xyz456
 ```
+
+To add `assigned_resource_owner` to an Identity Pool that Terraform already manages, re-import the Identity Pool. Adding the attribute to its configuration alone plans a replacement:
+
+```shell
+# 1. Add assigned_resource_owner to the Identity Pool's configuration.
+# 2. Remove the Identity Pool from Terraform state. This does not delete it.
+$ terraform state rm confluent_identity_pool.example
+# 3. With the credentials above still exported, import it again with the variable set to the configured value.
+$ export IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER="<assigned_resource_owner>"
+$ terraform import confluent_identity_pool.example op-abc123/pool-xyz456
+# 4. Confirm that the plan shows no changes.
+$ terraform plan
+```
+
+Re-importing only records the value in Terraform state; it does not grant ownership. Set it to the principal that already owns the Identity Pool, for example the one assigned when the Identity Pool was created outside Terraform.
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 
