@@ -402,6 +402,7 @@ const (
 	paramParentResourceCrn                               = "parent_resource_crn"
 	paramNetworkCrn                                      = "network_crn"
 	paramAccessPointCrn                                  = "access_point_crn"
+	paramAssignedResourceOwner                           = "assigned_resource_owner"
 	paramEnvironmentCrn                                  = "environment_crn"
 	paramTarget                                          = "target"
 	paramHostname                                        = "hostname"
