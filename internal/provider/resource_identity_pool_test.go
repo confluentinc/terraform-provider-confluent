@@ -144,9 +144,15 @@ func TestAccIdentityPool(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fullIdentityPoolResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName: fullIdentityPoolResourceLabel,
+				ImportState:  true,
+				// assigned_resource_owner is seeded from IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER on import (see
+				// identityPoolImport); this test never sets that env var, so the attribute is absent from
+				// the pre-import state but present as "" post-import — a key-presence mismatch the
+				// standard ImportStateVerify comparison treats as a diff even though both are empty.
+				// TestAccIdentityPoolAssignedResourceOwner covers the seeded case.
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{paramAssignedResourceOwner},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					poolId := resources[fullIdentityPoolResourceLabel].Primary.ID
