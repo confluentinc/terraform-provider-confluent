@@ -29,7 +29,7 @@ import (
 // TestAccCertificatePoolAssignedResourceOwner covers assigned_resource_owner, which the API
 // accepts only as a query parameter on create and never returns on read.
 //
-// Three things are asserted, each of which would otherwise fail silently:
+// Four things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -43,6 +43,9 @@ import (
 //     post-import plan would want to *replace* the pool. The import step therefore runs with
 //     ImportStateVerify and no ImportStateVerifyIgnore, exactly as
 //     resource_identity_pool_assigned_resource_owner_test.go does for identity_pool.
+//   - Changing the attribute replaces the resource, and the replacement's create sends the new
+//     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
+//     second DELETE beyond the final destroy.
 //
 // Kept separate from TestAccCertificatePool, which never configures this attribute, so that test
 // keeps covering the default path where the create request carries no query parameter at all.
@@ -66,6 +69,12 @@ func TestAccCertificatePoolAssignedResourceOwner(t *testing.T) {
 	const stateCreated = "assigned-resource-owner-created"
 	// The spec's own example for the parameter.
 	const testAssignedResourceOwner = "u-a83k9b"
+	// Changing the owner replaces the resource (the attribute is ForceNew): Terraform deletes it,
+	// then creates it again with the new owner. Delete does not poll, so that create is the next
+	// request.
+	const testReplacementAssignedResourceOwner = "sa-r3pl4c"
+	const stateDeletedForReplacement = "assigned-resource-owner-deleted-for-replacement"
+	const stateRecreated = "assigned-resource-owner-recreated"
 
 	itemUrlPath := fmt.Sprintf("%s/%s", certificatePoolUrlPath, certificatePoolId)
 
@@ -87,8 +96,30 @@ func TestAccCertificatePoolAssignedResourceOwner(t *testing.T) {
 		WhenScenarioStateIs(stateCreated).
 		WillReturn(string(createCertificatePoolResponse), contentTypeJSONHeader, http.StatusOK))
 
+	deleteForReplacementStub := wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateDeletedForReplacement).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteForReplacementStub)
+
+	// The replacement's create must carry the new owner, or this stub does not match.
+	recreateStub := wiremock.Post(wiremock.URLPathEqualTo(certificatePoolUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(testReplacementAssignedResourceOwner)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateDeletedForReplacement).
+		WillSetStateTo(stateRecreated).
+		WillReturn(string(createCertificatePoolResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(recreateStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillReturn(string(createCertificatePoolResponse), contentTypeJSONHeader, http.StatusOK))
+
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
 		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 
 	// The import step below reads this: the API does not return the value, so without it the
@@ -118,10 +149,22 @@ func TestAccCertificatePoolAssignedResourceOwner(t *testing.T) {
 					return certificateAuthorityId + "/" + poolId, nil
 				},
 			},
+			{
+				// assigned_resource_owner is ForceNew, so changing it replaces the resource.
+				Config: testAccCheckCertificatePoolAssignedResourceOwnerConfig(mockServerUrl, testReplacementAssignedResourceOwner),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificatePoolResourceLabel, paramId, certificatePoolId),
+					resource.TestCheckResourceAttr(certificatePoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
 	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s?%s=%s", certificatePoolUrlPath, paramAssignedResourceOwner, testAssignedResourceOwner), expectedCountOne)
+	// Request counts match on method and URL, not scenario state, so this also counts the final
+	// destroy: two DELETEs (replacement, then destroy) where a test with no replacement sees one.
+	checkStubCount(t, wiremockClient, deleteForReplacementStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", certificatePoolUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
 func testAccCheckCertificatePoolAssignedResourceOwnerConfig(mockServerUrl, assignedResourceOwner string) string {

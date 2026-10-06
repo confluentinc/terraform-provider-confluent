@@ -29,7 +29,7 @@ import (
 // TestAccIdentityPoolAssignedResourceOwner covers assigned_resource_owner, which the API accepts
 // only as a query parameter on create and never returns on read.
 //
-// Three things are asserted, each of which would otherwise fail silently:
+// Four things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -40,12 +40,15 @@ import (
 //     drift on refresh. A d.Set of the absent field would store "" over the user's value and
 //     produce a permanent diff — and, since the attribute is ForceNew, a permanent proposed
 //     replacement.
-//   - Import seeds the attribute from IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER. Without that env var an
-//     import leaves it empty, and because the attribute is ForceNew the first post-import plan
-//     would want to *replace* the pool — from a `terraform import`, which is meant to be
-//     read-only. The import step therefore runs with ImportStateVerify and no
+//   - Import seeds the attribute from IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER. Without that
+//     env var an import leaves it empty, and because the attribute is ForceNew the first
+//     post-import plan would want to *replace* the pool — from a `terraform import`, which is
+//     meant to be read-only. The import step therefore runs with ImportStateVerify and no
 //     ImportStateVerifyIgnore: the verification passing is what proves the env var closed the
 //     gap, exactly as resource_connect_artifact_azure_test.go does for IMPORT_ARTIFACT_FILENAME.
+//   - Changing the attribute replaces the resource, and the replacement's create sends the new
+//     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
+//     second DELETE beyond the final destroy.
 func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	ctx := context.Background()
 
@@ -67,6 +70,12 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	const stateDeleted = "assigned-resource-owner-deleted"
 	// The spec's own example for the parameter.
 	const testAssignedResourceOwner = "u-a83k9b"
+	// Changing the owner replaces the resource (the attribute is ForceNew): Terraform deletes it,
+	// then creates it again with the new owner. Delete does not poll, so that create is the next
+	// request.
+	const testReplacementAssignedResourceOwner = "sa-r3pl4c"
+	const stateDeletedForReplacement = "assigned-resource-owner-deleted-for-replacement"
+	const stateRecreated = "assigned-resource-owner-recreated"
 
 	createUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId)
 	itemUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId)
@@ -90,9 +99,30 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 		WhenScenarioStateIs(stateCreated).
 		WillReturn(string(readCreatedIdentityPoolResponse), contentTypeJSONHeader, http.StatusOK))
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+	deleteForReplacementStub := wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
 		InScenario(assignedResourceOwnerScenario).
 		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateDeletedForReplacement).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteForReplacementStub)
+
+	// The replacement's create must carry the new owner, or this stub does not match.
+	recreateStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(testReplacementAssignedResourceOwner)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateDeletedForReplacement).
+		WillSetStateTo(stateRecreated).
+		WillReturn(string(createIdentityPoolResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(recreateStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillReturn(string(readCreatedIdentityPoolResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
 		WillSetStateTo(stateDeleted).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 
@@ -134,10 +164,23 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 					return providerId + "/" + poolId, nil
 				},
 			},
+			{
+				// assigned_resource_owner is ForceNew, so changing it replaces the resource.
+				Config: testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, testReplacementAssignedResourceOwner),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
 	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testAssignedResourceOwner), expectedCountOne)
+	// Request counts match on method and URL, not scenario state, so this also counts the final
+	// destroy: two DELETEs (replacement, then destroy) where a test with no replacement sees one.
+	checkStubCount(t, wiremockClient, deleteForReplacementStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
 func testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, assignedResourceOwner string) string {

@@ -28,7 +28,7 @@ import (
 // TestAccServiceAccountAssignedResourceOwner covers assigned_resource_owner, which the API accepts
 // only as a query parameter on create and never returns on read.
 //
-// Three things are asserted, each of which would otherwise fail silently:
+// Four things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -43,6 +43,9 @@ import (
 //     be read-only. The import step therefore runs with ImportStateVerify and no
 //     ImportStateVerifyIgnore: the verification passing is what proves the env var closed the gap,
 //     exactly as resource_identity_pool_assigned_resource_owner_test.go does for identity_pool.
+//   - Changing the attribute replaces the resource, and the replacement's create sends the new
+//     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
+//     second DELETE beyond the final destroy.
 //
 // Kept separate from TestAccServiceAccount (which never configures this attribute) so that test
 // keeps covering the default, omitted-attribute path a WireMock-level test is uniquely placed to
@@ -68,6 +71,12 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 	const stateDeleted = "assigned-resource-owner-deleted"
 	// The spec's own example for the parameter.
 	const testAssignedResourceOwner = "u-a83k9b"
+	// Changing the owner replaces the resource (the attribute is ForceNew): Terraform deletes it,
+	// then creates it again with the new owner. Delete does not poll, so that create is the next
+	// request.
+	const testReplacementAssignedResourceOwner = "sa-r3pl4c"
+	const stateDeletedForReplacement = "assigned-resource-owner-deleted-for-replacement"
+	const stateRecreated = "assigned-resource-owner-recreated"
 
 	const createUrlPath = "/iam/v2/service-accounts"
 	const itemUrlPath = "/iam/v2/service-accounts/sa-1jjv26"
@@ -91,9 +100,30 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 		WhenScenarioStateIs(stateCreated).
 		WillReturn(string(readCreatedSaResponse), contentTypeJSONHeader, http.StatusOK))
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+	deleteForReplacementStub := wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
 		InScenario(assignedResourceOwnerScenario).
 		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateDeletedForReplacement).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteForReplacementStub)
+
+	// The replacement's create must carry the new owner, or this stub does not match.
+	recreateStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(testReplacementAssignedResourceOwner)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateDeletedForReplacement).
+		WillSetStateTo(stateRecreated).
+		WillReturn(string(createSaResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(recreateStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillReturn(string(readCreatedSaResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(assignedResourceOwnerScenario).
+		WhenScenarioStateIs(stateRecreated).
 		WillSetStateTo(stateDeleted).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 
@@ -129,10 +159,23 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				// assigned_resource_owner is ForceNew, so changing it replaces the resource.
+				Config: testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, testReplacementAssignedResourceOwner),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountExists(fullSaResourceLabel),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramId, "sa-1jjv26"),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
 	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testAssignedResourceOwner), expectedCountOne)
+	// Request counts match on method and URL, not scenario state, so this also counts the final
+	// destroy: two DELETEs (replacement, then destroy) where a test with no replacement sees one.
+	checkStubCount(t, wiremockClient, deleteForReplacementStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
 func testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, assignedResourceOwner string) string {
