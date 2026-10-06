@@ -181,7 +181,7 @@ func TestAccCertificatePoolAssignedResourceOwner(t *testing.T) {
 	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", certificatePoolUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
-// TestCertificatePoolAssignedResourceOwnerAddedToExisting covers a certificate pool created without
+// TestAccCertificatePoolAssignedResourceOwnerAddedToExisting covers a certificate pool created without
 // assigned_resource_owner, the path every existing configuration takes, and the attribute being
 // added to it later:
 //
@@ -299,7 +299,7 @@ func TestAccCertificatePoolAssignedResourceOwnerAddedToExisting(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
 }
 
-// TestCertificatePoolAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
+// TestAccCertificatePoolAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
 // such as a principal that does not exist. The API's error detail must reach the user, and nothing
 // may be left in state, so no read or delete of the certificate pool follows.
 func TestAccCertificatePoolAssignedResourceOwnerCreateError(t *testing.T) {

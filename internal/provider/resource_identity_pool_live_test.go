@@ -225,21 +225,11 @@ func TestAccIdentityPoolAssignedResourceOwnerLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityPoolLiveExists(poolResourceName),
 					resource.TestCheckResourceAttrPair(poolResourceName, paramAssignedResourceOwner, "confluent_service_account.test_live_assigned_owner", paramId),
-					testAccCheckAssignedResourceOwnerLive(poolResourceName, identityPoolCrnLive),
+					testAccCheckAssignedResourceOwnerLive(poolResourceName),
 				),
 			},
 		},
 	})
-}
-
-func identityPoolCrnLive(ctx context.Context, c *Client, rs *terraform.ResourceState) (string, error) {
-	identityProviderId := rs.Primary.Attributes["identity_provider.0.id"]
-	identityPool, resp, err := c.identityProviderV2Client.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId, rs.Primary.ID).Execute()
-	if err != nil {
-		return "", createDescriptiveError(err, resp)
-	}
-	metadata := identityPool.GetMetadata()
-	return metadata.GetResourceName(), nil
 }
 
 func testAccCheckIdentityPoolAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, idpDisplayName, poolDisplayName string) string {

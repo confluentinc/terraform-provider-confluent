@@ -192,7 +192,7 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
-// TestServiceAccountAssignedResourceOwnerAddedToExisting covers a service account created without
+// TestAccServiceAccountAssignedResourceOwnerAddedToExisting covers a service account created without
 // assigned_resource_owner, the path every existing configuration takes, and the attribute being
 // added to it later:
 //
@@ -324,7 +324,7 @@ func TestAccServiceAccountAssignedResourceOwnerAddedToExisting(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
 }
 
-// TestServiceAccountAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
+// TestAccServiceAccountAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
 // such as a principal that does not exist. The API's error detail must reach the user, and nothing
 // may be left in state, so no read or delete of the service account follows.
 func TestAccServiceAccountAssignedResourceOwnerCreateError(t *testing.T) {

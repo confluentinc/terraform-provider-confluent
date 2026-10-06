@@ -197,7 +197,7 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
 }
 
-// TestIdentityPoolAssignedResourceOwnerAddedToExisting covers a identity pool created without
+// TestAccIdentityPoolAssignedResourceOwnerAddedToExisting covers an identity pool created without
 // assigned_resource_owner, the path every existing configuration takes, and the attribute being
 // added to it later:
 //
@@ -329,7 +329,7 @@ func TestAccIdentityPoolAssignedResourceOwnerAddedToExisting(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
 }
 
-// TestIdentityPoolAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
+// TestAccIdentityPoolAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
 // such as a principal that does not exist. The API's error detail must reach the user, and nothing
 // may be left in state, so no read or delete of the identity pool follows.
 func TestAccIdentityPoolAssignedResourceOwnerCreateError(t *testing.T) {

@@ -17,7 +17,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -289,7 +288,7 @@ func TestAccServiceAccountAssignedResourceOwnerLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckServiceAccountLiveExists(ownedResourceName),
 					resource.TestCheckResourceAttrPair(ownedResourceName, paramAssignedResourceOwner, "confluent_service_account.test_live_assigned_owner", paramId),
-					testAccCheckAssignedResourceOwnerLive(ownedResourceName, serviceAccountCrnLive),
+					testAccCheckAssignedResourceOwnerLive(ownedResourceName),
 				),
 			},
 		},
@@ -339,20 +338,11 @@ func TestAccServiceAccountAssignedResourceOwnerIdentityPoolLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckServiceAccountLiveExists(ownedResourceName),
 					resource.TestCheckResourceAttrPair(ownedResourceName, paramAssignedResourceOwner, "confluent_identity_pool.test_live_assigned_owner_pool", paramId),
-					testAccCheckAssignedResourceOwnerLive(ownedResourceName, serviceAccountCrnLive),
+					testAccCheckAssignedResourceOwnerLive(ownedResourceName),
 				),
 			},
 		},
 	})
-}
-
-func serviceAccountCrnLive(ctx context.Context, c *Client, rs *terraform.ResourceState) (string, error) {
-	serviceAccount, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamV2ApiContext(ctx), rs.Primary.ID).Execute()
-	if err != nil {
-		return "", createDescriptiveError(err, resp)
-	}
-	metadata := serviceAccount.GetMetadata()
-	return metadata.GetResourceName(), nil
 }
 
 func testAccCheckServiceAccountAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, ownedDisplayName string) string {

@@ -310,21 +310,11 @@ func TestAccCertificatePoolAssignedResourceOwnerLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCertificatePoolLiveExists(poolResourceName),
 					resource.TestCheckResourceAttrPair(poolResourceName, paramAssignedResourceOwner, "confluent_service_account.test_live_assigned_owner", paramId),
-					testAccCheckAssignedResourceOwnerLive(poolResourceName, certificatePoolCrnLive),
+					testAccCheckAssignedResourceOwnerLive(poolResourceName),
 				),
 			},
 		},
 	})
-}
-
-func certificatePoolCrnLive(ctx context.Context, c *Client, rs *terraform.ResourceState) (string, error) {
-	certificateAuthorityId := rs.Primary.Attributes["certificate_authority.0.id"]
-	certificatePool, resp, err := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId, rs.Primary.ID).Execute()
-	if err != nil {
-		return "", createDescriptiveError(err, resp)
-	}
-	metadata := certificatePool.GetMetadata()
-	return metadata.GetResourceName(), nil
 }
 
 func testAccCheckCertificatePoolAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, caDisplayName, poolDisplayName, certChain, certificateAuthorityId string) string {
