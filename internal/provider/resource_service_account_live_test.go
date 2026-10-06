@@ -17,6 +17,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -245,4 +246,165 @@ func testAccCheckServiceAccountLiveDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+// TestAccServiceAccountAssignedResourceOwnerLive creates a service account with
+// assigned_resource_owner set to a second, freshly created service account, and checks against
+// the real API that the owner was granted ResourceOwner on it. The WireMock test
+// (TestAccServiceAccountAssignedResourceOwner) can only assert the request shape.
+func TestAccServiceAccountAssignedResourceOwnerLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	randomSuffix := rand.Intn(100000)
+	ownerDisplayName := fmt.Sprintf("tf-live-sa-owner-%d", randomSuffix)
+	ownedDisplayName := fmt.Sprintf("tf-live-sa-owned-%d", randomSuffix)
+	ownedResourceName := "confluent_service_account.test_live_owned_service_account"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckServiceAccountLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckServiceAccountAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, ownedDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountLiveExists(ownedResourceName),
+					resource.TestCheckResourceAttrPair(ownedResourceName, paramAssignedResourceOwner, "confluent_service_account.test_live_assigned_owner", paramId),
+					testAccCheckAssignedResourceOwnerLive(ownedResourceName, serviceAccountCrnLive),
+				),
+			},
+		},
+	})
+}
+
+// TestAccServiceAccountAssignedResourceOwnerIdentityPoolLive covers a second principal type:
+// assigned_resource_owner set to an identity pool (pool-xxx) rather than a service account. It
+// creates an identity provider and pool, then a service account owned by the pool, and checks
+// against the real API that the pool was granted ResourceOwner on it. Identity pools are RBAC
+// principals of the form User:pool-xxx, the form testAccCheckAssignedResourceOwnerLive queries.
+//
+// Not parallel, like the identity provider and identity pool live tests: each creates an identity
+// provider with the same issuer.
+func TestAccServiceAccountAssignedResourceOwnerIdentityPoolLive(t *testing.T) {
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	randomSuffix := rand.Intn(100000)
+	idpDisplayName := fmt.Sprintf("tf-live-sa-owner-idp-%d", randomSuffix)
+	poolDisplayName := fmt.Sprintf("tf-live-sa-owner-pool-%d", randomSuffix)
+	ownedDisplayName := fmt.Sprintf("tf-live-sa-pool-owned-%d", randomSuffix)
+	ownedResourceName := "confluent_service_account.test_live_pool_owned_service_account"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckServiceAccountLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckServiceAccountAssignedResourceOwnerIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpDisplayName, poolDisplayName, ownedDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountLiveExists(ownedResourceName),
+					resource.TestCheckResourceAttrPair(ownedResourceName, paramAssignedResourceOwner, "confluent_identity_pool.test_live_assigned_owner_pool", paramId),
+					testAccCheckAssignedResourceOwnerLive(ownedResourceName, serviceAccountCrnLive),
+				),
+			},
+		},
+	})
+}
+
+func serviceAccountCrnLive(ctx context.Context, c *Client, rs *terraform.ResourceState) (string, error) {
+	serviceAccount, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamV2ApiContext(ctx), rs.Primary.ID).Execute()
+	if err != nil {
+		return "", createDescriptiveError(err, resp)
+	}
+	metadata := serviceAccount.GetMetadata()
+	return metadata.GetResourceName(), nil
+}
+
+func testAccCheckServiceAccountAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, ownedDisplayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_service_account" "test_live_assigned_owner" {
+		display_name = "%s"
+		description  = "Owner principal for the assigned_resource_owner live test"
+	}
+
+	resource "confluent_service_account" "test_live_owned_service_account" {
+		display_name            = "%s"
+		description             = "Service account created with assigned_resource_owner for live testing"
+		assigned_resource_owner = confluent_service_account.test_live_assigned_owner.id
+	}
+	`, endpoint, apiKey, apiSecret, ownerDisplayName, ownedDisplayName)
+}
+
+func testAccCheckServiceAccountAssignedResourceOwnerIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpDisplayName, poolDisplayName, ownedDisplayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_identity_provider" "test_live_assigned_owner_idp" {
+		display_name = "%s"
+		description  = "Identity Provider for the assigned_resource_owner identity pool live test"
+		issuer       = "https://login.microsoftonline.com/common/v2.0"
+		jwks_uri     = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+	}
+
+	resource "confluent_identity_pool" "test_live_assigned_owner_pool" {
+		identity_provider {
+			id = confluent_identity_provider.test_live_assigned_owner_idp.id
+		}
+		display_name   = "%s"
+		description    = "Owner principal for the assigned_resource_owner identity pool live test"
+		identity_claim = "claims.sub"
+		filter         = "claims.aud==\"confluent\""
+	}
+
+	resource "confluent_service_account" "test_live_pool_owned_service_account" {
+		display_name            = "%s"
+		description             = "Service account owned by an identity pool, for live testing"
+		assigned_resource_owner = confluent_identity_pool.test_live_assigned_owner_pool.id
+	}
+	`, endpoint, apiKey, apiSecret, idpDisplayName, poolDisplayName, ownedDisplayName)
 }

@@ -261,3 +261,110 @@ func testAccCheckCertificatePoolLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+// TestAccCertificatePoolAssignedResourceOwnerLive creates a certificate pool with
+// assigned_resource_owner set to a freshly created service account, and checks against the real
+// API that the owner was granted ResourceOwner on it. The WireMock test
+// (TestAccCertificatePoolAssignedResourceOwner) can only assert the request shape.
+func TestAccCertificatePoolAssignedResourceOwnerLive(t *testing.T) {
+	// Not parallel, like TestAccCertificatePoolLive: both may use the same certificate chain.
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	// Certificate Pool requires a Certificate Authority
+	certificateAuthorityId := os.Getenv("TEST_CERTIFICATE_AUTHORITY_ID")
+	certChain := os.Getenv("TEST_CERTIFICATE_CHAIN")
+	if certificateAuthorityId == "" && certChain == "" {
+		t.Skip("Either TEST_CERTIFICATE_AUTHORITY_ID or TEST_CERTIFICATE_CHAIN must be set for Certificate Pool live tests")
+	}
+
+	randomSuffix := rand.Intn(100000)
+	ownerDisplayName := fmt.Sprintf("tf-live-cert-pool-owner-%d", randomSuffix)
+	caDisplayName := fmt.Sprintf("tf-live-ca-for-owned-pool-%d", randomSuffix)
+	poolDisplayName := fmt.Sprintf("tf-live-owned-cert-pool-%d", randomSuffix)
+	poolResourceName := "confluent_certificate_pool.test_live_owned_certificate_pool"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCertificatePoolLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckCertificatePoolAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, caDisplayName, poolDisplayName, certChain, certificateAuthorityId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckCertificatePoolLiveExists(poolResourceName),
+					resource.TestCheckResourceAttrPair(poolResourceName, paramAssignedResourceOwner, "confluent_service_account.test_live_assigned_owner", paramId),
+					testAccCheckAssignedResourceOwnerLive(poolResourceName, certificatePoolCrnLive),
+				),
+			},
+		},
+	})
+}
+
+func certificatePoolCrnLive(ctx context.Context, c *Client, rs *terraform.ResourceState) (string, error) {
+	certificateAuthorityId := rs.Primary.Attributes["certificate_authority.0.id"]
+	certificatePool, resp, err := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId, rs.Primary.ID).Execute()
+	if err != nil {
+		return "", createDescriptiveError(err, resp)
+	}
+	metadata := certificatePool.GetMetadata()
+	return metadata.GetResourceName(), nil
+}
+
+func testAccCheckCertificatePoolAssignedResourceOwnerLiveConfig(endpoint, apiKey, apiSecret, ownerDisplayName, caDisplayName, poolDisplayName, certChain, certificateAuthorityId string) string {
+	// Use an existing Certificate Authority when one is given, otherwise create one from the chain.
+	certificateAuthority := fmt.Sprintf("%q", certificateAuthorityId)
+	caResource := ""
+	if certificateAuthorityId == "" {
+		certificateAuthority = "confluent_certificate_authority.test_live_ca_for_owned_pool.id"
+		caResource = fmt.Sprintf(`
+	resource "confluent_certificate_authority" "test_live_ca_for_owned_pool" {
+		display_name = "%s"
+		description = "Test CA for the assigned_resource_owner live test"
+		certificate_chain = <<EOT
+%s
+EOT
+		certificate_chain_filename = "ca-cert.pem"
+	}
+`, caDisplayName, certChain)
+	}
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_service_account" "test_live_assigned_owner" {
+		display_name = "%s"
+		description  = "Owner principal for the assigned_resource_owner live test"
+	}
+%s
+	resource "confluent_certificate_pool" "test_live_owned_certificate_pool" {
+		certificate_authority {
+			id = %s
+		}
+		display_name            = "%s"
+		description             = "Certificate pool created with assigned_resource_owner for live testing"
+		external_identifier     = "CN"
+		filter                  = "O=='Confluent Test'"
+		assigned_resource_owner = confluent_service_account.test_live_assigned_owner.id
+	}
+	`, endpoint, apiKey, apiSecret, ownerDisplayName, caResource, certificateAuthority, poolDisplayName)
+}
