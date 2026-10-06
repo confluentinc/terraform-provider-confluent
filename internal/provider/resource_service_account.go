@@ -63,10 +63,11 @@ func serviceAccountResource() *schema.Resource {
 				Description: "Kind defines the object this REST resource represents.",
 			},
 			paramAssignedResourceOwner: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The resource_id of the principal who will be assigned resource owner on the created service account. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressCreateOnlyAttributeRemoval,
+				Description:      "The resource_id of the principal who will be assigned resource owner on the created service account. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).",
 			},
 		},
 	}
@@ -229,10 +230,13 @@ func serviceAccountDelete(ctx context.Context, d *schema.ResourceData, meta inte
 func serviceAccountImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing service account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	// assigned_resource_owner is sent only as a create-time query parameter and is never returned, so an
-	// import leaves it empty and — since it is ForceNew — the first post-import plan would want to
-	// replace the resource. Honor the documented IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER env var so an import can seed it.
-	if err := d.Set(paramAssignedResourceOwner, getEnv("IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER", "")); err != nil {
-		return nil, err
+	// import leaves it empty and — since it is ForceNew — a configuration that sets it would plan a
+	// replacement after import. Honor the documented env var so an import can seed it. Unset, the
+	// attribute stays absent, exactly as it would be without this handling.
+	if v := getEnv("IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER", ""); v != "" {
+		if err := d.Set(paramAssignedResourceOwner, v); err != nil {
+			return nil, err
+		}
 	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404

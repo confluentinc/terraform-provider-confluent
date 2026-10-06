@@ -62,10 +62,11 @@ func identityPoolResource() *schema.Resource {
 				Description: "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).",
 			},
 			paramAssignedResourceOwner: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The resource_id of the principal who will be assigned resource owner on the created identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressCreateOnlyAttributeRemoval,
+				Description:      "The resource_id of the principal who will be assigned resource owner on the created identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).",
 			},
 		},
 	}
@@ -252,10 +253,13 @@ func identityPoolImport(ctx context.Context, d *schema.ResourceData, meta interf
 		return nil, err
 	}
 	// assigned_resource_owner is sent only as a create-time query parameter and is never returned, so an
-	// import leaves it empty and — since it is ForceNew — the first post-import plan would want to
-	// replace the resource. Honor the documented IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER env var so an import can seed it.
-	if err := d.Set(paramAssignedResourceOwner, getEnv("IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER", "")); err != nil {
-		return nil, err
+	// import leaves it empty and — since it is ForceNew — a configuration that sets it would plan a
+	// replacement after import. Honor the documented env var so an import can seed it. Unset, the
+	// attribute stays absent, exactly as it would be without this handling.
+	if v := getEnv("IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER", ""); v != "" {
+		if err := d.Set(paramAssignedResourceOwner, v); err != nil {
+			return nil, err
+		}
 	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404

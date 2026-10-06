@@ -29,7 +29,7 @@ import (
 // TestAccCertificatePoolAssignedResourceOwner covers assigned_resource_owner, which the API
 // accepts only as a query parameter on create and never returns on read.
 //
-// Four things are asserted, each of which would otherwise fail silently:
+// Five things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -46,6 +46,9 @@ import (
 //   - Changing the attribute replaces the resource, and the replacement's create sends the new
 //     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
 //     second DELETE beyond the final destroy.
+//   - Removing the attribute from configuration does not replace the resource. The last step drops
+//     it, so a replacement would need a third DELETE and a POST with no owner, for which no stub
+//     exists; the stub counts at the end are unchanged by that step.
 //
 // Kept separate from TestAccCertificatePool, which never configures this attribute, so that test
 // keeps covering the default path where the create request carries no query parameter at all.
@@ -157,6 +160,15 @@ func TestAccCertificatePoolAssignedResourceOwner(t *testing.T) {
 					resource.TestCheckResourceAttr(certificatePoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
 				),
 			},
+			{
+				// Removing the attribute must not plan anything: the plan after this apply must be
+				// empty, and the configured value from the previous step stays in state.
+				Config: testAccCheckCertificatePoolAssignedResourceOwnerConfig(mockServerUrl, ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificatePoolResourceLabel, paramId, certificatePoolId),
+					resource.TestCheckResourceAttr(certificatePoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
@@ -180,7 +192,7 @@ func testAccCheckCertificatePoolAssignedResourceOwnerConfig(mockServerUrl, assig
 		description             = "example-description"
 		external_identifier     = "UID"
 		filter                  = "C=='Canada' && O=='Confluent'"
-		assigned_resource_owner = "%s"
+		%s
 	}
-	`, mockServerUrl, assignedResourceOwner)
+	`, mockServerUrl, assignedResourceOwnerConfigLine(assignedResourceOwner))
 }

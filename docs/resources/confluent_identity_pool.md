@@ -69,6 +69,8 @@ The following arguments are supported:
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).
 - `assigned_resource_owner` - (Optional String) The resource_id of the principal who will be assigned resource owner on the created identity pool. Principal can be group-mapping (group-xxx), user (u-xxx), service-account (sa-xxx) or identity-pool (pool-xxx).
 
+-> **Note:** `assigned_resource_owner` takes effect only when the Identity Pool is created. Changing it replaces the Identity Pool; removing it from the configuration leaves the Identity Pool unchanged.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
@@ -79,7 +81,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing an Identity Pool.
 
--> **Note:** If your configuration sets `assigned_resource_owner`, set the `IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER` environment variable to that same value before importing. The API never returns it, so without it the attribute is empty in imported state and the first plan after importing will want to replace the Identity Pool. Otherwise leave the variable unset: seeding a value your configuration does not set also plans a replacement. Terraform cannot verify the value you supply.
+-> **Note:** If your configuration sets `assigned_resource_owner`, set the `IMPORT_IDENTITY_POOL_ASSIGNED_RESOURCE_OWNER` environment variable to that same value before importing. The API never returns it, so without it the attribute is empty in imported state and the first plan after importing will want to replace the Identity Pool. The variable applies to every Identity Pool imported in the same run, so import ones with different values in separate runs. Terraform cannot verify the value you supply.
 
 You can import an Identity Pool by using Identity Provider ID and Identity Pool ID, in the format `<Identity Provider ID>/<Identity Pool ID>`. The following example shows how to import an Identity Pool:
 

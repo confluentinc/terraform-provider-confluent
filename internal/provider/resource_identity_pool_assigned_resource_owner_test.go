@@ -29,7 +29,7 @@ import (
 // TestAccIdentityPoolAssignedResourceOwner covers assigned_resource_owner, which the API accepts
 // only as a query parameter on create and never returns on read.
 //
-// Four things are asserted, each of which would otherwise fail silently:
+// Five things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -49,6 +49,9 @@ import (
 //   - Changing the attribute replaces the resource, and the replacement's create sends the new
 //     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
 //     second DELETE beyond the final destroy.
+//   - Removing the attribute from configuration does not replace the resource. The last step drops
+//     it, so a replacement would need a third DELETE and a POST with no owner, for which no stub
+//     exists; the stub counts at the end are unchanged by that step.
 func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	ctx := context.Background()
 
@@ -173,6 +176,16 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
 				),
 			},
+			{
+				// Removing the attribute must not plan anything: the plan after this apply must be
+				// empty, and the configured value from the previous step stays in state.
+				Config: testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
@@ -196,7 +209,16 @@ func testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identity
 		description             = "%s"
 		identity_claim          = "%s"
 		filter                  = %q
-		assigned_resource_owner = "%s"
+		%s
 	}
-	`, mockServerUrl, identityPoolResourceLabel, identityProviderId, identityPoolDisplayName, identityPoolDescription, identityPoolIdentityClaim, identityPoolFilter, assignedResourceOwner)
+	`, mockServerUrl, identityPoolResourceLabel, identityProviderId, identityPoolDisplayName, identityPoolDescription, identityPoolIdentityClaim, identityPoolFilter, assignedResourceOwnerConfigLine(assignedResourceOwner))
+}
+
+// assignedResourceOwnerConfigLine renders the assigned_resource_owner argument, or nothing for an
+// empty owner, so a test step can remove the attribute from configuration rather than set it to "".
+func assignedResourceOwnerConfigLine(assignedResourceOwner string) string {
+	if assignedResourceOwner == "" {
+		return ""
+	}
+	return fmt.Sprintf("assigned_resource_owner = %q", assignedResourceOwner)
 }

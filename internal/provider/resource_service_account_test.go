@@ -134,14 +134,9 @@ func TestAccServiceAccount(t *testing.T) {
 			},
 			{
 				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName: fullSaResourceLabel,
-				ImportState:  true,
-				// assigned_resource_owner is seeded from IMPORT_SERVICE_ACCOUNT_ASSIGNED_RESOURCE_OWNER on import (see
-				// serviceAccountImport); this test never sets that env var, so the attribute is absent
-				// from the pre-import state but present as "" post-import. TestAccServiceAccountAssignedResourceOwner
-				// covers the seeded case.
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramAssignedResourceOwner},
+				ResourceName:      fullSaResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saUpdatedDisplayName, saUpdatedDescription),
@@ -155,10 +150,9 @@ func TestAccServiceAccount(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            fullSaResourceLabel,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramAssignedResourceOwner},
+				ResourceName:      fullSaResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

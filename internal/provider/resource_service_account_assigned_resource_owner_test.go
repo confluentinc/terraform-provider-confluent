@@ -28,7 +28,7 @@ import (
 // TestAccServiceAccountAssignedResourceOwner covers assigned_resource_owner, which the API accepts
 // only as a query parameter on create and never returns on read.
 //
-// Four things are asserted, each of which would otherwise fail silently:
+// Five things are asserted, each of which would otherwise fail silently:
 //
 //   - The create request actually carries ?assigned_resource_owner=<principal>. The create stub
 //     matches on that query parameter, so a provider that accepts the attribute and then drops it
@@ -46,6 +46,9 @@ import (
 //   - Changing the attribute replaces the resource, and the replacement's create sends the new
 //     value. The stub counts at the end assert a POST matching the new owner exactly once, and a
 //     second DELETE beyond the final destroy.
+//   - Removing the attribute from configuration does not replace the resource. The last step drops
+//     it, so a replacement would need a third DELETE and a POST with no owner, for which no stub
+//     exists; the stub counts at the end are unchanged by that step.
 //
 // Kept separate from TestAccServiceAccount (which never configures this attribute) so that test
 // keeps covering the default, omitted-attribute path a WireMock-level test is uniquely placed to
@@ -168,6 +171,16 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSaResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
 				),
 			},
+			{
+				// Removing the attribute must not plan anything: the plan after this apply must be
+				// empty, and the configured value from the previous step stays in state.
+				Config: testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountExists(fullSaResourceLabel),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramId, "sa-1jjv26"),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramAssignedResourceOwner, testReplacementAssignedResourceOwner),
+				),
+			},
 		},
 	})
 
@@ -186,7 +199,7 @@ func testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saReso
 	resource "confluent_service_account" "%s" {
 		display_name            = "test_service_account_display_name"
 		description             = "The initial description of service account"
-		assigned_resource_owner = "%s"
+		%s
 	}
-	`, mockServerUrl, saResourceLabel, assignedResourceOwner)
+	`, mockServerUrl, saResourceLabel, assignedResourceOwnerConfigLine(assignedResourceOwner))
 }

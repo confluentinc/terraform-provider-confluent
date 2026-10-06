@@ -1105,6 +1105,16 @@ func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
 	return normalizeCrn(old) == normalizeCrn(new)
 }
 
+// suppressCreateOnlyAttributeRemoval suppresses the diff when a create-only attribute is
+// removed from configuration (the new value is empty). The value only ever takes effect at
+// creation, so removing it cannot change anything server-side; without this, ForceNew would turn
+// removal into a destroy-and-recreate. Changing it to a different value still replaces the
+// resource. Referenced by every cli-terraform-generator create_query_params attribute
+// (assigned_resource_owner).
+func suppressCreateOnlyAttributeRemoval(_, _, newValue string, _ *schema.ResourceData) bool {
+	return newValue == ""
+}
+
 // suppressSameValueIgnoringCase suppresses diffs when the two values differ only
 // by case, for example "AWS" == "aws".
 func suppressSameValueIgnoringCase(k, old, new string, d *schema.ResourceData) bool {
