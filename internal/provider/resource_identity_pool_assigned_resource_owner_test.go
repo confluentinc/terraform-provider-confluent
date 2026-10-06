@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -194,6 +195,188 @@ func TestAccIdentityPoolAssignedResourceOwner(t *testing.T) {
 	// destroy: two DELETEs (replacement, then destroy) where a test with no replacement sees one.
 	checkStubCount(t, wiremockClient, deleteForReplacementStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
+}
+
+// TestIdentityPoolAssignedResourceOwnerAddedToExisting covers a identity pool created without
+// assigned_resource_owner, the path every existing configuration takes, and the attribute being
+// added to it later:
+//
+//   - The create request carries no assigned_resource_owner query parameter at all, so existing
+//     configurations send exactly the request they always have. A higher-priority stub answers any
+//     create that carries the parameter, whatever its value, with a 400, so a provider that sent it
+//     for an unset attribute fails the first apply.
+//   - Adding the attribute to the existing identity pool replaces it, as the docs say: Terraform
+//     deletes it, then creates it again with the owner. The stub counts at the end require exactly
+//     one create carrying the parameter, the replacement's, out of two creates.
+func TestAccIdentityPoolAssignedResourceOwnerAddedToExisting(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const addedLaterScenario = "confluent_identity_pool assigned_resource_owner added later"
+	const stateCreated = "created-without-assigned-resource-owner"
+	const stateDeletedForReplacement = "deleted-for-replacement"
+	const stateRecreated = "recreated-with-assigned-resource-owner"
+	const stateDeleted = "deleted"
+	const testAssignedResourceOwner = "u-a83k9b"
+
+	createUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId)
+	itemUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId)
+
+	createResponse, _ := ioutil.ReadFile("../testdata/identity_pool/create_identity_pool.json")
+	readCreatedResponse, _ := ioutil.ReadFile("../testdata/identity_pool/read_created_identity_pool.json")
+
+	// Any create carrying the parameter, even with an empty value, matches this stub ahead of the
+	// plain create below (priority 1 beats the default) and fails the apply.
+	createWithOwnerStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.Matching(".*")).
+		AtPriority(1).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(`{"errors":[{"status":"400","detail":"unexpected assigned_resource_owner query parameter"}]}`, contentTypeJSONHeader, http.StatusBadRequest)
+	_ = wiremockClient.StubFor(createWithOwnerStub)
+
+	createStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(stateCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(createStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateCreated).
+		WillReturn(string(readCreatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	deleteStub := wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateDeletedForReplacement).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteStub)
+
+	// The replacement's create must carry the owner, or this stub does not match.
+	recreateStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(testAssignedResourceOwner)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateDeletedForReplacement).
+		WillSetStateTo(stateRecreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(recreateStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillReturn(string(readCreatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillSetStateTo(stateDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := ioutil.ReadFile("../testdata/identity_pool/read_deleted_identity_pool.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	identityPoolResourceLabel := "test_identity_pool_assigned_resource_owner_added_later"
+	fullIdentityPoolResourceLabel := fmt.Sprintf("confluent_identity_pool.%s", identityPoolResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckIdentityPoolDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
+					resource.TestCheckNoResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner),
+				),
+			},
+			{
+				// assigned_resource_owner is ForceNew, so adding it to an existing identity pool
+				// replaces it.
+				Config: testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, testAssignedResourceOwner),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, testAssignedResourceOwner),
+				),
+			},
+		},
+	})
+
+	// Request counts match on method, URL and query parameters, not scenario state.
+	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s", createUrlPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, createWithOwnerStub, fmt.Sprintf("POST %s?%s=<any>", createUrlPath, paramAssignedResourceOwner), expectedCountOne)
+	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testAssignedResourceOwner), expectedCountOne)
+	// The replacement, then the final destroy.
+	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
+}
+
+// TestIdentityPoolAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
+// such as a principal that does not exist. The API's error detail must reach the user, and nothing
+// may be left in state, so no read or delete of the identity pool follows.
+func TestAccIdentityPoolAssignedResourceOwnerCreateError(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const invalidAssignedResourceOwner = "u-doesnotexist"
+	const createErrorDetail = "Principal u-doesnotexist does not exist"
+
+	createUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId)
+	itemUrlPath := fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools/%s", identityProviderId, identityPoolId)
+
+	createStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(invalidAssignedResourceOwner)).
+		WillReturn(fmt.Sprintf(`{"errors":[{"status":"400","detail":%q}]}`, createErrorDetail), contentTypeJSONHeader, http.StatusBadRequest)
+	_ = wiremockClient.StubFor(createStub)
+
+	identityPoolResourceLabel := "test_identity_pool_assigned_resource_owner_create_error"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckIdentityPoolDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, invalidAssignedResourceOwner),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(createErrorDetail)),
+			},
+		},
+	})
+
+	// A 400 is not retried, and a failed create leaves nothing to read or delete.
+	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, invalidAssignedResourceOwner), expectedCountOne)
+	checkStubCount(t, wiremockClient, wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)), fmt.Sprintf("GET %s", itemUrlPath), expectedCountZero)
+	checkStubCount(t, wiremockClient, wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)), fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountZero)
 }
 
 func testAccCheckIdentityPoolAssignedResourceOwnerConfig(mockServerUrl, identityPoolResourceLabel, assignedResourceOwner string) string {

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -50,9 +51,9 @@ import (
 //     it, so a replacement would need a third DELETE and a POST with no owner, for which no stub
 //     exists; the stub counts at the end are unchanged by that step.
 //
-// Kept separate from TestAccServiceAccount (which never configures this attribute) so that test
-// keeps covering the default, omitted-attribute path a WireMock-level test is uniquely placed to
-// verify: that the create request carries no query parameter at all when unset.
+// Kept separate from TestAccServiceAccount, which never configures this attribute.
+// TestAccServiceAccountAssignedResourceOwnerAddedToExisting covers the unset path: that the create
+// request then carries no query parameter at all.
 func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 	ctx := context.Background()
 
@@ -189,6 +190,188 @@ func TestAccServiceAccountAssignedResourceOwner(t *testing.T) {
 	// destroy: two DELETEs (replacement, then destroy) where a test with no replacement sees one.
 	checkStubCount(t, wiremockClient, deleteForReplacementStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testReplacementAssignedResourceOwner), expectedCountOne)
+}
+
+// TestServiceAccountAssignedResourceOwnerAddedToExisting covers a service account created without
+// assigned_resource_owner, the path every existing configuration takes, and the attribute being
+// added to it later:
+//
+//   - The create request carries no assigned_resource_owner query parameter at all, so existing
+//     configurations send exactly the request they always have. A higher-priority stub answers any
+//     create that carries the parameter, whatever its value, with a 400, so a provider that sent it
+//     for an unset attribute fails the first apply.
+//   - Adding the attribute to the existing service account replaces it, as the docs say: Terraform
+//     deletes it, then creates it again with the owner. The stub counts at the end require exactly
+//     one create carrying the parameter, the replacement's, out of two creates.
+func TestAccServiceAccountAssignedResourceOwnerAddedToExisting(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const addedLaterScenario = "confluent_service_account assigned_resource_owner added later"
+	const stateCreated = "created-without-assigned-resource-owner"
+	const stateDeletedForReplacement = "deleted-for-replacement"
+	const stateRecreated = "recreated-with-assigned-resource-owner"
+	const stateDeleted = "deleted"
+	const testAssignedResourceOwner = "u-a83k9b"
+
+	const createUrlPath = "/iam/v2/service-accounts"
+	const itemUrlPath = "/iam/v2/service-accounts/sa-1jjv26"
+
+	createResponse, _ := ioutil.ReadFile("../testdata/service_account/create_sa.json")
+	readCreatedResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
+
+	// Any create carrying the parameter, even with an empty value, matches this stub ahead of the
+	// plain create below (priority 1 beats the default) and fails the apply.
+	createWithOwnerStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.Matching(".*")).
+		AtPriority(1).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(`{"errors":[{"status":"400","detail":"unexpected assigned_resource_owner query parameter"}]}`, contentTypeJSONHeader, http.StatusBadRequest)
+	_ = wiremockClient.StubFor(createWithOwnerStub)
+
+	createStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(stateCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(createStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateCreated).
+		WillReturn(string(readCreatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	deleteStub := wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateCreated).
+		WillSetStateTo(stateDeletedForReplacement).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent)
+	_ = wiremockClient.StubFor(deleteStub)
+
+	// The replacement's create must carry the owner, or this stub does not match.
+	recreateStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(testAssignedResourceOwner)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateDeletedForReplacement).
+		WillSetStateTo(stateRecreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated)
+	_ = wiremockClient.StubFor(recreateStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillReturn(string(readCreatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateRecreated).
+		WillSetStateTo(stateDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := ioutil.ReadFile("../testdata/service_account/read_deleted_sa.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)).
+		InScenario(addedLaterScenario).
+		WhenScenarioStateIs(stateDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	saResourceLabel := "test_sa_assigned_resource_owner_added_later"
+	fullSaResourceLabel := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckServiceAccountDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountExists(fullSaResourceLabel),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramId, "sa-1jjv26"),
+					resource.TestCheckNoResourceAttr(fullSaResourceLabel, paramAssignedResourceOwner),
+				),
+			},
+			{
+				// assigned_resource_owner is ForceNew, so adding it to an existing service account
+				// replaces it.
+				Config: testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, testAssignedResourceOwner),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountExists(fullSaResourceLabel),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramId, "sa-1jjv26"),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, paramAssignedResourceOwner, testAssignedResourceOwner),
+				),
+			},
+		},
+	})
+
+	// Request counts match on method, URL and query parameters, not scenario state.
+	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s", createUrlPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, createWithOwnerStub, fmt.Sprintf("POST %s?%s=<any>", createUrlPath, paramAssignedResourceOwner), expectedCountOne)
+	checkStubCount(t, wiremockClient, recreateStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, testAssignedResourceOwner), expectedCountOne)
+	// The replacement, then the final destroy.
+	checkStubCount(t, wiremockClient, deleteStub, fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountTwo)
+}
+
+// TestServiceAccountAssignedResourceOwnerCreateError covers a create the API rejects because of the owner,
+// such as a principal that does not exist. The API's error detail must reach the user, and nothing
+// may be left in state, so no read or delete of the service account follows.
+func TestAccServiceAccountAssignedResourceOwnerCreateError(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const invalidAssignedResourceOwner = "u-doesnotexist"
+	const createErrorDetail = "Principal u-doesnotexist does not exist"
+
+	const createUrlPath = "/iam/v2/service-accounts"
+	const itemUrlPath = "/iam/v2/service-accounts/sa-1jjv26"
+
+	createStub := wiremock.Post(wiremock.URLPathEqualTo(createUrlPath)).
+		WithQueryParam(paramAssignedResourceOwner, wiremock.EqualTo(invalidAssignedResourceOwner)).
+		WillReturn(fmt.Sprintf(`{"errors":[{"status":"400","detail":%q}]}`, createErrorDetail), contentTypeJSONHeader, http.StatusBadRequest)
+	_ = wiremockClient.StubFor(createStub)
+
+	saResourceLabel := "test_sa_assigned_resource_owner_create_error"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckServiceAccountDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, invalidAssignedResourceOwner),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(createErrorDetail)),
+			},
+		},
+	})
+
+	// A 400 is not retried, and a failed create leaves nothing to read or delete.
+	checkStubCount(t, wiremockClient, createStub, fmt.Sprintf("POST %s?%s=%s", createUrlPath, paramAssignedResourceOwner, invalidAssignedResourceOwner), expectedCountOne)
+	checkStubCount(t, wiremockClient, wiremock.Get(wiremock.URLPathEqualTo(itemUrlPath)), fmt.Sprintf("GET %s", itemUrlPath), expectedCountZero)
+	checkStubCount(t, wiremockClient, wiremock.Delete(wiremock.URLPathEqualTo(itemUrlPath)), fmt.Sprintf("DELETE %s", itemUrlPath), expectedCountZero)
 }
 
 func testAccCheckServiceAccountAssignedResourceOwnerConfig(mockServerUrl, saResourceLabel, assignedResourceOwner string) string {
