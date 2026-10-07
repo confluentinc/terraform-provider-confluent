@@ -86,11 +86,12 @@ func TestAccTableflowTopicLive(t *testing.T) {
 	kafkaTopicResourceLabel := "test_live_kafka_topic_for_tableflow"
 	tableflowTopicResourceLabel := "test_live_tableflow_topic"
 
-	// Free up partitions that earlier runs leaked onto the shared Standard cluster.
-	cleanupLeakedLiveTestTopics(t)
-
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {

@@ -64,11 +64,12 @@ func TestAccKafkaTopicDataSourceLive(t *testing.T) {
 	topicResourceLabel := "test_live_kafka_topic_resource"
 	topicDataSourceLabel := "test_live_kafka_topic_data_source"
 
-	// Free up partitions that earlier runs leaked onto the shared Standard cluster.
-	cleanupLeakedLiveTestTopics(t)
-
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckKafkaTopicDataSourceLiveDestroy,
 		Steps: []resource.TestStep{
