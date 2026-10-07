@@ -64,7 +64,11 @@ func TestAccConnectorLive(t *testing.T) {
 	connectorResourceLabel := "test_live_connector"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
@@ -139,7 +143,11 @@ func TestAccConnectorUpdateLive(t *testing.T) {
 	connectorResourceLabel := "test_live_connector_update"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
