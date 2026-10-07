@@ -63,6 +63,9 @@ func TestAccConnectorLive(t *testing.T) {
 	connectorName := fmt.Sprintf("tf-live-connector-%d", randomSuffix)
 	connectorResourceLabel := "test_live_connector"
 
+	// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+	cleanupLeakedLiveTestTopics(t)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -137,6 +140,9 @@ func TestAccConnectorUpdateLive(t *testing.T) {
 	randomSuffix := rand.Intn(100000)
 	connectorName := fmt.Sprintf("tf-live-connector-update-%d", randomSuffix)
 	connectorResourceLabel := "test_live_connector_update"
+
+	// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+	cleanupLeakedLiveTestTopics(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

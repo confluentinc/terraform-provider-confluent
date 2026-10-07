@@ -60,6 +60,13 @@ func TestAccKsqlClusterLive(t *testing.T) {
 	ksqlClusterDisplayName := fmt.Sprintf("tf-live-ksql-%d", randomSuffix)
 	ksqlClusterResourceLabel := "test_live_ksql_cluster"
 
+	// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+	cleanupLeakedLiveTestTopics(t)
+
+	// Destroying the ksqlDB cluster leaves its processing log topic behind, so delete it afterwards.
+	var ksqlTopicPrefix string
+	t.Cleanup(func() { deleteKsqlProcessingLogTopicLive(t, ksqlTopicPrefix) })
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -68,6 +75,7 @@ func TestAccKsqlClusterLive(t *testing.T) {
 			{
 				Config: testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
+					testAccCaptureKsqlTopicPrefixLive(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), &ksqlTopicPrefix),
 					testAccCheckKsqlClusterLiveExists(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "display_name", ksqlClusterDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "4"),
