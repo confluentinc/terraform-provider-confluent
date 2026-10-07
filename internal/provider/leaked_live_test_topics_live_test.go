@@ -68,16 +68,19 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	}
 
 	deletedTopics, deletedPartitions, failedTopics := 0, int32(0), 0
+	attemptedPartitions := int32(0)
 	var firstErr error
 	reachedLimit := false
 	for _, topic := range topics.GetData() {
 		if !isLeakedLiveTestTopic(topic.GetTopicName(), topic.GetPartitionsCount(), activeKsqlTopicPrefixes) {
 			continue
 		}
-		if deletedPartitions+topic.GetPartitionsCount() > maxLeakedPartitionsDeletedPerRun {
+		// Failed deletes count toward the limit too, so retrying failures can't keep the waiting tests blocked for long.
+		if attemptedPartitions+topic.GetPartitionsCount() > maxLeakedPartitionsDeletedPerRun {
 			reachedLimit = true
 			break
 		}
+		attemptedPartitions += topic.GetPartitionsCount()
 		if err := deleteLiveStandardKafkaTopic(ctx, kafkaRestClient, topic.GetTopicName()); err != nil {
 			failedTopics++
 			if firstErr == nil {
@@ -112,7 +115,7 @@ func testAccCaptureKsqlTopicPrefixLive(resourceName string, topicPrefix *string)
 }
 
 // deleteKsqlProcessingLogTopicLive deletes the processing-log topic that a destroyed ksqlDB cluster leaves on the shared
-// Standard cluster. A blank topicPrefix (the cluster was never created) is a no-op.
+// Standard cluster. A blank topicPrefix (nothing was captured, e.g. the cluster was never created) is a no-op.
 func deleteKsqlProcessingLogTopicLive(t *testing.T, topicPrefix string) {
 	if topicPrefix == "" {
 		return
