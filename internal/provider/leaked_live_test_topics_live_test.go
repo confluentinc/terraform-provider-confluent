@@ -35,7 +35,7 @@ import (
 // that per test run to leave room for the tests' own topics. Later runs delete whatever leaked topics remain.
 const maxLeakedPartitionsDeletedPerRun = 250
 
-// Tests wait for the leaked topic cleanups, so they give up after this long.
+// Tests wait for the leaked topic cleanups, so the cleanups give up after this long.
 const leakedLiveTestTopicsCleanupTimeout = 15 * time.Minute
 
 var (
