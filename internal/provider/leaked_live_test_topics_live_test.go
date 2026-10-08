@@ -23,6 +23,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ksqlv2 "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
@@ -34,6 +35,9 @@ import (
 // that per test run to leave room for the tests' own topics. Later runs delete whatever leaked topics remain.
 const maxLeakedPartitionsDeletedPerRun = 250
 
+// The tests that create topics on the shared Standard cluster wait for the cleanup, so give up on it after this long.
+const leakedLiveTestTopicsCleanupTimeout = 15 * time.Minute
+
 var (
 	cleanupLeakedLiveTestTopicsOnce    sync.Once
 	cleanupLeakedLiveTestTopicsSummary string
@@ -44,7 +48,9 @@ var (
 // for it, so tests that create topics there start with free partitions. Every caller logs the outcome; errors don't fail the test.
 func cleanupLeakedLiveTestTopics(t *testing.T) {
 	cleanupLeakedLiveTestTopicsOnce.Do(func() {
-		cleanupLeakedLiveTestTopicsSummary = deleteLeakedLiveTestTopics(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), leakedLiveTestTopicsCleanupTimeout)
+		defer cancel()
+		cleanupLeakedLiveTestTopicsSummary = deleteLeakedLiveTestTopics(ctx)
 	})
 	t.Log(cleanupLeakedLiveTestTopicsSummary)
 }
@@ -58,8 +64,12 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	c := newLiveCloudClient(ctx)
 
 	// Only ksqlDB clusters in liveTestEnvironmentId are checked below, so only clean up a Kafka cluster in that environment.
-	if _, resp, err := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(ctx), kafkaRestClient.clusterId).Environment(liveTestEnvironmentId).Execute(); err != nil {
+	kafkaCluster, resp, err := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(ctx), kafkaRestClient.clusterId).Environment(liveTestEnvironmentId).Execute()
+	if err != nil {
 		return fmt.Sprintf("Skipped leaked topic cleanup: error reading Kafka Cluster %q in environment %q: %s", kafkaRestClient.clusterId, liveTestEnvironmentId, createDescriptiveError(err, resp))
+	}
+	if environmentId := kafkaCluster.GetSpec().Environment.GetId(); environmentId != liveTestEnvironmentId {
+		return fmt.Sprintf("Skipped leaked topic cleanup: Kafka Cluster %q is in environment %q, not %q", kafkaRestClient.clusterId, environmentId, liveTestEnvironmentId)
 	}
 
 	// List topics before ksqlDB clusters, so any processing-log topic listed here whose cluster still exists
