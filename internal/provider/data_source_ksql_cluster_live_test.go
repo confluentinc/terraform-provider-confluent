@@ -62,13 +62,22 @@ func TestAccKsqlClusterDataSourceLive(t *testing.T) {
 	ksqlClusterResourceLabel := "test_live_ksql_cluster_resource"
 	ksqlClusterDataSourceLabel := "test_live_ksql_cluster_data_source"
 
+	// Destroying the ksqlDB cluster leaves its processing log topic behind, so delete it afterwards.
+	var ksqlTopicPrefix string
+	t.Cleanup(func() { deleteKsqlProcessingLogTopicLive(t, ksqlTopicPrefix) })
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlClusterDataSourceLabel, ksqlClusterDisplayName, kafkaClusterId, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
+					testAccCaptureKsqlTopicPrefixLive(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), &ksqlTopicPrefix),
 					// Check the resource was created
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "display_name", ksqlClusterDisplayName),
