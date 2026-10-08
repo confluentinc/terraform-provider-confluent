@@ -216,7 +216,7 @@ func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLa
 			id = "%s"
 		}
 		topic_name         = "%s"
-		partitions_count   = 6
+		partitions_count   = 6 # Not 1: the leaked topic cleanup deletes 1-partition tf-live-connector-* topics.
 		rest_endpoint      = "%s"
 		credentials {
 			key    = "%s"
@@ -265,7 +265,7 @@ func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorReso
 			id = "%s"
 		}
 		topic_name         = "%s"
-		partitions_count   = 6
+		partitions_count   = 6 # Not 1: the leaked topic cleanup deletes 1-partition tf-live-connector-* topics.
 		rest_endpoint      = "%s"
 		credentials {
 			key    = "%s"

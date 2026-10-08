@@ -185,7 +185,7 @@ make live-test
 - **Keep destroy functions simple** for live tests - they just verify state removal
 - **Don't make API calls in destroy functions** - let Terraform handle the actual cleanup
 - **Comment that actual cleanup happens through API calls during destroy**
-- **Call `cleanupLeakedLiveTestTopics(t)` from `PreCheck`** in tests that create topics on the shared Standard cluster (`KAFKA_STANDARD_AWS_*`), so topics leaked by earlier runs don't exhaust its 2,500-partition limit
+- **Call `cleanupLeakedLiveTestTopics(t)` from `PreCheck`** in tests that create topics on the shared Standard cluster (`KAFKA_STANDARD_AWS_*`), so topics leaked by earlier runs don't exhaust its 2,500-partition limit. It only cleans up that cluster when it's in `liveTestEnvironmentId`. Tests that create a ksqlDB cluster on it should also delete the cluster's processing log topic afterwards with `deleteKsqlProcessingLogTopicLive` in `t.Cleanup` (see `TestAccKsqlClusterLive`)
 
 ### 6. Common Patterns
 

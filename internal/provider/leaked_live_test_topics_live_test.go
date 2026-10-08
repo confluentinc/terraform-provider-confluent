@@ -24,6 +24,7 @@ import (
 	"sync"
 	"testing"
 
+	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ksqlv2 "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -49,11 +50,16 @@ func cleanupLeakedLiveTestTopics(t *testing.T) {
 }
 
 // deleteLeakedLiveTestTopics deletes leaked topics from the shared Standard cluster and returns a summary of what it did.
-// It assumes that cluster is in liveTestEnvironmentId, where it looks up the ksqlDB clusters still in use.
 func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	kafkaRestClient := newLiveStandardKafkaRestClient(ctx)
 	if kafkaRestClient == nil {
 		return "Skipped leaked topic cleanup: KAFKA_STANDARD_AWS_* environment variables are not set"
+	}
+	c := newLiveCloudClient(ctx)
+
+	// Only ksqlDB clusters in liveTestEnvironmentId are checked below, so only clean up a Kafka cluster in that environment.
+	if _, resp, err := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(ctx), kafkaRestClient.clusterId).Environment(liveTestEnvironmentId).Execute(); err != nil {
+		return fmt.Sprintf("Skipped leaked topic cleanup: error reading Kafka Cluster %q in environment %q: %s", kafkaRestClient.clusterId, liveTestEnvironmentId, createDescriptiveError(err, resp))
 	}
 
 	// List topics before ksqlDB clusters, so any processing-log topic listed here whose cluster still exists
@@ -62,7 +68,7 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	if err != nil {
 		return fmt.Sprintf("Skipped leaked topic cleanup: error listing Kafka Topics: %s", createDescriptiveError(err, resp))
 	}
-	activeKsqlTopicPrefixes, err := listLiveKsqlTopicPrefixes(ctx)
+	activeKsqlTopicPrefixes, err := listLiveKsqlTopicPrefixes(ctx, c)
 	if err != nil {
 		return fmt.Sprintf("Skipped leaked topic cleanup: %s", err)
 	}
@@ -156,20 +162,28 @@ func deleteLiveStandardKafkaTopic(ctx context.Context, c *KafkaRestClient, topic
 	return nil
 }
 
-// listLiveKsqlTopicPrefixes returns the topic_prefix of every ksqlDB cluster in the live test environment.
-func listLiveKsqlTopicPrefixes(ctx context.Context) (map[string]bool, error) {
+// newLiveCloudClient returns a Client with just the Kafka Cluster and ksqlDB Cluster APIs, authenticated with CONFLUENT_CLOUD_API_KEY.
+func newLiveCloudClient(ctx context.Context) *Client {
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
 	if endpoint == "" {
 		endpoint = "https://api.confluent.cloud"
 	}
-	cfg := ksqlv2.NewConfiguration()
-	cfg.Servers[0].URL = endpoint
-	cfg.HTTPClient = NewRetryableClientFactory(ctx).CreateRetryableClient()
-	c := &Client{
-		ksqlV2Client:   ksqlv2.NewAPIClient(cfg),
+	cmkV2Cfg := cmkv2.NewConfiguration()
+	cmkV2Cfg.Servers[0].URL = endpoint
+	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx).CreateRetryableClient()
+	ksqlV2Cfg := ksqlv2.NewConfiguration()
+	ksqlV2Cfg.Servers[0].URL = endpoint
+	ksqlV2Cfg.HTTPClient = NewRetryableClientFactory(ctx).CreateRetryableClient()
+	return &Client{
+		cmkV2Client:    cmkv2.NewAPIClient(cmkV2Cfg),
+		ksqlV2Client:   ksqlv2.NewAPIClient(ksqlV2Cfg),
 		cloudApiKey:    os.Getenv("CONFLUENT_CLOUD_API_KEY"),
 		cloudApiSecret: os.Getenv("CONFLUENT_CLOUD_API_SECRET"),
 	}
+}
+
+// listLiveKsqlTopicPrefixes returns the topic_prefix of every ksqlDB cluster in the live test environment.
+func listLiveKsqlTopicPrefixes(ctx context.Context, c *Client) (map[string]bool, error) {
 	ksqlClusters, err := loadKsqlClusters(ctx, c, liveTestEnvironmentId)
 	if err != nil {
 		return nil, err

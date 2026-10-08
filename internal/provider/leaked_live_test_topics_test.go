@@ -42,6 +42,8 @@ func TestIsLeakedLiveTestTopic(t *testing.T) {
 	}{
 		{"pksqlc-deleted-processing-log", 8, true},
 		{"pksqlc-active-processing-log", 8, false},
+		{"pksqlc-activex-processing-log", 8, true},
+		{"pksqlc-act-processing-log", 8, true},
 		{"pksqlc-deleted", 8, false},
 		{"pksqlc-deleted-processing-log-copy", 8, false},
 		{"my-pksqlc-deleted-processing-log", 8, false},
