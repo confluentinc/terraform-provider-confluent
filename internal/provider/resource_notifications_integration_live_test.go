@@ -73,7 +73,7 @@ func TestAccIntegrationLive(t *testing.T) {
 	displayName := fmt.Sprintf("tf_live_integration_%d", randomSuffix)
 	slackTargetWebhookUrl := os.Getenv("CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL")
 	if slackTargetWebhookUrl == "" {
-		slackTargetWebhookUrl = "https://hooks.slack.com/services/{id}/{id}/{id}"
+		slackTargetWebhookUrl = "https://hooks.slack.com/services/T00000000/B00000000/" + integrationResourceLabel
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -124,7 +124,7 @@ func TestAccIntegrationUpdateLive(t *testing.T) {
 	displayNameUpdated := fmt.Sprintf("tf_live_integration_update_%d", randomSuffix)
 	slackTargetWebhookUrl := os.Getenv("CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL")
 	if slackTargetWebhookUrl == "" {
-		slackTargetWebhookUrl = "https://hooks.slack.com/services/{id}/{id}/{id}"
+		slackTargetWebhookUrl = "https://hooks.slack.com/services/T00000000/B00000000/" + integrationResourceLabel
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -177,7 +177,7 @@ func TestAccIntegrationMinimalLive(t *testing.T) {
 	displayName := fmt.Sprintf("tf_live_integration_%d", randomSuffix)
 	slackTargetWebhookUrl := os.Getenv("CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL")
 	if slackTargetWebhookUrl == "" {
-		slackTargetWebhookUrl = "https://hooks.slack.com/services/{id}/{id}/{id}"
+		slackTargetWebhookUrl = "https://hooks.slack.com/services/T00000000/B00000000/" + integrationResourceLabel
 	}
 
 	resource.Test(t, resource.TestCase{
