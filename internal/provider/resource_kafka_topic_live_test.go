@@ -64,7 +64,11 @@ func TestAccKafkaTopicLive(t *testing.T) {
 	topicResourceLabel := "test_live_kafka_topic"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckKafkaTopicLiveDestroy,
 		Steps: []resource.TestStep{
@@ -122,7 +126,11 @@ func TestAccKafkaTopicUpdateLive(t *testing.T) {
 	topicResourceLabel := "test_live_kafka_topic_update"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckKafkaTopicLiveDestroy,
 		Steps: []resource.TestStep{
