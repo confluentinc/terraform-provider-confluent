@@ -171,6 +171,28 @@ Complete examples (with Okta and Microsoft Azure Entra ID as identity provider) 
 
 !> **Warning:** Without proper Identity Provider setup, Identity Pool creation and RBAC roles assignment, the OAuth credentials will not work with Confluent Terraform Provider.
 
+## Retries and Rate Limits
+
+Confluent Cloud APIs are rate-limited. When a request is rate-limited (`429 Too Many Requests`) or fails with a server or network error, the provider retries it before failing the operation. Set `max_retries` (or the `TF_PROVIDER_CONFLUENT_MAX_RETRIES` environment variable) to change the number of retries:
+
+```terraform
+provider "confluent" {
+  max_retries = 20 # optionally use TF_PROVIDER_CONFLUENT_MAX_RETRIES env var
+}
+```
+
+Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations are most often rate-limited, always retry at least 12 times. These requests are made by the `confluent_connector`, `confluent_service_account`, `confluent_api_key`, `confluent_role_binding`, `confluent_invitation` and `confluent_tf_importer` resources, and by the `confluent_service_account`, `confluent_user`, `confluent_users`, `confluent_role_binding` and `confluent_invitation` data sources.
+
+| `max_retries`         | Connect, IAM, API keys and RBAC requests | All other requests    |
+|-----------------------|------------------------------------------|-----------------------|
+| Not set (default `4`) | 12 retries                               | 4 retries             |
+| `4` to `12`           | 12 retries                               | `max_retries` retries |
+| Above `12`            | `max_retries` retries                    | `max_retries` retries |
+
+-> **Note:** `max_retries` must be at least `4`.
+
+-> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. A higher `max_retries` also makes the provider wait longer before it reports an API that is unavailable: up to 30 seconds for each extra retry.
+
 ## Helpful Links/Information
 
 * [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
