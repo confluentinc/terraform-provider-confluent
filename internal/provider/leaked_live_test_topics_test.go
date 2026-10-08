@@ -25,7 +25,7 @@ const ksqlProcessingLogTopicSuffix = "-processing-log"
 // isLeakedLiveTestTopic reports whether a topic on the shared live-test Kafka cluster was left behind by an earlier run:
 //   - "<topic_prefix>-processing-log", which a deleted ksqlDB cluster leaves behind, once no ksqlDB cluster uses that prefix.
 //   - A 1-partition "tf-live-connector-*" topic. The connector live tests create theirs with 6 partitions, so a 1-partition
-//     one was re-created by a Datagen connector still shutting down after the test deleted the original.
+//     one was re-created after the test deleted the original, most likely by its Datagen connector while shutting down.
 func isLeakedLiveTestTopic(topicName string, partitionsCount int32, activeKsqlTopicPrefixes map[string]bool) bool {
 	if strings.HasPrefix(topicName, "pksqlc-") && strings.HasSuffix(topicName, ksqlProcessingLogTopicSuffix) {
 		return !activeKsqlTopicPrefixes[strings.TrimSuffix(topicName, ksqlProcessingLogTopicSuffix)]

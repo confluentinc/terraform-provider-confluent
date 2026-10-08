@@ -35,7 +35,7 @@ import (
 // that per test run to leave room for the tests' own topics. Later runs delete whatever leaked topics remain.
 const maxLeakedPartitionsDeletedPerRun = 250
 
-// The tests that create topics on the shared Standard cluster wait for the cleanup, so give up on it after this long.
+// Tests wait for the leaked topic cleanups, so they give up after this long.
 const leakedLiveTestTopicsCleanupTimeout = 15 * time.Minute
 
 var (
@@ -59,7 +59,7 @@ func cleanupLeakedLiveTestTopics(t *testing.T) {
 func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	kafkaRestClient := newLiveStandardKafkaRestClient(ctx)
 	if kafkaRestClient == nil {
-		return "Skipped leaked topic cleanup: KAFKA_STANDARD_AWS_* environment variables are not set"
+		return "Skipped leaked topic cleanup: KAFKA_STANDARD_AWS_* environment variables are not all set"
 	}
 	c := newLiveCloudClient(ctx)
 
@@ -72,7 +72,7 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 		return fmt.Sprintf("Skipped leaked topic cleanup: Kafka Cluster %q is in environment %q, not %q", kafkaRestClient.clusterId, environmentId, liveTestEnvironmentId)
 	}
 
-	// List topics before ksqlDB clusters, so any processing-log topic listed here whose cluster still exists
+	// List topics before ksqlDB clusters, so any processing log topic listed here whose cluster still exists
 	// shows up in the ksqlDB cluster list too.
 	topics, resp, err := kafkaRestClient.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
 	if err != nil {
@@ -88,15 +88,19 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 	var firstErr error
 	reachedLimit := false
 	for _, topic := range topics.GetData() {
+		if ctx.Err() != nil {
+			break
+		}
 		if !isLeakedLiveTestTopic(topic.GetTopicName(), topic.GetPartitionsCount(), activeKsqlTopicPrefixes) {
 			continue
 		}
-		// Failed deletes count toward the limit too, so retrying failures can't keep the waiting tests blocked for long.
-		if attemptedPartitions+topic.GetPartitionsCount() > maxLeakedPartitionsDeletedPerRun {
+		// Count every topic as at least 1 partition, and count failed deletes too, so the limit always bounds the deletes.
+		partitions := max(topic.GetPartitionsCount(), 1)
+		if partitions > maxLeakedPartitionsDeletedPerRun-attemptedPartitions {
 			reachedLimit = true
-			break
+			continue
 		}
-		attemptedPartitions += topic.GetPartitionsCount()
+		attemptedPartitions += partitions
 		if err := deleteLiveStandardKafkaTopic(ctx, kafkaRestClient, topic.GetTopicName()); err != nil {
 			failedTopics++
 			if firstErr == nil {
@@ -105,14 +109,16 @@ func deleteLeakedLiveTestTopics(ctx context.Context) string {
 			continue
 		}
 		deletedTopics++
-		deletedPartitions += topic.GetPartitionsCount()
+		deletedPartitions += partitions
 	}
 
 	summary := fmt.Sprintf("Deleted %d leaked Kafka Topics (%d partitions) from Kafka Cluster %q", deletedTopics, deletedPartitions, kafkaRestClient.clusterId)
 	if failedTopics > 0 {
 		summary += fmt.Sprintf("; failed to delete %d (first error: %s)", failedTopics, firstErr)
 	}
-	if reachedLimit {
+	if ctx.Err() != nil {
+		summary += fmt.Sprintf("; stopped at the %s time limit, later runs will delete the rest", leakedLiveTestTopicsCleanupTimeout)
+	} else if reachedLimit {
 		summary += fmt.Sprintf("; stopped at the %d-partition limit per run, later runs will delete the rest", maxLeakedPartitionsDeletedPerRun)
 	}
 	return summary
@@ -130,25 +136,31 @@ func testAccCaptureKsqlTopicPrefixLive(resourceName string, topicPrefix *string)
 	}
 }
 
-// deleteKsqlProcessingLogTopicLive deletes the processing-log topic that a destroyed ksqlDB cluster leaves on the shared
-// Standard cluster. A blank topicPrefix (nothing was captured, e.g. the cluster was never created) is a no-op.
+// deleteKsqlProcessingLogTopicLive deletes the processing log topic that a destroyed ksqlDB cluster leaves on the shared
+// Standard cluster. It does nothing for a blank topicPrefix (nothing was captured, e.g. the cluster was never created).
+// If the test failed, its ksqlDB cluster may not have been destroyed, so the topic is left to a later run's cleanup.
 func deleteKsqlProcessingLogTopicLive(t *testing.T, topicPrefix string) {
 	if topicPrefix == "" {
 		return
 	}
-	ctx := context.Background()
-	kafkaRestClient := newLiveStandardKafkaRestClient(ctx)
-	if kafkaRestClient == nil {
-		t.Log("Skipping ksqlDB processing log topic cleanup: KAFKA_STANDARD_AWS_* environment variables are not set")
+	topicName := topicPrefix + ksqlProcessingLogTopicSuffix
+	if t.Failed() {
+		t.Logf("Skipping deletion of ksqlDB processing log Kafka Topic %q: the test failed, so its ksqlDB cluster may still exist", topicName)
 		return
 	}
-	topicName := topicPrefix + ksqlProcessingLogTopicSuffix
+	ctx, cancel := context.WithTimeout(context.Background(), leakedLiveTestTopicsCleanupTimeout)
+	defer cancel()
+	kafkaRestClient := newLiveStandardKafkaRestClient(ctx)
+	if kafkaRestClient == nil {
+		t.Log("Skipping ksqlDB processing log topic cleanup: KAFKA_STANDARD_AWS_* environment variables are not all set")
+		return
+	}
 	if err := deleteLiveStandardKafkaTopic(ctx, kafkaRestClient, topicName); err != nil {
 		t.Logf("Error deleting ksqlDB processing log Kafka Topic %q: %s", topicName, err)
 	}
 }
 
-// newLiveStandardKafkaRestClient returns a Kafka REST client for the shared Standard cluster, or nil if its environment variables are not set.
+// newLiveStandardKafkaRestClient returns a Kafka REST client for the shared Standard cluster, or nil if its environment variables are not all set.
 func newLiveStandardKafkaRestClient(ctx context.Context) *KafkaRestClient {
 	clusterId := os.Getenv("KAFKA_STANDARD_AWS_CLUSTER_ID")
 	apiKey := os.Getenv("KAFKA_STANDARD_AWS_API_KEY")
@@ -157,7 +169,7 @@ func newLiveStandardKafkaRestClient(ctx context.Context) *KafkaRestClient {
 	if clusterId == "" || apiKey == "" || apiSecret == "" || restEndpoint == "" {
 		return nil
 	}
-	return KafkaRestClientFactory{ctx: ctx}.CreateKafkaRestClient(restEndpoint, clusterId, apiKey, apiSecret, false, false, nil)
+	return KafkaRestClientFactory{ctx: ctx, userAgent: "terraform-provider-confluent-live-test"}.CreateKafkaRestClient(restEndpoint, clusterId, apiKey, apiSecret, false, false, nil)
 }
 
 // deleteLiveStandardKafkaTopic deletes topicName, treating a topic that's already gone as deleted.
@@ -200,7 +212,7 @@ func listLiveKsqlTopicPrefixes(ctx context.Context, c *Client) (map[string]bool,
 	}
 	topicPrefixes := make(map[string]bool, len(ksqlClusters))
 	for _, ksqlCluster := range ksqlClusters {
-		// Without its prefix, a cluster's processing-log topic can't be told apart from a leaked one.
+		// Without its prefix, a cluster's processing log topic can't be told apart from a leaked one.
 		topicPrefix := ksqlCluster.Status.GetTopicPrefix()
 		if topicPrefix == "" {
 			return nil, fmt.Errorf("ksqlDB Cluster %q has no topic prefix yet", ksqlCluster.GetId())
