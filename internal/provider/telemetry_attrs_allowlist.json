@@ -76,6 +76,7 @@
     "serial_numbers"
   ],
   "confluent_certificate_pool": [
+    "assigned_resource_owner",
     "certificate_authority",
     "description",
     "display_name",
@@ -218,6 +219,7 @@
     "query",
     "rest_endpoint",
     "session_options",
+    "start_mode",
     "stopped",
     "table_options",
     "watermark"
@@ -253,6 +255,7 @@
     "filter"
   ],
   "confluent_identity_pool": [
+    "assigned_resource_owner",
     "description",
     "display_name",
     "filter",
@@ -566,6 +569,7 @@
   ],
   "confluent_service_account": [
     "api_version",
+    "assigned_resource_owner",
     "description",
     "display_name",
     "kind"

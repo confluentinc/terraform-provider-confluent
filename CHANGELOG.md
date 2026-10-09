@@ -1,3 +1,21 @@
+## 2.90.0 (October 8th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.89.0...v2.90.0)
+
+**Bug fixes:**
+* Documented the `max_retries` provider argument and its `TF_PROVIDER_CONFLUENT_MAX_RETRIES` environment variable in the [provider docs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs), including the minimum of 12 retries for requests to the Connect, IAM, API keys and RBAC APIs.
+
+**New features:**
+* Added a `start_mode` block to the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_materialized_table), letting users control where a Materialized Table begins reading source data on creation and on each evolution (`FROM_BEGINNING`, `FROM_NOW`, `FROM_TIMESTAMP`, `RESUME_OR_FROM_BEGINNING`, `RESUME_OR_FROM_NOW`, `RESUME_OR_FROM_TIMESTAMP`), including an optional `timestamp` and a nested `time_interval`.
+* Added a new optional `assigned_resource_owner` attribute to the `confluent_identity_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_pool), `confluent_service_account` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account), and `confluent_certificate_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_pool). It assigns a principal as the resource owner on the new resource at creation time. 
+
+## 2.89.0 (October 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.88.0...v2.89.0)
+
+**Bug fixes:**
+* Fixed an issue where large plans could fail with `429 Too Many Requests` errors. Rate-limited requests to the Connect, IAM, API Key, and RBAC APIs are now retried at least 12 times instead of 4, and Connect API retries now back off with jitter.
+
 ## 2.88.0 (September 30th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.87.0...v2.88.0)

@@ -75,6 +75,7 @@ const (
 	computePoolConfigLoggingKey               = "compute_pool_config_id"
 	configOAuthBearer                         = "OAUTHBEARER"
 	configOperationDelete                     = "DELETE"
+	rateLimitedAPIMinMaxRetries               = 12
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"
@@ -402,6 +403,7 @@ const (
 	paramParentResourceCrn                               = "parent_resource_crn"
 	paramNetworkCrn                                      = "network_crn"
 	paramAccessPointCrn                                  = "access_point_crn"
+	paramAssignedResourceOwner                           = "assigned_resource_owner"
 	paramEnvironmentCrn                                  = "environment_crn"
 	paramTarget                                          = "target"
 	paramHostname                                        = "hostname"
@@ -631,6 +633,12 @@ const (
 	paramSourceKafkaCredentials                          = "source_kafka_cluster.0.credentials"
 	paramSourceKafkaTopic                                = "source_kafka_topic"
 	paramStandardCluster                                 = "standard"
+	paramStartMode                                       = "start_mode"
+	paramStartModeKind                                   = "kind"
+	paramStartModeTimestamp                              = "timestamp"
+	paramStartModeTimeInterval                           = "time_interval"
+	paramIntervalValue                                   = "interval"
+	paramIntervalTimeUnit                                = "time_unit"
 	paramStatement                                       = "statement"
 	paramStatementName                                   = "statement_name"
 	paramStatus                                          = "status"

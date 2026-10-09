@@ -42,7 +42,8 @@ func setupWiremock(ctx context.Context) (*WiremockContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "wiremock/wiremock:2.32.0-alpine",
 		ExposedPorts: []string{"8080/tcp"},
-		WaitingFor:   wait.ForListeningPort(port),
+		// Wait until the admin API answers through the mapped port, since tests register stubs right after this returns.
+		WaitingFor: wait.ForHTTP("/__admin/mappings").WithPort(port),
 		// docker run -it --rm -p 8080:8080 wiremock/wiremock --verbose
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

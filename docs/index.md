@@ -23,7 +23,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.88.0"
+      version = "2.90.0"
     }
   }
 }
@@ -170,6 +170,28 @@ Complete examples (with Okta and Microsoft Azure Entra ID as identity provider) 
 -> **Note:** To switch your Terraform configuration from API key/secret authentication to OAuth, update your provider block by removing any references to variables such as `cloud_api_key`, `flink_api_key`, `kafka_api_key`, `schema_registry_api_key`, and similar variables. Also, remove any `credentials` blocks from resources like `confluent_kafka_topic`, `confluent_schema`, and `confluent_flink_statement`. Instead, specify your authentication details within the `oauth {}` block. After making these changes, apply your configuration to start using OAuth.
 
 !> **Warning:** Without proper Identity Provider setup, Identity Pool creation and RBAC roles assignment, the OAuth credentials will not work with Confluent Terraform Provider.
+
+## Retries and Rate Limits
+
+Confluent Cloud APIs are rate-limited. When a request is rate-limited (`429 Too Many Requests`) or fails with a server or network error, the provider retries it before failing the operation. Set `max_retries` (or the `TF_PROVIDER_CONFLUENT_MAX_RETRIES` environment variable) to change the number of retries:
+
+```terraform
+provider "confluent" {
+  max_retries = 20 # optionally use TF_PROVIDER_CONFLUENT_MAX_RETRIES env var
+}
+```
+
+Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations are most often rate-limited, always retry at least 12 times. These requests are made by the `confluent_connector`, `confluent_service_account`, `confluent_api_key`, `confluent_role_binding`, `confluent_invitation` and `confluent_tf_importer` resources, and by the `confluent_service_account`, `confluent_user`, `confluent_users`, `confluent_role_binding` and `confluent_invitation` data sources.
+
+| `max_retries`         | Connect, IAM, API keys and RBAC requests | All other requests    |
+|-----------------------|------------------------------------------|-----------------------|
+| Not set (default `4`) | 12 retries                               | 4 retries             |
+| `4` to `12`           | 12 retries                               | `max_retries` retries |
+| Above `12`            | `max_retries` retries                    | `max_retries` retries |
+
+-> **Note:** `max_retries` must be at least `4`.
+
+-> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. Before each retry, a rate-limited request waits at least as long as the API asks in its `Retry-After` response header, which is 1 second for the per-second limits of the control-plane APIs at `api.confluent.cloud`. Other failures, and rate-limited requests without that header, wait 1, 2, 4, 8, 16 and then 30 seconds, so a higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
 ## Helpful Links/Information
 
