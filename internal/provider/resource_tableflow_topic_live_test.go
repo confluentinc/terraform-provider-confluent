@@ -87,7 +87,11 @@ func TestAccTableflowTopicLive(t *testing.T) {
 	tableflowTopicResourceLabel := "test_live_tableflow_topic"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {

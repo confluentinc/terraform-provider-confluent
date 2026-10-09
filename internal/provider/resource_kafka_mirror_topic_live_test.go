@@ -75,7 +75,11 @@ func TestAccKafkaMirrorTopicLive(t *testing.T) {
 	mirrorTopicResourceLabel := "test_live_kafka_mirror_topic"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckKafkaMirrorTopicLiveDestroy,
 		Steps: []resource.TestStep{

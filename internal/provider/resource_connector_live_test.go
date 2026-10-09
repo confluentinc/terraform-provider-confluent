@@ -64,7 +64,11 @@ func TestAccConnectorLive(t *testing.T) {
 	connectorResourceLabel := "test_live_connector"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
@@ -139,7 +143,11 @@ func TestAccConnectorUpdateLive(t *testing.T) {
 	connectorResourceLabel := "test_live_connector_update"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Free up partitions that earlier runs leaked onto the shared Standard cluster.
+			cleanupLeakedLiveTestTopics(t)
+		},
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
@@ -208,7 +216,7 @@ func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLa
 			id = "%s"
 		}
 		topic_name         = "%s"
-		partitions_count   = 6
+		partitions_count   = 6 # Not 1: the leaked topic cleanup deletes 1-partition tf-live-connector-* topics.
 		rest_endpoint      = "%s"
 		credentials {
 			key    = "%s"
@@ -257,7 +265,7 @@ func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorReso
 			id = "%s"
 		}
 		topic_name         = "%s"
-		partitions_count   = 6
+		partitions_count   = 6 # Not 1: the leaked topic cleanup deletes 1-partition tf-live-connector-* topics.
 		rest_endpoint      = "%s"
 		credentials {
 			key    = "%s"
