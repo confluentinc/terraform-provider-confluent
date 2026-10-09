@@ -314,6 +314,7 @@ const (
 	paramColumns                                         = "columns"
 	paramCompatibilityGroup                              = "compatibility_group"
 	paramCompatibilityLevel                              = "compatibility_level"
+	paramCompatibilityPolicy                             = "compatibility_policy"
 	paramComputePool                                     = "compute_pool"
 	paramComputedComment                                 = "column_computed_comment"
 	paramComputedExpression                              = "column_computed_expression"
