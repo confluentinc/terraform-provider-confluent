@@ -527,6 +527,7 @@
   "confluent_schema_registry_cluster_config": [
     "compatibility_group",
     "compatibility_level",
+    "compatibility_policy",
     "credentials",
     "normalize",
     "rest_endpoint",
@@ -573,6 +574,7 @@
     "alias",
     "compatibility_group",
     "compatibility_level",
+    "compatibility_policy",
     "credentials",
     "normalize",
     "rest_endpoint",
