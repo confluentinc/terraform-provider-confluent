@@ -153,11 +153,13 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), "default"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "credentials.0.secret"),
@@ -175,13 +177,15 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "4"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "6"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", thirdConfigName), thirdConfigAddedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fourthConfigName), fourthConfigAddedValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", sixthConfigName), sixthConfigUpdatedValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", seventhConfigName), seventhConfigUpdatedValue),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", eighthConfigName), eighthConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "credentials.0.secret"),
@@ -217,9 +221,11 @@ func testAccCheckTopicConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mo
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "default"
+		"%s" = "%s"
+		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName)
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, sixthConfigName, seventhConfigName, escapeForHCL(seventhConfigValue), eighthConfigName, escapeForHCL(eighthConfigValue))
 }
 
 func testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mockServerUrl string) string {
@@ -240,7 +246,9 @@ func testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock2(confluentCloudBase
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
+		"%s" = "%s"
+		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue)
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue, seventhConfigName, escapeForHCL(seventhConfigUpdatedValue), eighthConfigName, escapeForHCL(eighthConfigUpdatedValue))
 }
