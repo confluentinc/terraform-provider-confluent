@@ -77,6 +77,7 @@ func TestAccDataSchemaRegistryClusterCompatibilityLevelSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_level", testSchemaRegistryClusterCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_group", testSchemaRegistryClusterCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_policy", testCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes)),
 				),

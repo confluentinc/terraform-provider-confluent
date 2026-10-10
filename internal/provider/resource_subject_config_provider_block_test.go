@@ -110,7 +110,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel),
+				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel, testCompatibilityPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -119,6 +119,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_policy", testCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
@@ -135,7 +136,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel),
+				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel, testUpdatedCompatibilityPolicy),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -144,6 +145,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testUpdatedSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_policy", testUpdatedCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
@@ -166,7 +168,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSubjectCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSubjectCompatibilityLevelPath), expectedCountOne)
 }
 
-func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel string) string {
+func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, compatibilityPolicy string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -179,9 +181,10 @@ func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(conflu
 	  subject_name = "%s"
 	  compatibility_level = "%s"
 	  compatibility_group = "%s"
+	  compatibility_policy = "%s"
 	  normalize = true
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectCompatibilityLevelResourceLabel, testSubjectName, compatibilityLevel, testSubjectCompatibilityGroup)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectCompatibilityLevelResourceLabel, testSubjectName, compatibilityLevel, testSubjectCompatibilityGroup, compatibilityPolicy)
 }
 
 func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
