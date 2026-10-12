@@ -1286,8 +1286,9 @@ func suppressFlinkTimestampDiff(k, old, new string, d *schema.ResourceData) bool
 	return oldTime.Equal(newTime)
 }
 
-// suppressDefaultKindOfEmptyPhysicalColumn leaves the default kind out of the plan for a physical column
-// block that sets no name, type, or comment, so an empty columns_physical {} block is not sent.
+// suppressDefaultKindOfEmptyPhysicalColumn keeps the kind out of the plan for a physical column block
+// with no name, type, or comment, so an empty columns_physical {} block is still not sent. This also
+// applies when such a block sets column_physical_kind = "Physical" explicitly.
 func suppressDefaultKindOfEmptyPhysicalColumn(k, old, new string, d *schema.ResourceData) bool {
 	prefix := strings.TrimSuffix(k, paramPhysicalKind)
 	return old == "" && new == physicalColumnKind && d.Get(prefix+paramPhysicalName) == "" &&

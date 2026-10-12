@@ -22,7 +22,10 @@ func TestExpandAllColumnsKind(t *testing.T) {
 		{name: "physical defaults to Physical", block: paramColumnPhysical, column: map[string]interface{}{paramPhysicalName: "event_ts"}, wantKind: "Physical"},
 		{name: "computed defaults to Computed", block: paramColumnComputed, column: map[string]interface{}{paramComputedName: "event_hour"}, wantKind: "Computed"},
 		{name: "metadata defaults to Metadata", block: paramColumnMetadata, column: map[string]interface{}{paramMetadataName: "kafka_ts"}, wantKind: "Metadata"},
-		// Explicit kinds are sent unchanged (aliases used here; the API itself only accepts the canonical kinds).
+		// A physical block that sets only a type or only a comment still gets the default kind.
+		{name: "physical with only a type defaults to Physical", block: paramColumnPhysical, column: map[string]interface{}{paramPhysicalType: "STRING"}, wantKind: "Physical"},
+		{name: "physical with only a comment defaults to Physical", block: paramColumnPhysical, column: map[string]interface{}{paramPhysicalComment: "note"}, wantKind: "Physical"},
+		// Explicit kinds are sent unchanged; non-default values tell a kept kind apart from the default.
 		{name: "explicit physical kind is kept", block: paramColumnPhysical, column: map[string]interface{}{paramPhysicalName: "event_ts", paramPhysicalKind: "sql.v1.PhysicalColumn"}, wantKind: "sql.v1.PhysicalColumn"},
 		{name: "explicit computed kind is kept", block: paramColumnComputed, column: map[string]interface{}{paramComputedName: "event_hour", paramComputedKind: "sql.v1.ComputedColumn"}, wantKind: "sql.v1.ComputedColumn"},
 		{name: "explicit metadata kind is kept", block: paramColumnMetadata, column: map[string]interface{}{paramMetadataName: "kafka_ts", paramMetadataKind: "sql.v1.MetadataColumn"}, wantKind: "sql.v1.MetadataColumn"},
@@ -80,7 +83,7 @@ func TestEmptyPhysicalBlockPlansNoKindChange(t *testing.T) {
 	config := terraform.NewResourceConfigRaw(map[string]interface{}{
 		paramColumns: []interface{}{map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{}}}},
 	})
-	diff, err := schema.InternalMap(flinkMaterializedTableResource().Schema).Diff(context.Background(), state, config, nil, nil, true)
+	diff, err := flinkMaterializedTableResource().Diff(context.Background(), state, config, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
