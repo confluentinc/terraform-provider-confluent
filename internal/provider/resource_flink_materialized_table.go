@@ -125,6 +125,7 @@ func columnComputedSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "Kind of the computed column.",
 					Optional:    true,
+					Default:     computedColumnKind,
 				},
 				paramComputedExpression: {
 					Type:        schema.TypeString,
@@ -167,6 +168,7 @@ func columnPhysicalSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "Kind of the physical column.",
 					Optional:    true,
+					Default:     physicalColumnKind,
 				},
 			},
 		},
@@ -198,6 +200,7 @@ func columnMetadataSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "Kind of the metadata column.",
 					Optional:    true,
+					Default:     metadataColumnKind,
 				},
 				paramMetadataKey: {
 					Type:        schema.TypeString,
