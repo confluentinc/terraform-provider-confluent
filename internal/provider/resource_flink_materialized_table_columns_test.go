@@ -1,10 +1,13 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // TestExpandAllColumnsKind verifies the kind sent for each column block: an omitted kind defaults to
@@ -45,5 +48,48 @@ func TestExpandAllColumnsKind(t *testing.T) {
 				t.Errorf("expected kind %q, got %q in %s", tt.wantKind, sent["kind"], body)
 			}
 		})
+	}
+}
+
+// TestExpandAllColumnsSkipsEmptyPhysicalBlock verifies that an empty columns_physical {} block is not
+// sent, while a named physical column next to it still gets the default kind.
+func TestExpandAllColumnsSkipsEmptyPhysicalBlock(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, flinkMaterializedTableResource().Schema, map[string]interface{}{
+		paramColumns: []interface{}{
+			map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{paramPhysicalName: "a", paramPhysicalType: "STRING"}}},
+			map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{}}},
+		},
+	})
+	columns := expandAllColumns(d)
+	if len(columns) != 1 || columns[0].SqlV1PhysicalColumn == nil ||
+		columns[0].SqlV1PhysicalColumn.Name != "a" || columns[0].SqlV1PhysicalColumn.Kind != "Physical" {
+		t.Fatalf("expected only column \"a\" of kind Physical, got %d column(s): %+v", len(columns), columns)
+	}
+}
+
+// TestEmptyPhysicalBlockPlansNoKindChange verifies that a resource whose state holds an empty physical
+// column block (no kind) plans no change for it.
+func TestEmptyPhysicalBlockPlansNoKindChange(t *testing.T) {
+	state := &terraform.InstanceState{ID: "env-abc123/lkc-01/t", Attributes: map[string]string{
+		"id":                           "env-abc123/lkc-01/t",
+		"columns.#":                    "1",
+		"columns.0.columns_physical.#": "1",
+		"columns.0.columns_computed.#": "0",
+		"columns.0.columns_metadata.#": "0",
+	}}
+	config := terraform.NewResourceConfigRaw(map[string]interface{}{
+		paramColumns: []interface{}{map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{}}}},
+	})
+	diff, err := schema.InternalMap(flinkMaterializedTableResource().Schema).Diff(context.Background(), state, config, nil, nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff == nil {
+		return
+	}
+	for k, v := range diff.Attributes {
+		if strings.HasPrefix(k, paramColumns+".") && (v.Old != v.New || v.NewComputed || v.NewRemoved) {
+			t.Errorf("unexpected columns diff %s: %q -> %q", k, v.Old, v.New)
+		}
 	}
 }

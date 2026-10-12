@@ -165,10 +165,11 @@ func columnPhysicalSchema() *schema.Schema {
 					Optional:    true,
 				},
 				paramPhysicalKind: {
-					Type:        schema.TypeString,
-					Description: "Kind of the physical column.",
-					Optional:    true,
-					Default:     physicalColumnKind,
+					Type:             schema.TypeString,
+					Description:      "Kind of the physical column.",
+					Optional:         true,
+					Default:          physicalColumnKind,
+					DiffSuppressFunc: suppressDefaultKindOfEmptyPhysicalColumn,
 				},
 			},
 		},
@@ -1283,6 +1284,14 @@ func suppressFlinkTimestampDiff(k, old, new string, d *schema.ResourceData) bool
 		return false
 	}
 	return oldTime.Equal(newTime)
+}
+
+// suppressDefaultKindOfEmptyPhysicalColumn leaves the default kind out of the plan for a physical column
+// block that sets no name, type, or comment, so an empty columns_physical {} block is not sent.
+func suppressDefaultKindOfEmptyPhysicalColumn(k, old, new string, d *schema.ResourceData) bool {
+	prefix := strings.TrimSuffix(k, paramPhysicalKind)
+	return old == "" && new == physicalColumnKind && d.Get(prefix+paramPhysicalName) == "" &&
+		d.Get(prefix+paramPhysicalType) == "" && d.Get(prefix+paramPhysicalComment) == ""
 }
 
 // expandMaterializedTableStartMode builds the API start_mode object from the
