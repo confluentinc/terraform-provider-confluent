@@ -1446,3 +1446,213 @@ func testAccCheckMaterializedTableUnmanagedOptionsConfig(mockServerUrl, resource
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
+
+// TestAccFlinkMaterializedTableColumnKindDefaults verifies that omitting column_*_kind sends each
+// column's block kind (Physical, Computed, Metadata) on create and update instead of an empty kind,
+// and that the defaults match the kinds returned on read, so re-planning shows no diff.
+func TestAccFlinkMaterializedTableColumnKindDefaults(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Column Kind Defaults"
+	const columnKindsDisplayName = "table_column_kinds"
+	readColumnKindsPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, columnKindsDisplayName)
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_column_kind_defaults.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readColumnKindsPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	readUpdatedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_column_kind_defaults_updated.json")
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readColumnKindsPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenUpdated).
+		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readColumnKindsPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
+		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readColumnKindsPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readColumnKindsPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+	amountColumn := `
+	  columns {
+	    columns_physical {
+	      column_physical_name = "amount"
+	      column_physical_type = "DOUBLE"
+	    }
+	  }`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMaterializedTableColumnKindDefaultsConfig(mockTestServerUrl, resourceLabel, columnKindsDisplayName, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.#", "3"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.0.columns_physical.0.column_physical_kind", "Physical"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.1.columns_computed.0.column_computed_kind", "Computed"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.2.columns_metadata.0.column_metadata_kind", "Metadata"),
+					verifyMaterializedTableColumnKindsSent(wiremockClient, wiremock.Post, createFlinkMaterializedTablePath, map[string]string{
+						"event_ts":   "Physical",
+						"event_hour": "Computed",
+						"kafka_ts":   "Metadata",
+					}),
+				),
+			},
+			{
+				// The defaults match the kinds the API echoes, so re-planning is a no-op.
+				Config:             testAccCheckMaterializedTableColumnKindDefaultsConfig(mockTestServerUrl, resourceLabel, columnKindsDisplayName, ""),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				// Adding a column without a kind updates in place and sends every column's kind.
+				Config: testAccCheckMaterializedTableColumnKindDefaultsConfig(mockTestServerUrl, resourceLabel, columnKindsDisplayName, amountColumn),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.#", "4"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.3.columns_physical.0.column_physical_name", "amount"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "columns.3.columns_physical.0.column_physical_kind", "Physical"),
+					verifyMaterializedTableColumnKindsSent(wiremockClient, wiremock.Put, readColumnKindsPath, map[string]string{
+						"event_ts":   "Physical",
+						"event_hour": "Computed",
+						"kafka_ts":   "Metadata",
+						"amount":     "Physical",
+					}),
+				),
+			},
+			{
+				Config:             testAccCheckMaterializedTableColumnKindDefaultsConfig(mockTestServerUrl, resourceLabel, columnKindsDisplayName, amountColumn),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+// verifyMaterializedTableColumnKindsSent asserts, via the wiremock request journal, that requests
+// sent each named column with the given kind and never sent a column with an empty kind.
+func verifyMaterializedTableColumnKindsSent(wiremockClient *wiremock.Client, method func(wiremock.URLMatcher) *wiremock.StubRule, path string, wantKinds map[string]string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		for name, kind := range wantKinds {
+			withKind := method(wiremock.URLPathEqualTo(path)).
+				WithBodyPattern(wiremock.MatchingJsonPath(fmt.Sprintf("$.spec.columns[?(@.name == '%s' && @.kind == '%s')]", name, kind)))
+			count, err := wiremockClient.GetCountRequests(withKind.Request())
+			if err != nil {
+				return err
+			}
+			if count < 1 {
+				return fmt.Errorf("expected a request to %s with column %q of kind %q, got %d", path, name, kind, count)
+			}
+		}
+		emptyKind := method(wiremock.URLPathEqualTo(path)).
+			WithBodyPattern(wiremock.MatchingJsonPath("$.spec.columns[?(@.kind == '')]"))
+		count, err := wiremockClient.GetCountRequests(emptyKind.Request())
+		if err != nil {
+			return err
+		}
+		if count != 0 {
+			return fmt.Errorf("%d request(s) to %s sent a column with an empty kind; want 0", count, path)
+		}
+		return nil
+	}
+}
+
+func testAccCheckMaterializedTableColumnKindDefaultsConfig(mockServerUrl, resourceLabel, displayName, extraColumns string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT * FROM payment_events;"
+	  watermark {
+	    column     = "event_ts"
+	    expression = "event_ts - INTERVAL '5' SECOND"
+	  }
+	  # NOTE: no column_*_kind on purpose - each column block implies its kind.
+	  columns {
+	    columns_physical {
+	      column_physical_name = "event_ts"
+	      column_physical_type = "TIMESTAMP(3)"
+	    }
+	  }
+	  columns {
+	    columns_computed {
+	      column_computed_name       = "event_hour"
+	      column_computed_type       = "BIGINT"
+	      column_computed_expression = "HOUR(event_ts)"
+	    }
+	  }
+	  columns {
+	    columns_metadata {
+	      column_metadata_name    = "kafka_ts"
+	      column_metadata_type    = "TIMESTAMP_LTZ(3)"
+	      column_metadata_key     = "timestamp"
+	      column_metadata_virtual = true
+	    }
+	  }%s
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase, extraColumns)
+}
