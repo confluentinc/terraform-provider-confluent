@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 
@@ -192,6 +193,8 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("default endpoint, no opt-out: enabled runtime with a live sink", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
+		// Truly unset, as for a user who never sets it.
+		_ = os.Unsetenv(disableProviderAnalyticsEnvVar)
 		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || rt.config.Disabled {
@@ -290,6 +293,51 @@ func TestTelemetryDisabledForTestMode(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := telemetryDisabledForTestMode(tc.acceptance, tc.live); got != tc.want {
 				t.Errorf("telemetryDisabledForTestMode(%v, %v) = %v, want %v", tc.acceptance, tc.live, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestProviderConfigureWiresTelemetryGate checks that providerConfigure passes the
+// configured endpoint and the test mode to the telemetry gate.
+func TestProviderConfigureWiresTelemetryGate(t *testing.T) {
+	tests := []struct {
+		name        string
+		endpoint    string // empty uses the schema default
+		acc, prod   string
+		wantEnabled bool
+	}{
+		{"default endpoint: enabled", "", "", "", true},
+		{"Confluent Cloud for Government endpoint: disabled", "https://api.confluentgov.com", "", "", false},
+		{"hermetic acceptance test: disabled", "", "1", "", false},
+		{"live production test: enabled", "", "1", "1", true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			restorePublishedTelemetry(t)
+			publishedTelemetry.Store(nil)
+			t.Setenv(disableProviderAnalyticsEnvVar, "")
+			t.Setenv("TF_ACC", tc.acc)
+			t.Setenv("TF_ACC_PROD", tc.prod)
+			raw := map[string]interface{}{"cloud_api_key": "test-key", "cloud_api_secret": "test-secret"}
+			if tc.endpoint != "" {
+				raw["endpoint"] = tc.endpoint
+			}
+			p := New("test", "")()
+			d := schema.TestResourceDataRaw(t, p.Schema, raw)
+			if _, diags := providerConfigure(context.Background(), d, p, "test", ""); diags.HasError() {
+				t.Fatalf("providerConfigure failed: %v", diags)
+			}
+			rt := publishedTelemetry.Load()
+			if rt == nil {
+				t.Fatal("providerConfigure published no telemetry runtime")
+			}
+			// Stop the transport an enabled runtime starts.
+			if c, ok := rt.reporter.(interface{ Close() }); ok {
+				c.Close()
+			}
+			if enabled := !rt.config.Disabled && rt.reporter != nil; enabled != tc.wantEnabled {
+				t.Errorf("reporting enabled = %v, want %v", enabled, tc.wantEnabled)
 			}
 		})
 	}
