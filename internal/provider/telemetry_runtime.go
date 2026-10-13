@@ -109,7 +109,7 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 }
 
 // telemetryDisabledForTestMode suppresses telemetry for acceptance-only runs
-// (TF_ACC set, TF_ACC_PROD unset); live-production runs may emit.
+// (TF_ACC=1 without TF_ACC_PROD=1); live-production runs may emit.
 func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
 	return acceptanceTestMode && !liveProductionTestMode
 }

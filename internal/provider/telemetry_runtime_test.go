@@ -37,14 +37,15 @@ func TestTelemetryOptOut(t *testing.T) {
 	tests := []struct {
 		name     string
 		endpoint string
-		envValue *string // nil = unset
+		envValue *string // nil = set to empty
 		want     bool
 	}{
 		{"default (prod) endpoint, no env: enabled", defaultCloudEndpoint, nil, false},
 		{"staging endpoint, no env: enabled", stagingCloudEndpoint, nil, false},
 		{"devel endpoint, no env: enabled", develCloudEndpoint, nil, false},
 		{"empty endpoint disables", "", nil, true},
-		{"non-enabled (gov) endpoint disables", "https://api.confluent-gov.cloud", nil, true},
+		{"Confluent Cloud for Government endpoint disables", "https://api.confluentgov.com", nil, true},
+		{"Confluent Cloud for Government endpoint (CLI form) disables", "https://confluentgov.com/api", nil, true},
 		{"trailing slash disables (exact match only)", defaultCloudEndpoint + "/", nil, true},
 		{"env var disables on default endpoint", defaultCloudEndpoint, strptr("1"), true},
 		{"env var disables on staging endpoint", stagingCloudEndpoint, strptr("1"), true},
@@ -147,9 +148,8 @@ func TestPublishedTelemetryReporter_ConcurrentPublishAndReport(t *testing.T) {
 }
 
 func TestPublishTelemetryRuntime(t *testing.T) {
-	// Every case supplies a top-level identity except where it is the factor under
-	// test, so each subtest isolates one gate. The no-identity path lives in
-	// telemetry_auth_scope_test.go.
+	// Every case supplies a top-level identity, so each subtest isolates one gate. The
+	// no-identity path lives in telemetry_auth_scope_test.go.
 	t.Run("non-default endpoint publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
