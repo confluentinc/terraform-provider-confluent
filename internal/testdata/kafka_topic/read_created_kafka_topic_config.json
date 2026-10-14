@@ -615,6 +615,50 @@
       ],
       "topic_name": "read_created_kafka_topic",
       "is_default": false
+    },
+    {
+      "kind": "KafkaTopicConfig",
+      "metadata": {
+        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/read_created_kafka_topic/configs/confluent.key.association",
+        "resource_name": "crn:///kafka=lkc-190073/topic=read_created_kafka_topic/config=confluent.key.association"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "confluent.key.association",
+      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestKeyRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"fields\\\":[{\\\"name\\\":\\\"f1\\\",\\\"type\\\":\\\"string\\\"}]}\",\"schemaType\":\"AVRO\"}",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_TOPIC_CONFIG",
+      "synonyms": [
+        {
+          "name": "confluent.key.association",
+          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestKeyRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"fields\\\":[{\\\"name\\\":\\\"f1\\\",\\\"type\\\":\\\"string\\\"}]}\",\"schemaType\":\"AVRO\"}",
+          "source": "DYNAMIC_TOPIC_CONFIG"
+        }
+      ],
+      "topic_name": "read_created_kafka_topic",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaTopicConfig",
+      "metadata": {
+        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/read_created_kafka_topic/configs/confluent.value.association",
+        "resource_name": "crn:///kafka=lkc-190073/topic=read_created_kafka_topic/config=confluent.value.association"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "confluent.value.association",
+      "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_TOPIC_CONFIG",
+      "synonyms": [
+        {
+          "name": "confluent.value.association",
+          "value": "{\"schema\":\"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"TestValueRecord\\\",\\\"namespace\\\":\\\"com.example.avro\\\",\\\"doc\\\":\\\"Create test.\\\\nChecks equals sign = and escaping.\\\",\\\"fields\\\":[{\\\"name\\\":\\\"field1\\\",\\\"type\\\":[\\\"null\\\",\\\"string\\\"]}]}\",\"schemaType\":\"AVRO\"}",
+          "source": "DYNAMIC_TOPIC_CONFIG"
+        }
+      ],
+      "topic_name": "read_created_kafka_topic",
+      "is_default": false
     }
   ]
 }
