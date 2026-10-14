@@ -49,6 +49,9 @@ type telemetryRuntime struct {
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
+	// confluentCloudHostsOnly reports only operations whose API requests all went to
+	// Confluent Cloud hosts (see publishedTelemetryHostPolicy).
+	confluentCloudHostsOnly bool
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
@@ -68,6 +71,19 @@ func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 		return
 	}
 	rt.reporter.Report(u)
+}
+
+// publishedTelemetryHostPolicy is the wrappers' host check. On the default endpoint
+// it reports an operation only if all of its API requests went to Confluent Cloud
+// hosts, so a provider block that leaves endpoint unset but manages, for example,
+// Confluent Cloud for Government clusters never sends its credentials to the
+// commercial endpoint.
+func publishedTelemetryHostPolicy(h *apiHosts) bool {
+	rt := publishedTelemetry.Load()
+	if rt == nil || !rt.confluentCloudHostsOnly {
+		return true
+	}
+	return h.onlyConfluentCloud()
 }
 
 // telemetryEnabledEndpoints lists the Cloud API endpoints for which usage
@@ -127,6 +143,7 @@ func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIK
 	if !disabled {
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
 		rt.reporter = telemetry.NewTransport(poster, ctx)
+		rt.confluentCloudHostsOnly = endpoint == defaultCloudEndpoint
 	}
 	// Close any prior transport so repeated in-process configuration (the test
 	// harness) does not leak worker goroutines; production configures once.

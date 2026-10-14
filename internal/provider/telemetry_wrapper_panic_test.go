@@ -337,7 +337,7 @@ func TestReportSafely_ContainsPanics(t *testing.T) {
 				t.Fatalf("reportSafely let a payload-build panic escape: %v", p)
 			}
 		}()
-		reportSafely(testWrapConfig(&recordingReporter{}), func() telemetry.Usage {
+		reportSafely(testWrapConfig(&recordingReporter{}), nil, func() telemetry.Usage {
 			panic("build boom")
 		})
 	}()
@@ -348,7 +348,7 @@ func TestReportSafely_ContainsPanics(t *testing.T) {
 				t.Fatalf("reportSafely let a reporter panic escape: %v", p)
 			}
 		}()
-		reportSafely(testWrapConfig(panicReporter{}), func() telemetry.Usage {
+		reportSafely(testWrapConfig(panicReporter{}), nil, func() telemetry.Usage {
 			return telemetry.Usage{}
 		})
 	}()
