@@ -49,8 +49,8 @@ type telemetryRuntime struct {
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
-	// confluentCloudHostsOnly reports only operations whose API requests all went to
-	// Confluent Cloud hosts (see publishedTelemetryHostPolicy).
+	// confluentCloudHostsOnly reports only operations that made at least one API
+	// request, all to Confluent Cloud hosts (see publishedTelemetryHostPolicy).
 	confluentCloudHostsOnly bool
 }
 
@@ -74,10 +74,10 @@ func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 }
 
 // publishedTelemetryHostPolicy is the wrappers' host check. On the default endpoint
-// it reports an operation only if all of its API requests went to Confluent Cloud
-// hosts, so a provider block that leaves endpoint unset but manages, for example,
-// Confluent Cloud for Government clusters never sends its credentials to the
-// commercial endpoint.
+// it reports an operation only if it made at least one API request and all of them
+// went to Confluent Cloud hosts, so a provider block that leaves endpoint unset but
+// manages, for example, Confluent Cloud for Government clusters never sends its
+// credentials to the commercial endpoint.
 func publishedTelemetryHostPolicy(h *apiHosts) bool {
 	rt := publishedTelemetry.Load()
 	if rt == nil || !rt.confluentCloudHostsOnly {
@@ -135,7 +135,9 @@ func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode boo
 // Reporting is enabled only when the process is not opted out and is on an enabled
 // endpoint, a top-level Cloud identity is configured, and the run is not a hermetic
 // acceptance test (live-production runs may emit). When enabled the sink is the
-// bounded-worker transport; otherwise it is nil and every event is dropped.
+// bounded-worker transport, limited on the default endpoint to operations that talked
+// only to Confluent Cloud (see publishedTelemetryHostPolicy); otherwise it is nil and
+// every event is dropped.
 func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, disabledForTestMode bool) {
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
 	disabled := telemetryOptOut(endpoint) || authFunc == nil || disabledForTestMode

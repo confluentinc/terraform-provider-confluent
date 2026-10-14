@@ -31,14 +31,14 @@ import (
 )
 
 // Central client-analytics wrapping. Replaces every managed resource's CRUD and
-// import entry points, once, with wrappers that build a telemetry.Usage and hand
-// it to a reporter.
+// import entry points, once, with wrappers that build a telemetry.Usage and, when
+// the host policy allows, hand it to a reporter.
 //
 // The wrappers are also the provider's only panic recovery: a panic in a wrapped
 // CRUD or import call is recovered and returned as an error (with the trimmed
 // stack in its detail) instead of crashing the process, and is reported as a
-// crash event when the host policy allows. Building and reporting the Usage has
-// its own recover, so a panic while doing that is contained too.
+// crash event. Building and reporting the Usage has its own recover, so a panic
+// while doing that is contained too.
 
 // telemetryReporter receives a populated Usage; Report should not block the caller.
 type telemetryReporter interface {
