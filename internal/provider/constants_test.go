@@ -603,6 +603,7 @@ const (
 	readCreatedSchemaExporterUrlPath                                    = "/exporters/exporter1"
 	readCreatedTagBindingUrlPath                                        = "/catalog/v1/entity/type/sr_schema/name/lsrc-8wrx70:.:100001/tags"
 	readCreatedTagUrlPath                                               = "/catalog/v1/types/tagdefs/test1"
+	readSchemaExporterClusterLinkConfigUrlPath                          = "/exporters/exporter1/config/clusterlink"
 	readUpdatedBusinessMetadataBindingSrUrlPath                         = "/catalog/v1/entity/type/sr_schema/name/lsrc-nrndwv:.:100002/businessmetadata"
 	roleBindingDataSourceScenarioName                                   = "confluent_role_binding Data Source Lifecycle"
 	roleBindingId                                                       = "rb-OOXL7"
@@ -870,6 +871,8 @@ const (
 	scenarioStateTopicHasBeenUpdateCreated                              = "The topic has been update created"
 	scenarioStateTopicHasBeenUpdated                                    = "A new topic has been just updated"
 	schemaDataSourceScenarioName                                        = "confluent_schema Data Source Lifecycle"
+	schemaExporterClusterLinkConfigDataSourceLabel                      = "data.confluent_schema_exporter_cluster_link_config.main"
+	schemaExporterClusterLinkConfigDataSourceScenarioName               = "confluent_schema_exporter_cluster_link_config Data Source Lifecycle"
 	schemaExporterLabel                                                 = "confluent_schema_exporter.main"
 	schemaExporterResourceScenarioName                                  = "confluent_schema_exporter Resource Lifecycle"
 	schemaRegistryClusterApiVersion                                     = "srcm/v3"
@@ -1085,6 +1088,7 @@ const (
 	testRecreateOnUpdateTrue                                                = "true"
 	testSchemaContent                                                       = "foobar"
 	testSchemaContentUpdated                                                = "foobar2"
+	testSchemaExporterClusterLinkConfigValue                                = `{"topicsToInclude":["*"],"topicsToExclude":[],"contextType":"AUTO","subjectRenameFormat":"my-${subject}","sourceSRDeployment":"CONFLUENT_CLOUD","sourceLSRC":"lsrc-abc123"}`
 	testSchemaIdentifier                                                    = 100001
 	testSchemaRegistryClusterCompatibilityGroup                             = "abc.cg.version"
 	testSchemaRegistryClusterCompatibilityLevel                             = "FULL"
