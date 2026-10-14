@@ -352,6 +352,11 @@ type loggingTransport struct {
 }
 
 func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Record the host for client analytics before sending, so failed requests count too.
+	if req.URL != nil {
+		recordAPIHost(req.Context(), req.URL.Hostname())
+	}
+
 	// 1. Call the original transport to do the actual HTTP work
 	resp, err := t.transport.RoundTrip(req)
 
