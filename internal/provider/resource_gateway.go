@@ -69,6 +69,7 @@ func gatewayResource() *schema.Resource {
 			paramAzureEgressPrivateLinkGateway:          azureEgressPrivateLinkGatewayGatewaySchema(),
 			paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewayGatewaySchema(),
 			paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewayGatewaySchema(),
+			paramGcpEgressPrivateServiceConnectGateway:  gcpEgressPrivateServiceConnectGatewayGatewayDataSourceSchema(),
 		},
 	}
 }
@@ -458,6 +459,10 @@ func setGatewayAttributes(d *schema.ResourceData, gateway networkinggatewayv1.Ne
 	oneOfConfig := spec.GetConfig()
 	status := gateway.GetStatus()
 	statusOneOfConfig := status.GetCloudGateway()
+
+	if err := d.Set(paramGcpEgressPrivateServiceConnectGateway, []interface{}{}); err != nil {
+		return nil, createDescriptiveError(err)
+	}
 
 	switch {
 	case oneOfConfig.NetworkingV1AwsEgressPrivateLinkGatewaySpec != nil && statusOneOfConfig.NetworkingV1AwsEgressPrivateLinkGatewayStatus != nil:
