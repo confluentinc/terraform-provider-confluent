@@ -32,11 +32,6 @@ const (
 	// any non-empty value.
 	disableProviderAnalyticsEnvVar = "CONFLUENT_DISABLE_PROVIDER_ANALYTICS"
 
-	// previewProviderAnalyticsEnvVar temporarily gates reporting behind an opt-in:
-	// reporting stays off for everyone unless this is set to any non-empty value.
-	// Remove it once analytics is enabled by default.
-	previewProviderAnalyticsEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_PREVIEW"
-
 	// defaultCloudEndpoint is the production Cloud API origin; it must match the
 	// "endpoint" schema default.
 	defaultCloudEndpoint = "https://api.confluent.cloud"
@@ -54,6 +49,9 @@ type telemetryRuntime struct {
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
+	// confluentCloudHostsOnly reports only operations whose API requests all went to
+	// Confluent Cloud hosts (see publishedTelemetryHostPolicy).
+	confluentCloudHostsOnly bool
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
@@ -73,6 +71,19 @@ func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 		return
 	}
 	rt.reporter.Report(u)
+}
+
+// publishedTelemetryHostPolicy is the wrappers' host check. On the default endpoint
+// it reports an operation only if all of its API requests went to Confluent Cloud
+// hosts, so a provider block that leaves endpoint unset but manages, for example,
+// Confluent Cloud for Government clusters never sends its credentials to the
+// commercial endpoint.
+func publishedTelemetryHostPolicy(h *apiHosts) bool {
+	rt := publishedTelemetry.Load()
+	if rt == nil || !rt.confluentCloudHostsOnly {
+		return true
+	}
+	return h.onlyConfluentCloud()
 }
 
 // telemetryEnabledEndpoints lists the Cloud API endpoints for which usage
@@ -114,27 +125,25 @@ func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, st
 }
 
 // telemetryDisabledForTestMode suppresses telemetry for acceptance-only runs
-// (TF_ACC set, TF_ACC_PROD unset); live-production runs may emit.
+// (TF_ACC=1 without TF_ACC_PROD=1); live-production runs may emit.
 func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
 	return acceptanceTestMode && !liveProductionTestMode
 }
 
 // publishTelemetryRuntime decides whether reporting is enabled and publishes the
 // runtime the resource wrappers read, once at the end of provider configuration.
-// Reporting is enabled only when the preview opt-in is set, the process is not
-// opted out and is on an enabled endpoint, a top-level Cloud identity is
-// configured, and the run is not a hermetic acceptance test (live-production runs
-// may emit). When enabled the sink is the bounded-worker transport; otherwise it is
-// nil and every event is dropped.
+// Reporting is enabled only when the process is not opted out and is on an enabled
+// endpoint, a top-level Cloud identity is configured, and the run is not a hermetic
+// acceptance test (live-production runs may emit). When enabled the sink is the
+// bounded-worker transport; otherwise it is nil and every event is dropped.
 func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, disabledForTestMode bool) {
 	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
-	// Temporary opt-in gate: keep reporting off until the preview flag is set.
-	previewOptIn := os.Getenv(previewProviderAnalyticsEnvVar) != ""
-	disabled := !previewOptIn || telemetryOptOut(endpoint) || authFunc == nil || disabledForTestMode
+	disabled := telemetryOptOut(endpoint) || authFunc == nil || disabledForTestMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
 		rt.reporter = telemetry.NewTransport(poster, ctx)
+		rt.confluentCloudHostsOnly = endpoint == defaultCloudEndpoint
 	}
 	// Close any prior transport so repeated in-process configuration (the test
 	// harness) does not leak worker goroutines; production configures once.

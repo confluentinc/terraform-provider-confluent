@@ -60,6 +60,9 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 }
 
 func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *testing.T) {
+	// Opt out so configuring on the default endpoint doesn't start a real telemetry transport.
+	restorePublishedTelemetry(t)
+	t.Setenv(disableProviderAnalyticsEnvVar, "1")
 	p := New("test", "")()
 	d := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
 		"cloud_api_key":    "test-key",

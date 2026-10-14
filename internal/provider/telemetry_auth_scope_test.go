@@ -29,7 +29,6 @@ import (
 func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
-	t.Setenv(previewProviderAnalyticsEnvVar, "1")
 
 	// Everything else opens the gate, so the missing identity is the only thing
 	// disabling here (no Cloud key and no OAuth/STS token).
@@ -55,7 +54,6 @@ func TestTelemetryDisabledWithoutTopLevelIdentity(t *testing.T) {
 func TestTelemetryEnabledWithTopLevelIdentity(t *testing.T) {
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "")
-	t.Setenv(previewProviderAnalyticsEnvVar, "1")
 
 	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 	rt := publishedTelemetry.Load()

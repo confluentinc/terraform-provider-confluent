@@ -37,8 +37,8 @@ import (
 // The wrappers are also the provider's only panic recovery: a panic in a wrapped
 // CRUD or import call is recovered and returned as an error (with the trimmed
 // stack in its detail) instead of crashing the process, and is reported as a
-// crash event. Building and reporting the Usage has its own recover, so a panic
-// while doing that is contained too.
+// crash event when the host policy allows. Building and reporting the Usage has
+// its own recover, so a panic while doing that is contained too.
 
 // telemetryReporter receives a populated Usage; Report should not block the caller.
 type telemetryReporter interface {
@@ -61,6 +61,17 @@ type telemetryWrapConfig struct {
 	// terraformVersion returns Terraform Core's version. It is a func because Core
 	// sets it during ConfigureProvider, after New returns; a nil func yields "".
 	terraformVersion func() string
+
+	// reportHosts decides from an operation's API hosts whether to report it; a nil
+	// func reports every operation.
+	reportHosts func(*apiHosts) bool
+}
+
+func (c telemetryWrapConfig) hostsReportable(h *apiHosts) bool {
+	if c.reportHosts == nil {
+		return true
+	}
+	return c.reportHosts(h)
 }
 
 func (c telemetryWrapConfig) report(u telemetry.Usage) {
@@ -138,6 +149,7 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
+		ctx, hosts := withAPIHosts(ctx)
 
 		// Recover a panic from the CRUD call and return it as error diagnostics
 		// instead of letting it crash the process.
@@ -148,7 +160,7 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 
 		// Build and report the Usage under a separate recover, so a panic while
 		// building or sending it is also contained.
-		reportSafely(cfg, func() telemetry.Usage {
+		reportSafely(cfg, hosts, func() telemetry.Usage {
 			changed := []string{}
 			if rec == nil {
 				changed = changedAttributeNames(d, resourceSchema, op)
@@ -165,6 +177,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) (imported []*schema.ResourceData, err error) {
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
+		ctx, hosts := withAPIHosts(ctx)
 
 		// Recover an import panic as an error, discarding any partial result.
 		rec, stack := runGuarded(func() { imported, err = inner(ctx, d, meta) })
@@ -173,7 +186,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 			err = panicError(resourceType, telemetry.OperationImport, rec, stack)
 		}
 
-		reportSafely(cfg, func() telemetry.Usage {
+		reportSafely(cfg, hosts, func() telemetry.Usage {
 			return cfg.buildUsage(resourceType, telemetry.OperationImport, seq, timer, []string{}, rec != nil || err != nil, stack)
 		})
 		return imported, err
@@ -213,10 +226,13 @@ func runGuarded(fn func()) (rec interface{}, stack []string) {
 	return
 }
 
-// reportSafely builds and reports a Usage, swallowing any panic so telemetry can
-// never crash the process it observes.
-func reportSafely(cfg telemetryWrapConfig, build func() telemetry.Usage) {
+// reportSafely builds and reports a Usage when the host policy allows it,
+// swallowing any panic so telemetry can never crash the process it observes.
+func reportSafely(cfg telemetryWrapConfig, hosts *apiHosts, build func() telemetry.Usage) {
 	defer func() { _ = recover() }()
+	if !cfg.hostsReportable(hosts) {
+		return
+	}
 	cfg.report(build())
 }
 

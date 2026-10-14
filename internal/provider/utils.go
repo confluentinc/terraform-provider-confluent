@@ -264,7 +264,9 @@ func (c *Client) certificateAuthorityV2ApiContext(ctx context.Context) context.C
 
 func (c *Client) camV1ApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), camv1.ContextBasicAuth, camv1.BasicAuth{
+		// Keep the operation's values (for client analytics) but not its deadline, so
+		// provisioning waits keep their own timeout.
+		return context.WithValue(context.WithoutCancel(ctx), camv1.ContextBasicAuth, camv1.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
