@@ -1,3 +1,13 @@
+## 2.91.0 (October 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.90.0...v2.91.0)
+
+**Bug fixes:**
+* Fixed an issue where creating a `confluent_notifications_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_integration) failed with 400 Bad Request: Invalid Json: No schema matches because the provider sent the wrong kind for the target.
+
+**New features:**
+* Added the `compatibility_policy` attribute to the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config), and the `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config).
+
 ## 2.90.0 (October 8th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.89.0...v2.90.0)
