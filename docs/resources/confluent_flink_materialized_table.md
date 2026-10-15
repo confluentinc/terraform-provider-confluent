@@ -204,19 +204,19 @@ The following arguments are supported:
         - `column_physical_name` - (Optional String) Name of the physical column.
         - `column_physical_type` - (Optional String) Type of the physical column.
         - `column_physical_comment` - (Optional String) Comment for the physical column.
-        - `column_physical_kind` - (Optional String) Kind of the physical column.
+        - `column_physical_kind` - (Optional String) Kind of the physical column. Defaults to `Physical`, the only supported value.
     - `columns_computed` - (Optional List of Blocks) Computed column definitions. Each block supports:
         - `column_computed_name` - (Optional String) Name of the computed column.
         - `column_computed_type` - (Optional String) Type of the computed column.
         - `column_computed_comment` - (Optional String) Comment for the computed column.
-        - `column_computed_kind` - (Optional String) Kind of the computed column.
+        - `column_computed_kind` - (Optional String) Kind of the computed column. Defaults to `Computed`, the only supported value.
         - `column_computed_expression` - (Optional String) Expression of the computed column.
         - `column_computed_virtual` - (Optional Boolean) Whether the computed column is virtual. Defaults to `false`.
     - `columns_metadata` - (Optional List of Blocks) Metadata column definitions. Each block supports:
         - `column_metadata_name` - (Optional String) Name of the metadata column.
         - `column_metadata_type` - (Optional String) Type of the metadata column.
         - `column_metadata_comment` - (Optional String) Comment for the metadata column.
-        - `column_metadata_kind` - (Optional String) Kind of the metadata column.
+        - `column_metadata_kind` - (Optional String) Kind of the metadata column. Defaults to `Metadata`, the only supported value.
         - `column_metadata_key` - (Optional String) Metadata key of the metadata column.
         - `column_metadata_virtual` - (Optional Boolean) Whether the metadata column is virtual. Defaults to `false`.
 
