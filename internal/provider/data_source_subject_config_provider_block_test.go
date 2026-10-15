@@ -70,6 +70,7 @@ func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *test
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_policy", testCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.#", "0"),

@@ -18,7 +18,11 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strconv"
+	"sync"
 	"sync/atomic"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
@@ -40,6 +44,12 @@ const (
 	// origins, enabled for reporting alongside production.
 	stagingCloudEndpoint = "https://api.stag.cpdev.cloud"
 	develCloudEndpoint   = "https://api.devel.cpdev.cloud"
+
+	// defaultMaxEventsPerRun caps the events one provider run reports.
+	defaultMaxEventsPerRun = 20000
+
+	// maxEventsPerRunEnvVar overrides the cap for load testing; positive integers only.
+	maxEventsPerRunEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN"
 )
 
 // telemetryRuntime is the analytics state published once per process during
@@ -52,6 +62,12 @@ type telemetryRuntime struct {
 	// confluentCloudHostsOnly reports only operations that made at least one API
 	// request, all to Confluent Cloud hosts (see publishedTelemetryHostPolicy).
 	confluentCloudHostsOnly bool
+	// maxEvents is the highest sequence reported; zero means uncapped.
+	maxEvents int64
+	// logCtx is the logger for the cap warning.
+	logCtx context.Context
+	// capWarnOnce logs the cap warning only once.
+	capWarnOnce sync.Once
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
@@ -61,13 +77,21 @@ type telemetryRuntime struct {
 var publishedTelemetry atomic.Pointer[telemetryRuntime]
 
 // publishedTelemetryReporter is the reporter the wrapper holds. It forwards to
-// whatever configuration published, and drops when nothing is published yet or
-// reporting is disabled.
+// whatever configuration published, and drops when nothing is published yet,
+// reporting is disabled, or the event is past the run's cap.
 type publishedTelemetryReporter struct{}
 
 func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 	rt := publishedTelemetry.Load()
 	if rt == nil || rt.config.Disabled || rt.reporter == nil {
+		return
+	}
+	if rt.maxEvents > 0 && u.Sequence > rt.maxEvents {
+		rt.capWarnOnce.Do(func() {
+			tflog.Warn(rt.logCtx, "client-analytics event cap reached; events past it will not be reported for this run", map[string]interface{}{
+				"max_events": rt.maxEvents,
+			})
+		})
 		return
 	}
 	rt.reporter.Report(u)
@@ -101,6 +125,14 @@ func telemetryOptOut(endpoint string) bool {
 	}
 	// Enabled only for known Cloud endpoints; any other value disables.
 	return !telemetryEnabledEndpoints[endpoint]
+}
+
+// telemetryMaxEventsPerRun returns the per-run event cap.
+func telemetryMaxEventsPerRun() int64 {
+	if n, err := strconv.ParseInt(os.Getenv(maxEventsPerRunEnvVar), 10, 64); err == nil && n > 0 {
+		return n
+	}
+	return defaultMaxEventsPerRun
 }
 
 // telemetryAuthFunc builds the per-request auth decorator from the provider's
@@ -146,6 +178,8 @@ func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIK
 		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
 		rt.reporter = telemetry.NewTransport(poster, ctx)
 		rt.confluentCloudHostsOnly = endpoint == defaultCloudEndpoint
+		rt.maxEvents = telemetryMaxEventsPerRun()
+		rt.logCtx = context.WithoutCancel(ctx)
 	}
 	// Close any prior transport so repeated in-process configuration (the test
 	// harness) does not leak worker goroutines; production configures once.

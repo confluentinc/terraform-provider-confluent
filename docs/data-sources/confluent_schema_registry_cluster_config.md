@@ -74,4 +74,5 @@ In addition to the preceding arguments, the following attributes are exported:
 - `id` - (Required String) The ID of the Schema Registry Cluster Config, in the format `<Schema Registry cluster ID>`, for example, `lsrc-abc123`.
 - `compatibility_level` - (Optional String) The global Schema Registry compatibility level. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The global Schema Registry compatibility group.
+- `compatibility_policy` - (Optional String) The global Schema Registry compatibility policy. Accepted values are: `LENIENT`, `LOGICAL`, and `STRICT`.
 - `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
