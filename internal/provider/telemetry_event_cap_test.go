@@ -77,20 +77,20 @@ func TestPublishedTelemetryReporter_EventCap(t *testing.T) {
 				publishedTelemetryReporter{}.Report(telemetry.Usage{Sequence: seq})
 			}
 		}
-		report(1, 2, 3)
+		report(1, 3)
 		if warnings := capWarnings(t, &logs); len(warnings) != 0 {
 			t.Errorf("cap warning logged %d times with no event past the cap, want 0", len(warnings))
 		}
-		// Event 5 finishes before event 4, as after a slower operation; the first
-		// drop warns.
+		// Event 5 finishes before events 2 and 4, as after slower operations; the
+		// first drop warns, and 2 is still forwarded.
 		report(5)
 		if warnings := capWarnings(t, &logs); len(warnings) != 1 {
 			t.Errorf("cap warning logged %d times after the first drop, want once", len(warnings))
 		}
-		report(4, 6)
+		report(2, 4, 6)
 
-		if got := forwardedSequences(rec); !reflect.DeepEqual(got, []int64{1, 2, 3}) {
-			t.Errorf("forwarded sequences = %v, want [1 2 3]", got)
+		if got := forwardedSequences(rec); !reflect.DeepEqual(got, []int64{1, 3, 2}) {
+			t.Errorf("forwarded sequences = %v, want [1 3 2]", got)
 		}
 		warnings := capWarnings(t, &logs)
 		if len(warnings) != 1 {
