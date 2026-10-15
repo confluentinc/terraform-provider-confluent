@@ -53,9 +53,7 @@ const (
 	// defaultMaxEventsPerRun caps the events one provider run reports.
 	defaultMaxEventsPerRun = 20000
 
-	// maxEventsPerRunEnvVar overrides the cap with a positive integer, for load
-	// testing only; a value above the run's operation count (e.g. 2147483647)
-	// effectively removes it. Any other value keeps the default.
+	// maxEventsPerRunEnvVar overrides the cap for load testing; positive integers only.
 	maxEventsPerRunEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN"
 )
 
@@ -66,10 +64,9 @@ type telemetryRuntime struct {
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
-	// maxEvents is the highest sequence number this run reports; zero means
-	// uncapped.
+	// maxEvents is the highest sequence reported; zero means uncapped.
 	maxEvents int64
-	// logCtx carries the provider logger for the cap warning.
+	// logCtx is the logger for the cap warning.
 	logCtx context.Context
 	// capWarnOnce logs the cap warning only once.
 	capWarnOnce sync.Once
