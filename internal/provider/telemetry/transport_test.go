@@ -433,13 +433,13 @@ func TestTransport_DrainWaitsOnlyTheRestOfTheTimeout(t *testing.T) {
 // TestTransport_DrainRestartsAfterASettle confirms a send that settles makes the
 // transport active again, so Drain waits for the event queued behind it.
 func TestTransport_DrainRestartsAfterASettle(t *testing.T) {
-	const timeout = 50 * time.Millisecond
+	const timeout = 200 * time.Millisecond
 	var n atomic.Int64
 	fp := newFakePoster(func(context.Context, Usage) error {
 		if n.Add(1) == 1 {
 			time.Sleep(2 * timeout) // a slow send that still succeeds
 		} else {
-			time.Sleep(timeout / 2)
+			time.Sleep(timeout / 10)
 		}
 		return nil
 	})
@@ -460,9 +460,9 @@ func TestTransport_DrainCountsFailedAndPanickedSends(t *testing.T) {
 	var n atomic.Int64
 	fp := newFakePoster(func(context.Context, Usage) error {
 		switch n.Add(1) {
-		case 1:
-			return errors.New("boom")
 		case 2:
+			return errors.New("boom")
+		case 3:
 			panic("post boom")
 		default:
 			return nil
@@ -471,6 +471,7 @@ func TestTransport_DrainCountsFailedAndPanickedSends(t *testing.T) {
 	tr := newTransport(fp, context.Background(), 1, 4, time.Minute)
 	defer tr.Close()
 
+	// The last send panics, so Drain must report nothing pending despite the failure.
 	for i := 0; i < 3; i++ {
 		tr.Report(sampleUsage())
 	}
@@ -553,8 +554,10 @@ func TestTransport_DrainWaitsAgainAfterASuccessfulSend(t *testing.T) {
 // TestTransport_DrainReturnsWithinTimeoutWhileSendsKeepSettling confirms the
 // deadline is fixed when Drain is called: sends that keep settling don't extend it.
 func TestTransport_DrainReturnsWithinTimeoutWhileSendsKeepSettling(t *testing.T) {
+	// 4 workers at 20 ms per send fall behind one event per millisecond, so the
+	// transport stays busy and a send settles every few milliseconds.
 	tr := newTransport(postFunc(func(context.Context, Usage) error {
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		return nil
 	}), context.Background(), 4, 8, time.Minute)
 	defer tr.Close()
@@ -578,13 +581,13 @@ func TestTransport_DrainReturnsWithinTimeoutWhileSendsKeepSettling(t *testing.T)
 		close(stop)
 		wg.Wait()
 	}()
-	waitTimeout := 100 * time.Millisecond
-	time.Sleep(20 * time.Millisecond)
+	const timeout = 300 * time.Millisecond
+	time.Sleep(50 * time.Millisecond)
 
 	start := time.Now()
-	tr.Drain(waitTimeout)
-	if elapsed := time.Since(start); elapsed > waitTimeout+time.Second {
-		t.Fatalf("Drain returned after %s; its timeout was %s", elapsed, waitTimeout)
+	tr.Drain(timeout)
+	if elapsed := time.Since(start); elapsed > timeout*3/2 {
+		t.Fatalf("Drain returned after %s; its timeout was %s", elapsed, timeout)
 	}
 }
 
