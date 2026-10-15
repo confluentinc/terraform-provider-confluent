@@ -51,7 +51,7 @@ const (
 	develCloudEndpoint   = "https://api.devel.cpdev.cloud"
 
 	// defaultMaxEventsPerRun caps the events one provider run reports.
-	defaultMaxEventsPerRun = 10000
+	defaultMaxEventsPerRun = 20000
 
 	// maxEventsPerRunEnvVar overrides the cap with a positive integer, for load
 	// testing only; a value above the run's operation count (e.g. 2147483647)

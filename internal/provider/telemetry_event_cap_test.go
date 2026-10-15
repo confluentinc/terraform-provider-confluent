@@ -144,8 +144,8 @@ func TestPublishedTelemetryReporter_EventCap(t *testing.T) {
 }
 
 func TestTelemetryMaxEventsPerRun(t *testing.T) {
-	if defaultMaxEventsPerRun != 10000 {
-		t.Errorf("defaultMaxEventsPerRun = %d, want 10000", defaultMaxEventsPerRun)
+	if defaultMaxEventsPerRun != 20000 {
+		t.Errorf("defaultMaxEventsPerRun = %d, want 20000", defaultMaxEventsPerRun)
 	}
 	if maxEventsPerRunEnvVar != "CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN" {
 		t.Errorf("maxEventsPerRunEnvVar = %q, want CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN", maxEventsPerRunEnvVar)
