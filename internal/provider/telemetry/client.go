@@ -51,8 +51,20 @@ func NewSDKPoster(basePath string, httpClient *http.Client, userAgent string, au
 	}
 }
 
+// statusError is a response with status 300 or above from the terraform-usage
+// endpoint. It keeps the status code so the transport can tell a backend that is
+// shedding load (429 or 5xx) apart from other failures.
+type statusError struct {
+	code int
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("terraform-usage endpoint returned HTTP %d", e.code)
+}
+
 // Post delivers one Usage: it applies auth, honors ctx, and returns an error on
-// any transport failure or non-2xx response.
+// any transport failure or non-2xx response. A response with status 300 or above
+// is returned as a *statusError.
 func (p *sdkPoster) Post(ctx context.Context, u Usage) error {
 	if p.authFunc != nil {
 		ctx = p.authFunc(ctx)
@@ -66,13 +78,13 @@ func (p *sdkPoster) Post(ctx context.Context, u Usage) error {
 		// The generated client already closes the body; this is a harmless safeguard.
 		defer resp.Body.Close()
 	}
-	if err != nil {
-		return err
-	}
+	// Check the status before err: for a status of 300 or above the generated
+	// client returns the response together with an error that does not expose
+	// the code.
 	if resp != nil && resp.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("terraform-usage endpoint returned %s", resp.Status)
+		return &statusError{code: resp.StatusCode}
 	}
-	return nil
+	return err
 }
 
 // toContractUsage maps the internal Usage onto the wire contract. Sequence and
