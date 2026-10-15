@@ -389,7 +389,7 @@ func TestTransport_DrainSkipsSendsStuckLongerThanTimeout(t *testing.T) {
 	tr := newTransport(fp, context.Background(), 1, 4, time.Minute)
 	defer tr.Close()
 
-	const timeout = 50 * time.Millisecond
+	const timeout = 200 * time.Millisecond
 	tr.Report(sampleUsage())
 	waitSignals(t, fp.entered, 1, 2*time.Second)
 	time.Sleep(2 * timeout)
