@@ -32,12 +32,12 @@ import (
 
 // Variant kind constants
 const (
-	kindSlackTarget     = "SlackTarget"
-	kindRoleEmailTarget = "RoleEmailTarget"
-	kindUserEmailTarget = "UserEmailTarget"
-	kindWebhookTarget   = "WebhookTarget"
-	kindMsTeamsTarget   = "MsTeamsTarget"
-	kindInAppTarget     = "InAppTarget"
+	kindSlackTarget     = "Slack"
+	kindRoleEmailTarget = "RoleEmail"
+	kindUserEmailTarget = "UserEmail"
+	kindWebhookTarget   = "Webhook"
+	kindMsTeamsTarget   = "MsTeams"
+	kindInAppTarget     = "InApp"
 )
 
 // acceptedTargetVariants defines the list of valid, user-settable target

@@ -1065,13 +1065,13 @@ const (
 	testKafkaHttpEndpoint2                                                  = "https://pkc-3w22w.us-central1.gcp.confluent.cloud:443"
 	testKafkaRbacCrn2                                                       = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-29ynpv"
 	testKekName                                                             = "testkek"
-	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 7
-	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes   = "7"
+	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 8
+	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes   = "8"
 	testNumberOfSchemaRegistryClusterModeDataSourceAttributes               = 5
 	testNumberOfSchemaRegistryClusterModeResourceAttributes                 = "6"
 	testNumberOfSchemaRegistrySchemaResourceAttributes                      = 15
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 9
-	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "9"
+	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 10
+	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "10"
 	testNumberOfSubjectModeDataSourceAttributes                             = 6
 	testNumberOfSubjectModeResourceAttributes                               = "7"
 	testOriginalDestinationSchemaRegistryRestEndpoint                       = "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"
@@ -1116,6 +1116,7 @@ message SomeRecord {
 	testSkipSchemaValidationDuringPlanFalse            = "false"
 	testSkipSchemaValidationDuringPlanTrue             = "true"
 	testStreamGovernanceClusterId                      = "lsrc-abc123"
+	testCompatibilityPolicy                            = "STRICT"
 	testSubjectCompatibilityGroup                      = "abc.cg.version"
 	testSubjectCompatibilityLevel                      = "FULL"
 	testSubjectCompatibilityLevelResourceLabel         = "test_subject_compatibility_level_resource_label"
@@ -1123,6 +1124,7 @@ message SomeRecord {
 	testSubjectModeResourceLabel                       = "test_subject_mode_resource_label"
 	testSubjectName                                    = "test2"
 	testTagName                                        = "ttt6"
+	testUpdatedCompatibilityPolicy                     = "LENIENT"
 	testUpdatedSchemaRegistryClusterCompatibilityLevel = "BACKWARD_TRANSITIVE"
 	testUpdatedSchemaRegistryClusterMode               = "READONLY"
 	testUpdatedSubjectCompatibilityLevel               = "BACKWARD_TRANSITIVE"

@@ -59,6 +59,7 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 			},
 			paramColumns:      columnsSchemaDataSource(),
 			paramConstraints:  constraintsSchemaDataSource(),
+			paramStartMode:    startModeSchemaDataSource(),
 			paramOrganization: optionalIdBlockSchema(),
 			paramEnvironment:  optionalIdBlockSchema(),
 			paramComputePool:  optionalIdBlockSchemaUpdatable(),
@@ -262,6 +263,45 @@ func distributionSchemaDataSource() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "The kind of distribution.",
 					Computed:    true,
+				},
+			},
+		},
+	}
+}
+
+func startModeSchemaDataSource() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStartModeKind: {
+					Type:        schema.TypeString,
+					Description: "The start mode strategy.",
+					Computed:    true,
+				},
+				paramStartModeTimestamp: {
+					Type:        schema.TypeString,
+					Description: "Absolute point in time to start processing from, as an RFC 3339 timestamp.",
+					Computed:    true,
+				},
+				paramStartModeTimeInterval: {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramIntervalValue: {
+								Type:        schema.TypeInt,
+								Description: "Numeric value of the time interval.",
+								Computed:    true,
+							},
+							paramIntervalTimeUnit: {
+								Type:        schema.TypeString,
+								Description: "Unit of time for the interval.",
+								Computed:    true,
+							},
+						},
+					},
 				},
 			},
 		},

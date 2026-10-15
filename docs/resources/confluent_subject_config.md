@@ -119,6 +119,7 @@ The following arguments are supported:
 
 - `compatibility_level` - (Optional String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The Compatibility Group of the specified subject.
+- `compatibility_policy` - (Optional String) The Compatibility Policy of the specified subject. Accepted values are: `LENIENT`, `LOGICAL`, and `STRICT`.
 - `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
 - `alias` - (Optional String) The subject name that this subject is an alias for. Any reference to this subject will be replaced by the alias. See [Subject Aliases](https://docs.confluent.io/platform/current/schema-registry/fundamentals/index.html#subject-aliases) for more details.
 
