@@ -362,6 +362,7 @@ const (
 	GcpEgressAccessPointDataSourceScenarioName                          = "confluent_access_point Gcp Egress Private Service Connect Endpoint Data Source Lifecycle"
 	gcpEgressAccessPointScenarioName                                    = "confluent_access_point Gcp Egress Private Link Endpoint Resource Lifecycle"
 	gcpIngressAccessPointScenarioName                                   = "confluent_access_point Gcp Ingress Private Service Connect Endpoint Resource Lifecycle"
+	gcpEgressGatewayId                                                  = "gw-def456"
 	gcpEgressPrivateServiceConnectGatewayScenarioName                   = "confluent_gateway GCP Egress Private Service Connect Gateway Spec Data Source Lifecycle"
 	gcpIngressPrivateServiceConnectGatewayScenarioName                  = "confluent_gateway GCP Ingress Private Service Connect Gateway Spec Data Source Lifecycle"
 	gcpIngressGatewayId                                                 = "gw-gcp-ingress"
