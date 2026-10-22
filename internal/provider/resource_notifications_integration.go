@@ -58,17 +58,15 @@ func integrationResource() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			paramDisplayName: {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(0, 64),
-				Description:  "A human readable name for the particular integration",
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A human readable name for the particular integration",
 			},
 			paramDescription: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringLenBetween(0, 128),
-				Description:  "A human readable description for the particular integration",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "A human readable description for the particular integration",
 			},
 			paramApiVersion: {
 				Type:        schema.TypeString,
