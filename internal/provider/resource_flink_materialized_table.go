@@ -125,6 +125,7 @@ func columnComputedSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "Kind of the computed column.",
 					Optional:    true,
+					Default:     computedColumnKind,
 				},
 				paramComputedExpression: {
 					Type:        schema.TypeString,
@@ -164,9 +165,11 @@ func columnPhysicalSchema() *schema.Schema {
 					Optional:    true,
 				},
 				paramPhysicalKind: {
-					Type:        schema.TypeString,
-					Description: "Kind of the physical column.",
-					Optional:    true,
+					Type:             schema.TypeString,
+					Description:      "Kind of the physical column.",
+					Optional:         true,
+					Default:          physicalColumnKind,
+					DiffSuppressFunc: suppressDefaultKindOfEmptyPhysicalColumn,
 				},
 			},
 		},
@@ -198,6 +201,7 @@ func columnMetadataSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Description: "Kind of the metadata column.",
 					Optional:    true,
+					Default:     metadataColumnKind,
 				},
 				paramMetadataKey: {
 					Type:        schema.TypeString,
@@ -1280,6 +1284,15 @@ func suppressFlinkTimestampDiff(k, old, new string, d *schema.ResourceData) bool
 		return false
 	}
 	return oldTime.Equal(newTime)
+}
+
+// suppressDefaultKindOfEmptyPhysicalColumn keeps the kind out of the plan for a physical column block
+// with no name, type, or comment, so an empty columns_physical {} block is still not sent. This also
+// applies when such a block sets column_physical_kind = "Physical" explicitly.
+func suppressDefaultKindOfEmptyPhysicalColumn(k, old, new string, d *schema.ResourceData) bool {
+	prefix := strings.TrimSuffix(k, paramPhysicalKind)
+	return old == "" && new == physicalColumnKind && d.Get(prefix+paramPhysicalName) == "" &&
+		d.Get(prefix+paramPhysicalType) == "" && d.Get(prefix+paramPhysicalComment) == ""
 }
 
 // expandMaterializedTableStartMode builds the API start_mode object from the
