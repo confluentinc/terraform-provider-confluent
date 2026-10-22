@@ -229,10 +229,11 @@ func gcpEgressPrivateServiceConnectGatewayGatewaySchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramRegion: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "GCP region of the Egress Private Service Connect Gateway.",
+					Type:             schema.TypeString,
+					Required:         true,
+					ForceNew:         true,
+					DiffSuppressFunc: suppressSameValueIgnoringCase,
+					Description:      "GCP region of the Egress Private Service Connect Gateway.",
 				},
 				paramProject: {
 					Type:        schema.TypeString,
