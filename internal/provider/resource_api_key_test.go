@@ -933,6 +933,7 @@ func TestAccCloudApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyDisplayName),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyDescription),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "expires_at", "2026-12-31"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "false"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
@@ -955,6 +956,7 @@ func TestAccCloudApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyUpdatedDescription),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "expires_at", "2026-12-31"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "true"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
@@ -1057,6 +1059,7 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
+		expires_at = "2026-12-31"
 		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
