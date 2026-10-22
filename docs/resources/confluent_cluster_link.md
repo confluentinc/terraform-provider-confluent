@@ -121,6 +121,8 @@ The following arguments are supported:
 
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_cluster_link` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
+-> **Note:** When using OAuth authentication in the provider block, Confluent Cloud stores the provider's OAuth client ID and client secret on the outbound cluster link object, so the link can keep obtaining new access tokens on its own after `terraform apply`. They are stored [encrypted](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/security-cloud.html), can't be read back through the API, and aren't written to Terraform state.
+
 -> **Note:** See [Supported Cluster Types](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/index.html#supported-cluster-types) to determine supported options for source and destination clusters.
 
 -> **Note:** Exactly one from the `rest_endpoint` and `bootstrap_endpoint` attributes must be specified.
