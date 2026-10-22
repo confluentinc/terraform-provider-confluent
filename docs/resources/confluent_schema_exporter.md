@@ -131,7 +131,7 @@ The following arguments are supported:
 
 -> **Note:** When using OAuth authentication in the provider block, `destination_schema_registry_cluster.id` is required and credentials blocks for both source and destination schema registry clusters must be removed.
 
--> **Note:** When using OAuth authentication in the provider block, Confluent Cloud stores the provider's OAuth client ID, client secret, token URL, scope, and identity pool ID on the exporter as `bearer.auth.*` configs, so the exporter can authenticate to the destination Schema Registry cluster after Terraform finishes. It is recommended to use an OAuth client that is dedicated to Confluent Cloud and not shared with other systems. Terraform sends these credentials only when it creates or updates the exporter, so after rotating the client secret, update the exporter's `bearer.auth.client.secret` config, for example with `confluent schema-registry exporter update <exporter-name> --config <file>`.
+-> **Note:** When using OAuth authentication in the provider block, Confluent Cloud persists the provider's OAuth client credentials (client ID, client secret, token endpoint URL, scope, and identity pool ID) in the exporter's `bearer.auth.*` configs. The exporter uses these credentials to authenticate to the destination Schema Registry cluster after Terraform completes.
 
 ## Attributes Reference
 
