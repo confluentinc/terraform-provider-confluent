@@ -121,6 +121,8 @@ The following arguments are supported:
 
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_cluster_link` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
+-> **Note:** When using OAuth authentication in the provider block, Confluent Cloud stores the provider's OAuth client ID, client secret, token URL, scope, and identity pool ID on the cluster link (in `sasl.jaas.config`, and also in `local.sasl.jaas.config` for bidirectional and source-initiated links), so the link can get new tokens after Terraform finishes. Confluent Cloud [encrypts these credentials](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/security-cloud.html), and users can't retrieve them. It is recommended to use an OAuth client that is dedicated to Confluent Cloud and not shared with other systems. Terraform doesn't push a rotated client secret to an existing cluster link, so after rotating it, update the link's `sasl.jaas.config` (and `local.sasl.jaas.config`, if set) with `confluent kafka link configuration update <link-name> --config <file>`.
+
 -> **Note:** See [Supported Cluster Types](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/index.html#supported-cluster-types) to determine supported options for source and destination clusters.
 
 -> **Note:** Exactly one from the `rest_endpoint` and `bootstrap_endpoint` attributes must be specified.
