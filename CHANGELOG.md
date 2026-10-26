@@ -1,3 +1,11 @@
+## 2.92.0 (October 26th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.91.0...v2.92.0)
+
+**Bug fixes:**
+* Removed the Terraform client side validation on `display_name` and `description` attributes for `confluent_notifications_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_integration).
+* Updated the docs for `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to include OAuth authentication specific application note.
+
 ## 2.91.0 (October 14th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.90.0...v2.91.0)
