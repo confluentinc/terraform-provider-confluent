@@ -19,7 +19,7 @@ global_job_config:
       - 'export "PATH=${GOPATH}/bin:${PATH}"'
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
-      # Belt-and-suspenders: keep client-analytics telemetry off in smoke runs.
+      # Keep client-analytics telemetry off in smoke runs; this export is the only guard.
       - 'export "CONFLUENT_DISABLE_PROVIDER_ANALYTICS=1"'
 
 execution_time_limit:

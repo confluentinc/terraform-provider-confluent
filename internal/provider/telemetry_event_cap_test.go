@@ -186,7 +186,6 @@ func TestPublishTelemetryRuntime_SetsEventCap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			restorePublishedTelemetry(t)
 			t.Setenv(disableProviderAnalyticsEnvVar, "")
-			t.Setenv(previewProviderAnalyticsEnvVar, "1")
 			t.Setenv(maxEventsPerRunEnvVar, tc.value)
 			var logs bytes.Buffer
 

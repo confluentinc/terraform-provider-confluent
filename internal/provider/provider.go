@@ -468,6 +468,7 @@ func New(version, userAgent string) func() *schema.Provider {
 			reporter:         publishedTelemetryReporter{},
 			providerVersion:  version,
 			terraformVersion: func() string { return provider.TerraformVersion },
+			reportHosts:      publishedTelemetryHostPolicy,
 		})
 
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
