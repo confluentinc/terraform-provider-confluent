@@ -247,6 +247,7 @@
     "azure_ingress_private_link_gateway",
     "display_name",
     "environment",
+    "gcp_egress_private_service_connect_gateway",
     "gcp_ingress_private_service_connect_gateway"
   ],
   "confluent_group_mapping": [
