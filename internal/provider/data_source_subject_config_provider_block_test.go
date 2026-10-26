@@ -73,6 +73,7 @@ func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *test
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_policy", testCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias", ""),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias_for_deks", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.0.secret"),

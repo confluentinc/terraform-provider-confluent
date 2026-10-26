@@ -576,6 +576,7 @@
   ],
   "confluent_subject_config": [
     "alias",
+    "alias_for_deks",
     "compatibility_group",
     "compatibility_level",
     "compatibility_policy",
