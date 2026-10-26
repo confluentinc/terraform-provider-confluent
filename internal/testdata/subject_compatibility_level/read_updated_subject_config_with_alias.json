@@ -2,6 +2,7 @@
   "compatibilityLevel": "BACKWARD",
   "compatibilityGroup": "",
   "normalize": false,
-  "alias": "orders-new-target-subject-value"
+  "alias": "orders-new-target-subject-value",
+  "aliasForDeks": "orders-dek-new-target-subject-value"
 }
 

@@ -130,6 +130,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_policy", testCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias", ""),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias_for_deks", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
@@ -152,6 +153,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_policy", testUpdatedCompatibilityPolicy),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias", ""),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "alias_for_deks", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
@@ -194,12 +196,15 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 	testAliasSubjectName := "orders-alias-value"
 	testAliasTarget := "orders-original-subject-value"
 	testUpdatedAliasTarget := "orders-new-target-subject-value"
+	testAliasForDeksTarget := "orders-dek-original-subject-value"
+	testUpdatedAliasForDeksTarget := "orders-dek-new-target-subject-value"
 	aliasSubjectConfigPath := fmt.Sprintf("/config/%s", testAliasSubjectName)
 	aliasScenarioName := "confluent_subject_config Alias Resource Lifecycle"
 	aliasResourceLabel := "test_subject_config_alias"
 
 	createSubjectConfigWithAliasResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_created_subject_config_with_alias.json")
 	createSubjectConfigWithAliasStub := wiremock.Put(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+		WithBodyPattern(wiremock.Contains(fmt.Sprintf(`"aliasForDeks":%q`, testAliasForDeksTarget))).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo("AliasSubjectConfigCreated").
@@ -220,7 +225,8 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+	updateSubjectConfigWithAliasStub := wiremock.Put(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+		WithBodyPattern(wiremock.Contains(fmt.Sprintf(`"aliasForDeks":%q`, testUpdatedAliasForDeksTarget))).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigCreated").
 		WillSetStateTo("AliasSubjectConfigUpdated").
@@ -228,7 +234,8 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)
+	_ = wiremockClient.StubFor(updateSubjectConfigWithAliasStub)
 
 	readUpdatedSubjectConfigWithAliasResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_updated_subject_config_with_alias.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
@@ -270,23 +277,25 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 		CheckDestroy:      testAccCheckSubjectCompatibilityLevelDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockSubjectConfigTestServerUrl, aliasResourceLabel, testAliasSubjectName, testAliasTarget, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockSubjectConfigTestServerUrl, aliasResourceLabel, testAliasSubjectName, testAliasTarget, testAliasForDeksTarget, testSchemaRegistryKey, testSchemaRegistrySecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullAliasResourceLabel),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testAliasSubjectName)),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "subject_name", testAliasSubjectName),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "alias", testAliasTarget),
+					resource.TestCheckResourceAttr(fullAliasResourceLabel, "alias_for_deks", testAliasForDeksTarget),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "normalize", "false"),
 				),
 			},
 			{
-				Config: testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockSubjectConfigTestServerUrl, aliasResourceLabel, testAliasSubjectName, testUpdatedAliasTarget, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockSubjectConfigTestServerUrl, aliasResourceLabel, testAliasSubjectName, testUpdatedAliasTarget, testUpdatedAliasForDeksTarget, testSchemaRegistryKey, testSchemaRegistrySecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullAliasResourceLabel),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testAliasSubjectName)),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "subject_name", testAliasSubjectName),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "alias", testUpdatedAliasTarget),
+					resource.TestCheckResourceAttr(fullAliasResourceLabel, "alias_for_deks", testUpdatedAliasForDeksTarget),
 					resource.TestCheckResourceAttr(fullAliasResourceLabel, "compatibility_level", "BACKWARD"),
 				),
 			},
@@ -298,11 +307,13 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSubjectConfigWithAliasStub, fmt.Sprintf("PUT (CREATE) %s", aliasSubjectConfigPath), expectedCountTwo)
+	// The PUT stubs match on the request body, so each count confirms alias_for_deks was sent.
+	checkStubCount(t, wiremockClient, createSubjectConfigWithAliasStub, fmt.Sprintf("PUT (CREATE) %s", aliasSubjectConfigPath), expectedCountOne)
+	checkStubCount(t, wiremockClient, updateSubjectConfigWithAliasStub, fmt.Sprintf("PUT (UPDATE) %s", aliasSubjectConfigPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSubjectConfigWithAliasStub, fmt.Sprintf("DELETE %s", aliasSubjectConfigPath), expectedCountOne)
 }
 
-func testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockServerUrl, resourceLabel, subjectName, aliasTarget, schemaRegistryKey, schemaRegistrySecret string) string {
+func testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockServerUrl, resourceLabel, subjectName, aliasTarget, aliasForDeksTarget, schemaRegistryKey, schemaRegistrySecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -320,8 +331,9 @@ func testAccCheckSubjectConfigWithAliasConfig(confluentCloudBaseUrl, mockServerU
 	  subject_name        = "%s"
 	  compatibility_level = "BACKWARD"
 	  alias               = "%s"
+	  alias_for_deks      = "%s"
 	}
-	`, confluentCloudBaseUrl, resourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, subjectName, aliasTarget)
+	`, confluentCloudBaseUrl, resourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, subjectName, aliasTarget, aliasForDeksTarget)
 }
 
 func testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, compatibilityGroup, compatibilityPolicy, schemaRegistryKey, schemaRegistrySecret string) string {

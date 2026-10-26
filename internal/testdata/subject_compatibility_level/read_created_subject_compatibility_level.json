@@ -3,5 +3,6 @@
   "compatibilityGroup": "abc.cg.version",
   "compatibilityPolicy": "STRICT",
   "normalize": true,
-  "alias": ""
+  "alias": "",
+  "aliasForDeks": ""
 }

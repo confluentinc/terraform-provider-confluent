@@ -1070,8 +1070,8 @@ const (
 	testNumberOfSchemaRegistryClusterModeDataSourceAttributes               = 5
 	testNumberOfSchemaRegistryClusterModeResourceAttributes                 = "6"
 	testNumberOfSchemaRegistrySchemaResourceAttributes                      = 15
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 10
-	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "10"
+	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 11
+	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "11"
 	testNumberOfSubjectModeDataSourceAttributes                             = 6
 	testNumberOfSubjectModeResourceAttributes                               = "7"
 	testOriginalDestinationSchemaRegistryRestEndpoint                       = "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"

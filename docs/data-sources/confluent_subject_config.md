@@ -81,3 +81,4 @@ In addition to the preceding arguments, the following attributes are exported:
 - `compatibility_policy` - (Optional String) The Compatibility Policy of the specified subject. Accepted values are: `LENIENT`, `LOGICAL`, and `STRICT`.
 - `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
 - `alias` - (Optional String) The subject name that this subject is an alias for. 
+- `alias_for_deks` - (Optional String) The subject name that this subject is an alias for, but only in the context of DEK Registry calls.
