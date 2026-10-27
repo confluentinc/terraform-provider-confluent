@@ -22,9 +22,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 )
-
 
 func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	ctx := context.Background()
@@ -751,6 +751,125 @@ func TestAccGatewayGcpIngressPrivateServiceConnect(t *testing.T) {
 	})
 }
 
+func TestAccGatewayGcpEgressPrivateServiceConnect(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_gcp_egress_private_service_connect_gateway.json")
+	// A create request without the GCP egress kind and region gets WireMock's default 404.
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+		WithBodyPattern(wiremock.MatchingJsonPath("$.spec.config[?(@.kind == 'GcpEgressPrivateServiceConnectGatewaySpec' && @.region == 'us-central1')]")).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateGatewayIsProvisioning).
+		WillReturn(
+			string(createGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, gcpEgressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
+		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
+		WillReturn(
+			string(createGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_gcp_egress_private_service_connect_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, gcpEgressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
+		WillReturn(
+			string(readGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_gcp_egress_private_service_connect_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, gcpEgressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
+		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, gcpEgressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, gcpEgressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceGatewayGcpEgressPrivateServiceConnectConfig(mockServerUrl, "prod-gateway"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "id", gcpEgressGatewayId),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "display_name", "prod-gateway"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.0.project", "traffic-dmz-env-abc123"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_ingress_private_service_connect_gateway.#", "0"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_egress_private_link_gateway.#", "0"),
+				),
+			},
+			{
+				// Importing a GCP egress gateway used to fail with "Invalid address to set" (#1302).
+				ResourceName: gatewayResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					gatewayId := resources[gatewayResourceLabel].Primary.ID
+					environmentId := resources[gatewayResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + gatewayId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckResourceGatewayGcpEgressPrivateServiceConnectConfig(mockServerUrl, "prod-gateway-new"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "id", gcpEgressGatewayId),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "display_name", "prod-gateway-new"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "gcp_egress_private_service_connect_gateway.0.project", "traffic-dmz-env-abc123"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckResourceGatewayAzureIngressPrivateLinkConfig(mockServerUrl, name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
@@ -781,6 +900,24 @@ func testAccCheckResourceGatewayGcpIngressPrivateServiceConnectConfig(mockServer
 			id = "env-abc123"
 		}
 		gcp_ingress_private_service_connect_gateway {
+			region = "us-central1"
+		}
+	}
+	`, mockServerUrl, name)
+}
+
+func testAccCheckResourceGatewayGcpEgressPrivateServiceConnectConfig(mockServerUrl, name string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_gateway" "main" {
+		display_name = "%s"
+		environment {
+			id = "env-abc123"
+		}
+		gcp_egress_private_service_connect_gateway {
 			region = "us-central1"
 		}
 	}

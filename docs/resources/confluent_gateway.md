@@ -49,6 +49,8 @@ The following arguments are supported:
   - `region` - (Required String) Azure region of the Gateway, for example, `eastus`.
 - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Ingress Private Link Gateway, for example, `centralus`.
+- `gcp_egress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) GCP region of the Egress Private Service Connect Gateway, for example, `us-central1`.
 - `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) GCP region of the Ingress Private Service Connect Gateway, for example, `us-central1`.
 
@@ -67,6 +69,8 @@ In addition to the preceding arguments, the following attributes are exported:
 - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
   - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
+- `gcp_egress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `project` - (Required String) The GCP project used by the GCP Private Service Connect Gateway.
 - `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
   - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
 
