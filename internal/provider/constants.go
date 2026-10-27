@@ -403,6 +403,7 @@ const (
 	paramParentResourceCrn                               = "parent_resource_crn"
 	paramNetworkCrn                                      = "network_crn"
 	paramAccessPointCrn                                  = "access_point_crn"
+	paramAliasForDeks                                    = "alias_for_deks"
 	paramAssignedResourceOwner                           = "assigned_resource_owner"
 	paramEnvironmentCrn                                  = "environment_crn"
 	paramTarget                                          = "target"
