@@ -768,7 +768,9 @@ func TestAccGatewayGcpEgressPrivateServiceConnect(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_gcp_egress_private_service_connect_gateway.json")
+	// A create request without the GCP egress kind and region gets WireMock's default 404.
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+		WithBodyPattern(wiremock.MatchingJsonPath("$.spec.config[?(@.kind == 'GcpEgressPrivateServiceConnectGatewaySpec' && @.region == 'us-central1')]")).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateGatewayIsProvisioning).
