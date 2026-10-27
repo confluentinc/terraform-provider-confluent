@@ -1,4 +1,4 @@
-## 2.92.0 (October 26th, 2026)
+## 2.92.0 (October 27th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.91.0...v2.92.0)
 
