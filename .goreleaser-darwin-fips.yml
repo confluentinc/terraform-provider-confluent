@@ -1,6 +1,7 @@
 env:
   - CGO_ENABLED=1
   - GOEXPERIMENT=boringcrypto
+  - GOFIPS140=off
 
 builds:
   - id: darwin-fips
