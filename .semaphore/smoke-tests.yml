@@ -32,8 +32,20 @@ blocks:
         - name: "Run Smoke Tests"
           commands:
             # 1. Fetch secrets
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+            - . vault-get-secret apif/live-test-environment
+            - . vault-get-secret apif/live-test-kafka-standard-cluster
+            - . vault-get-secret cli/live-test-kafka-standard-api-key
+            - . vault-get-secret terraform-provider-confluent/live-test-confluent-cloud-api-key
+            - . vault-get-secret terraform-provider-confluent/live-test-kafka-dedicated-api-key
+            - . vault-get-secret terraform-provider-confluent/live-test-kafka-dedicated-cluster
+            - . vault-get-secret terraform-provider-confluent/live-test-schema-registry
+            - . vault-get-secret terraform-provider-confluent/live-test-schema-registry-api-key
+            - . vault-get-secret terraform-provider-confluent/live-test-tableflow-api-key
+            - . vault-get-secret terraform-provider-confluent/live-test-kms-keys
+            - . vault-get-secret terraform-provider-confluent/live-test-aws-privatelink-network
+            - . vault-get-secret terraform-provider-confluent/live-test-azure
+            - . vault-get-secret terraform-provider-confluent/live-test-certificate-chain
+            - . vault-get-secret terraform-provider-confluent/slack-notifications-live-testing
 
             # 2. Build OTLP metric reporter
             - go mod vendor
