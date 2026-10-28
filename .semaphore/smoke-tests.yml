@@ -32,8 +32,8 @@ blocks:
         - name: "Run Smoke Tests"
           commands:
             # 1. Fetch secrets
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+            - . vault-get-secret terraform-provider-confluent/live-test-confluent-cloud-api-key
+            - . vault-get-secret terraform-provider-confluent/slack-notifications-live-testing
 
             # 2. Build OTLP metric reporter
             - go mod vendor

@@ -59,10 +59,10 @@ func TestAccSchemaRegistryDekLive(t *testing.T) {
 	}
 
 	// DEK requires KEK which requires cloud provider KMS credentials
-	kmsType := os.Getenv("TEST_KMS_TYPE")    // e.g., "aws-kms", "azure-kms", "gcp-kms"
+	kmsType := "aws-kms"
 	kmsKeyId := os.Getenv("TEST_KMS_KEY_ID") // KMS key ARN or ID
-	if kmsType == "" || kmsKeyId == "" {
-		t.Skip("TEST_KMS_TYPE and TEST_KMS_KEY_ID environment variables must be set for DEK live tests (required for KEK creation)")
+	if kmsKeyId == "" {
+		t.Skip("TEST_KMS_KEY_ID environment variable must be set for DEK live tests (required for KEK creation)")
 	}
 
 	// Generate unique names for test resources to avoid conflicts
