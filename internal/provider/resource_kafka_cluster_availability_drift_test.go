@@ -404,3 +404,40 @@ func testAccCheckClusterConfigWithAvailability(mockServerUrl, clusterType, avail
 	}
 	`, mockServerUrl, kafkaDisplayName, availability, kafkaCloud, kafkaRegion, clusterType, testEnvironmentId)
 }
+
+func TestKafkaClusterAvailabilityDiffSuppress(t *testing.T) {
+	diffSuppress := kafkaResource().Schema[paramAvailability].DiffSuppressFunc
+
+	tests := []struct {
+		name string
+		old  string
+		new  string
+		want bool
+	}{
+		// V1 <-> V2 billing model names of the same tier.
+		{name: "SINGLE_ZONE state, LOW config", old: singleZone, new: lowAvailability, want: true},
+		{name: "LOW state, SINGLE_ZONE config", old: lowAvailability, new: singleZone, want: true},
+		{name: "MULTI_ZONE state, HIGH config", old: multiZone, new: highAvailability, want: true},
+		{name: "HIGH state, MULTI_ZONE config", old: highAvailability, new: multiZone, want: true},
+		// Availability downgraded by Confluent: the API returns a lower availability than configured.
+		{name: "MULTI_ZONE config downgraded to SINGLE_ZONE", old: singleZone, new: multiZone, want: true},
+		{name: "HIGH config downgraded to LOW", old: lowAvailability, new: highAvailability, want: true},
+		// Only same-tier-name downgrades are expected from Confluent; mixed names are not suppressed.
+		{name: "HIGH config, SINGLE_ZONE state", old: singleZone, new: highAvailability, want: false},
+		{name: "MULTI_ZONE config, LOW state", old: lowAvailability, new: multiZone, want: false},
+		// A downgrade made in the configuration is not suppressed.
+		{name: "MULTI_ZONE state, SINGLE_ZONE config", old: multiZone, new: singleZone, want: false},
+		{name: "HIGH state, LOW config", old: highAvailability, new: lowAvailability, want: false},
+		{name: "HIGH state, SINGLE_ZONE config", old: highAvailability, new: singleZone, want: false},
+		{name: "MULTI_ZONE state, LOW config", old: multiZone, new: lowAvailability, want: false},
+		// Empty values (create) are not suppressed.
+		{name: "empty state", old: "", new: multiZone, want: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := diffSuppress(paramAvailability, tc.old, tc.new, nil); got != tc.want {
+				t.Errorf("DiffSuppressFunc(old=%q, new=%q) = %t, want %t", tc.old, tc.new, got, tc.want)
+			}
+		})
+	}
+}
