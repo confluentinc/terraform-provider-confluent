@@ -1,3 +1,10 @@
+## 2.93.0 (October 29th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.92.0...v2.93.0)
+
+**New features:**
+* Added the `alias_for_deks` attribute support for `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config) to support assigning an alternative name (alias) to a schema subject.
+
 ## 2.92.0 (October 27th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.91.0...v2.92.0)
