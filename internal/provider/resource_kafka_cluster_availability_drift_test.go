@@ -422,8 +422,9 @@ func TestKafkaClusterAvailabilityDiffSuppress(t *testing.T) {
 		// Availability downgraded by Confluent: the API returns a lower availability than configured.
 		{name: "MULTI_ZONE config downgraded to SINGLE_ZONE", old: singleZone, new: multiZone, want: true},
 		{name: "HIGH config downgraded to LOW", old: lowAvailability, new: highAvailability, want: true},
-		{name: "HIGH config downgraded to SINGLE_ZONE", old: singleZone, new: highAvailability, want: true},
-		{name: "MULTI_ZONE config downgraded to LOW", old: lowAvailability, new: multiZone, want: true},
+		// Only same-tier-name downgrades are expected from Confluent; mixed names are not suppressed.
+		{name: "HIGH config, SINGLE_ZONE state", old: singleZone, new: highAvailability, want: false},
+		{name: "MULTI_ZONE config, LOW state", old: lowAvailability, new: multiZone, want: false},
 		// A downgrade made in the configuration is not suppressed.
 		{name: "MULTI_ZONE state, SINGLE_ZONE config", old: multiZone, new: singleZone, want: false},
 		{name: "HIGH state, LOW config", old: highAvailability, new: lowAvailability, want: false},

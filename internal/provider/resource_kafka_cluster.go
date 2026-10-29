@@ -88,9 +88,7 @@ func kafkaResource() *schema.Resource {
 					// downgrades (MULTI_ZONE -> SINGLE_ZONE, HIGH -> LOW) are not supported through the API, but Confluent
 					// can apply them (e.g. incidents or product exceptions), and availability is ForceNew.
 					isAvailabilityDowngraded := (old == singleZone && new == multiZone) ||
-						(old == lowAvailability && new == highAvailability) ||
-						(old == singleZone && new == highAvailability) ||
-						(old == lowAvailability && new == multiZone)
+						(old == lowAvailability && new == highAvailability)
 
 					return isEquivalentAvailability || isAvailabilityDowngraded
 				},
