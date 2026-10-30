@@ -122,9 +122,10 @@ func columnComputedSchema() *schema.Schema {
 					Optional:    true,
 				},
 				paramComputedKind: {
-					Type:        schema.TypeString,
-					Description: "Kind of the computed column.",
-					Optional:    true,
+					Type:             schema.TypeString,
+					Description:      "Kind of the computed column.",
+					Optional:         true,
+					DiffSuppressFunc: suppressOmittedColumnKindDiff(computedColumnKind),
 				},
 				paramComputedExpression: {
 					Type:        schema.TypeString,
@@ -164,9 +165,10 @@ func columnPhysicalSchema() *schema.Schema {
 					Optional:    true,
 				},
 				paramPhysicalKind: {
-					Type:        schema.TypeString,
-					Description: "Kind of the physical column.",
-					Optional:    true,
+					Type:             schema.TypeString,
+					Description:      "Kind of the physical column.",
+					Optional:         true,
+					DiffSuppressFunc: suppressOmittedColumnKindDiff(physicalColumnKind),
 				},
 			},
 		},
@@ -195,9 +197,10 @@ func columnMetadataSchema() *schema.Schema {
 					Optional:    true,
 				},
 				paramMetadataKind: {
-					Type:        schema.TypeString,
-					Description: "Kind of the metadata column.",
-					Optional:    true,
+					Type:             schema.TypeString,
+					Description:      "Kind of the metadata column.",
+					Optional:         true,
+					DiffSuppressFunc: suppressOmittedColumnKindDiff(metadataColumnKind),
 				},
 				paramMetadataKey: {
 					Type:        schema.TypeString,
@@ -1164,7 +1167,7 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayv1.SqlV1ColumnDetail
 					continue
 				}
 				col := flinkgatewayv1.SqlV1ColumnDetails{
-					SqlV1ComputedColumn: &flinkgatewayv1.SqlV1ComputedColumn{},
+					SqlV1ComputedColumn: &flinkgatewayv1.SqlV1ComputedColumn{Kind: computedColumnKind},
 				}
 				if name, ok := cm[paramComputedName].(string); ok && name != "" {
 					col.SqlV1ComputedColumn.Name = &name
@@ -1195,7 +1198,7 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayv1.SqlV1ColumnDetail
 					continue
 				}
 				col := flinkgatewayv1.SqlV1ColumnDetails{
-					SqlV1PhysicalColumn: &flinkgatewayv1.SqlV1PhysicalColumn{},
+					SqlV1PhysicalColumn: &flinkgatewayv1.SqlV1PhysicalColumn{Kind: physicalColumnKind},
 				}
 				if name, ok := pm[paramPhysicalName].(string); ok && name != "" {
 					col.SqlV1PhysicalColumn.Name = name
@@ -1220,7 +1223,7 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayv1.SqlV1ColumnDetail
 					continue
 				}
 				col := flinkgatewayv1.SqlV1ColumnDetails{
-					SqlV1MetadataColumn: &flinkgatewayv1.SqlV1MetadataColumn{},
+					SqlV1MetadataColumn: &flinkgatewayv1.SqlV1MetadataColumn{Kind: metadataColumnKind},
 				}
 				if name, ok := mm[paramMetadataName].(string); ok && name != "" {
 					col.SqlV1MetadataColumn.Name = name
@@ -1280,6 +1283,14 @@ func suppressFlinkTimestampDiff(k, old, new string, d *schema.ResourceData) bool
 		return false
 	}
 	return oldTime.Equal(newTime)
+}
+
+// suppressOmittedColumnKindDiff hides the diff when the config omits a column kind and the state holds
+// blockKind, since expandAllColumns sends blockKind when no kind is set.
+func suppressOmittedColumnKindDiff(blockKind string) schema.SchemaDiffSuppressFunc {
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		return new == "" && old == blockKind
+	}
 }
 
 // expandMaterializedTableStartMode builds the API start_mode object from the
