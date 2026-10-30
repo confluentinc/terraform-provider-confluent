@@ -46,7 +46,14 @@
       "bucket_count": 10,
       "kind": "HASH"
     },
-    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;",
+    "start_mode": {
+      "kind": "FROM_NOW",
+      "time_interval": {
+        "interval": 2,
+        "time_unit": "HOURS"
+      }
+    }
   },
   "status": {
     "phase": "RUNNING",

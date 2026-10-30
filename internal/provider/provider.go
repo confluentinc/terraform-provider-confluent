@@ -59,6 +59,7 @@ import (
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
+	switchoverv1 "github.com/confluentinc/ccloud-sdk-go-v2/switchover/v1"
 	// cli-tfgen:tf-imports
 )
 
@@ -133,6 +134,7 @@ type Client struct {
 	isOAuthEnabled                  bool
 	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
+	switchoverV1Client              *switchoverv1.APIClient
 	// cli-tfgen:tf-client-fields
 }
 
@@ -303,7 +305,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:     true,
 					DefaultFunc:  schema.EnvDefaultFunc("TF_PROVIDER_CONFLUENT_MAX_RETRIES", 4),
 					ValidateFunc: validation.IntAtLeast(4),
-					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
+					Description:  "Maximum number of retries of HTTP client. Defaults to 4. Connect, IAM, API keys and RBAC API requests retry at least 12 times.",
 				},
 				"user_agent_suffix": {
 					Type:        schema.TypeString,
@@ -378,6 +380,10 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_rtce_topic":                          rtceTopicDataSource(),
 				"confluent_schema_registry_kek":                 schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                 schemaRegistryDekDataSource(),
+				"confluent_switchover_pair":                     switchoverPairDataSource(),
+				"confluent_switchover_pairs":                    switchoverPairsDataSource(),
+				"confluent_switchover_endpoint":                 switchoverEndpointDataSource(),
+				"confluent_switchover_endpoints":                switchoverEndpointsDataSource(),
 				"confluent_notifications_integration":           integrationDataSource(),
 				"confluent_notification_type":                   notificationTypeDataSource(),
 				"confluent_notifications_resource_preference":   resourcePreferenceDataSource(),
@@ -450,6 +456,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                 schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":           catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                          rtceTopicResource(),
+				"confluent_switchover_pair":                     switchoverPairResource(),
+				"confluent_switchover_endpoint":                 switchoverEndpointResource(),
 				"confluent_notifications_integration":           integrationResource(),
 				"confluent_notifications_resource_preference":   resourcePreferenceResource(),
 				"confluent_notifications_resource_subscription": resourceSubscriptionResource(),
@@ -467,6 +475,7 @@ func New(version, userAgent string) func() *schema.Provider {
 			reporter:         publishedTelemetryReporter{},
 			providerVersion:  version,
 			terraformVersion: func() string { return provider.TerraformVersion },
+			reportHosts:      publishedTelemetryHostPolicy,
 		})
 
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -622,6 +631,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
+	switchoverV1Cfg := switchoverv1.NewConfiguration()
 	// cli-tfgen:tf-client-cfg
 
 	apiKeysV2Cfg.Servers[0].URL = endpoint
@@ -656,6 +666,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
+	switchoverV1Cfg.Servers[0].URL = endpoint
 	// cli-tfgen:tf-client-endpoint
 
 	apiKeysV2Cfg.UserAgent = userAgent
@@ -691,6 +702,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
+	switchoverV1Cfg.UserAgent = userAgent
 	// cli-tfgen:tf-client-useragent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
@@ -705,7 +717,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	tableflowRestClientFactory = &TableflowRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries, endpoint: endpoint}
 
-	apiKeysV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	apiKeysV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
 	byokV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	certificateAuthorityV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	dataCatalogV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -713,14 +725,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries)), WithRateLimitBackoff()).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
 	iamIpFilteringV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	mdsV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	mdsV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
 	networkingV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	networkingGatewayV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	networkingIpV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -738,6 +750,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	switchoverV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	// cli-tfgen:tf-client-httpclient
 
 	secureTokenServiceClient := stsv1.NewAPIClient(stsV1Cfg)
@@ -818,6 +831,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
+		switchoverV1Client:              switchoverv1.NewAPIClient(switchoverV1Cfg),
 		// cli-tfgen:tf-client-literal
 		userAgent:                  userAgent,
 		catalogRestEndpoint:        catalogRestEndpoint,
@@ -855,10 +869,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isOAuthEnabled:               oauthEnabled,
 	}
 
-	// Publish this process's analytics opt-out decision for the resource wrappers:
-	// disabled when the opt-out env var is set or the endpoint is not the
-	// production endpoint. Written once, before the concurrent resource operations.
-	publishTelemetryRuntime(endpoint)
+	// Publish this process's telemetry decision, once, for the resource wrappers to read.
+	publishTelemetryRuntime(ctx, endpoint, userAgent, cloudApiKey, cloudApiSecret, externalOAuthToken, stsOAuthToken, telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode))
 
 	return &client, nil
 }

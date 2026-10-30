@@ -130,6 +130,7 @@ const (
 	azureProviderIntegrationV2ResourceLabel                             = "test_azure"
 	azureSubscription                                                   = "1234abcd-12ab-34cd-1234-123456abcdef"
 	azureTableflowTopicScenarioName                                     = "confluent_tableflow_topic Azure Storage Resource Lifecycle"
+	gcsTableflowTopicScenarioName                                       = "confluent_tableflow_topic GCS Storage Resource Lifecycle"
 	azureTenant                                                         = "1111tttt-1111-1111-1111-111111tttttt"
 	businessMetadataBindingDataSourceLabel                              = "data.confluent_business_metadata_binding.main"
 	businessMetadataBindingDataSourceScenarioName                       = "confluent_business_metadata_binding Data Source Lifecycle"
@@ -1064,13 +1065,13 @@ const (
 	testKafkaHttpEndpoint2                                                  = "https://pkc-3w22w.us-central1.gcp.confluent.cloud:443"
 	testKafkaRbacCrn2                                                       = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-29ynpv"
 	testKekName                                                             = "testkek"
-	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 7
-	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes   = "7"
+	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 8
+	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes   = "8"
 	testNumberOfSchemaRegistryClusterModeDataSourceAttributes               = 5
 	testNumberOfSchemaRegistryClusterModeResourceAttributes                 = "6"
 	testNumberOfSchemaRegistrySchemaResourceAttributes                      = 15
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 9
-	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "9"
+	testNumberOfSubjectCompatibilityLevelDataSourceAttributes               = 11
+	testNumberOfSubjectCompatibilityLevelResourceAttributes                 = "11"
 	testNumberOfSubjectModeDataSourceAttributes                             = 6
 	testNumberOfSubjectModeResourceAttributes                               = "7"
 	testOriginalDestinationSchemaRegistryRestEndpoint                       = "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"
@@ -1115,6 +1116,7 @@ message SomeRecord {
 	testSkipSchemaValidationDuringPlanFalse            = "false"
 	testSkipSchemaValidationDuringPlanTrue             = "true"
 	testStreamGovernanceClusterId                      = "lsrc-abc123"
+	testCompatibilityPolicy                            = "STRICT"
 	testSubjectCompatibilityGroup                      = "abc.cg.version"
 	testSubjectCompatibilityLevel                      = "FULL"
 	testSubjectCompatibilityLevelResourceLabel         = "test_subject_compatibility_level_resource_label"
@@ -1122,6 +1124,7 @@ message SomeRecord {
 	testSubjectModeResourceLabel                       = "test_subject_mode_resource_label"
 	testSubjectName                                    = "test2"
 	testTagName                                        = "ttt6"
+	testUpdatedCompatibilityPolicy                     = "LENIENT"
 	testUpdatedSchemaRegistryClusterCompatibilityLevel = "BACKWARD_TRANSITIVE"
 	testUpdatedSchemaRegistryClusterMode               = "READONLY"
 	testUpdatedSubjectCompatibilityLevel               = "BACKWARD_TRANSITIVE"
@@ -1152,6 +1155,7 @@ message SomeRecord {
 	transitGatewayAttachmentDataSourceDisplayName      = "prod-tgw-use1"
 	transitGatewayAttachmentDataSourceLabel            = "example"
 	unityCatalogIntegrationScenarioName                = "confluent_catalog_integration Unity Resource Lifecycle"
+	bigLakeMetastoreCatalogIntegrationScenarioName     = "confluent_catalog_integration BigLake Metastore Resource Lifecycle"
 	updatedIssuer                                      = "https://example.okta.com/oauth2/default"
 	updatedJwksUri                                     = "https://example.okta.com/oauth2/default/v1/keys"
 	userApiVersion                                     = "iam/v2"

@@ -59,4 +59,6 @@ The following attributes are exported:
 
 - `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
 - `display_name` - (Required String) A human-readable name for the Environment.
+- `stream_governance` - (Configuration Block) Stream Governance configurations for the environment. Supports the following:
+    - `package` - (String) Stream Governance Package. Supported values are ESSENTIALS and ADVANCED. Package comparison can be found [here](https://docs.confluent.io/cloud/current/stream-governance/packages.html#features-by-package-type).
 - `resource_name` - (Required String) The Confluent Resource Name of the Environment, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123`.

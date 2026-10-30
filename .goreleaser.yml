@@ -32,6 +32,10 @@ builds:
         goarch: amd64
       - goos: linux
         goarch: arm64
+      - goos: windows
+        goarch: arm
+      - goos: darwin
+        goarch: arm
     env:
       - CGO_ENABLED=0
     # https://goreleaser.com/customization/build/#reproducible-builds

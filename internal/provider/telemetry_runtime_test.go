@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 
@@ -36,13 +37,18 @@ func TestTelemetryOptOut(t *testing.T) {
 	tests := []struct {
 		name     string
 		endpoint string
-		envValue *string // nil = unset
+		envValue *string // nil = set to empty
 		want     bool
 	}{
-		{"default endpoint, no env: enabled", defaultCloudEndpoint, nil, false},
-		{"empty endpoint disables (only prod endpoint enables)", "", nil, true},
-		{"non-default (gov) endpoint disables", "https://api.confluent-gov.cloud", nil, true},
+		{"default (prod) endpoint, no env: enabled", defaultCloudEndpoint, nil, false},
+		{"staging endpoint, no env: enabled", stagingCloudEndpoint, nil, false},
+		{"devel endpoint, no env: enabled", develCloudEndpoint, nil, false},
+		{"empty endpoint disables", "", nil, true},
+		{"Confluent Cloud for Government endpoint disables", "https://api.confluentgov.com", nil, true},
+		{"Confluent Cloud for Government endpoint (CLI form) disables", "https://confluentgov.com/api", nil, true},
+		{"trailing slash disables (exact match only)", defaultCloudEndpoint + "/", nil, true},
 		{"env var disables on default endpoint", defaultCloudEndpoint, strptr("1"), true},
+		{"env var disables on staging endpoint", stagingCloudEndpoint, strptr("1"), true},
 		{"env var disables even with a false-ish value", defaultCloudEndpoint, strptr("false"), true}, // any non-empty value opts out
 	}
 	for _, tc := range tests {
@@ -142,10 +148,12 @@ func TestPublishedTelemetryReporter_ConcurrentPublishAndReport(t *testing.T) {
 }
 
 func TestPublishTelemetryRuntime(t *testing.T) {
+	// Every case supplies a top-level identity, so each subtest isolates one gate. The
+	// no-identity path lives in telemetry_auth_scope_test.go.
 	t.Run("non-default endpoint publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		publishTelemetryRuntime("https://mock.local")
+		publishTelemetryRuntime(context.Background(), "https://mock.local", "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
 			t.Fatalf("expected a disabled runtime with no reporter, got %+v", rt)
@@ -155,27 +163,39 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 	t.Run("empty endpoint publishes a disabled runtime", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		publishTelemetryRuntime("")
+		publishTelemetryRuntime(context.Background(), "", "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
 			t.Fatalf("expected a disabled runtime with no reporter, got %+v", rt)
 		}
 	})
 
-	t.Run("env var publishes a disabled runtime even on the default endpoint", func(t *testing.T) {
+	t.Run("opt-out publishes a disabled runtime even on the default endpoint with an identity", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "1")
-		publishTelemetryRuntime(defaultCloudEndpoint)
+		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
-			t.Fatalf("expected a disabled runtime, got %+v", rt)
+			t.Fatalf("expected a disabled runtime when opted out, got %+v", rt)
 		}
 	})
 
-	t.Run("default endpoint, no env var: enabled runtime with a live sink", func(t *testing.T) {
+	t.Run("test mode publishes a disabled runtime even on the default endpoint with an identity", func(t *testing.T) {
 		restorePublishedTelemetry(t)
 		t.Setenv(disableProviderAnalyticsEnvVar, "")
-		publishTelemetryRuntime(defaultCloudEndpoint)
+		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, true)
+		rt := publishedTelemetry.Load()
+		if rt == nil || !rt.config.Disabled || rt.reporter != nil {
+			t.Fatalf("expected a disabled runtime in test mode, got %+v", rt)
+		}
+	})
+
+	t.Run("default endpoint, no opt-out: enabled runtime with a live sink", func(t *testing.T) {
+		restorePublishedTelemetry(t)
+		t.Setenv(disableProviderAnalyticsEnvVar, "")
+		// Truly unset, as for a user who never sets it.
+		_ = os.Unsetenv(disableProviderAnalyticsEnvVar)
+		publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
 		rt := publishedTelemetry.Load()
 		if rt == nil || rt.config.Disabled {
 			t.Fatalf("expected an enabled runtime, got %+v", rt)
@@ -183,9 +203,27 @@ func TestPublishTelemetryRuntime(t *testing.T) {
 		if rt.reporter == nil {
 			t.Fatalf("enabled runtime must carry a non-nil reporter")
 		}
+		// Stop the transport's worker goroutines started for this test.
+		if c, ok := rt.reporter.(interface{ Close() }); ok {
+			c.Close()
+		}
 		// The published run ID is stable and matches the process run ID.
 		if rt.config.RunID != telemetry.RunID() {
 			t.Errorf("published RunID = %q, want the process RunID %q", rt.config.RunID, telemetry.RunID())
+		}
+	})
+
+	t.Run("staging endpoint, no opt-out: enabled runtime with a live sink", func(t *testing.T) {
+		restorePublishedTelemetry(t)
+		t.Setenv(disableProviderAnalyticsEnvVar, "")
+		publishTelemetryRuntime(context.Background(), stagingCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+		rt := publishedTelemetry.Load()
+		if rt == nil || rt.config.Disabled || rt.reporter == nil {
+			t.Fatalf("expected an enabled runtime on the staging endpoint, got %+v", rt)
+		}
+		// Stop the transport's worker goroutines started for this test.
+		if c, ok := rt.reporter.(interface{ Close() }); ok {
+			c.Close()
 		}
 	})
 }
@@ -223,9 +261,9 @@ func TestPublishedGate_EndToEndThroughWrapper(t *testing.T) {
 }
 
 // TestDefaultCloudEndpointMatchesSchemaDefault keeps defaultCloudEndpoint in sync
-// with the provider's "endpoint" schema default. The gate enables reporting only
-// on an exact match, so if the two drifted, telemetry would silently disable on
-// the production endpoint.
+// with the provider's "endpoint" schema default. Reporting is enabled only for
+// endpoints in the allowlist, so if the two drifted, telemetry would silently
+// disable on the production endpoint.
 func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
 	p := New(testVersion, "")()
 	got, ok := p.Schema["endpoint"].Default.(string)
@@ -234,6 +272,105 @@ func TestDefaultCloudEndpointMatchesSchemaDefault(t *testing.T) {
 	}
 	if got != defaultCloudEndpoint {
 		t.Errorf("provider \"endpoint\" schema default = %q, want defaultCloudEndpoint %q; the opt-out gate misfires if these diverge", got, defaultCloudEndpoint)
+	}
+}
+
+// TestTelemetryDisabledForTestMode checks that hermetic acceptance runs suppress
+// telemetry while live-production runs may emit.
+func TestTelemetryDisabledForTestMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		acceptance bool
+		live       bool
+		want       bool
+	}{
+		{"not a test run: not suppressed", false, false, false},
+		{"hermetic acceptance: suppressed", true, false, true},
+		{"live production: not suppressed", true, true, false},
+		{"live flag alone: not suppressed", false, true, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := telemetryDisabledForTestMode(tc.acceptance, tc.live); got != tc.want {
+				t.Errorf("telemetryDisabledForTestMode(%v, %v) = %v, want %v", tc.acceptance, tc.live, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestProviderConfigureWiresTelemetryGate checks that providerConfigure passes the
+// configured endpoint and the test mode to the telemetry gate.
+func TestProviderConfigureWiresTelemetryGate(t *testing.T) {
+	tests := []struct {
+		name        string
+		endpoint    string // empty uses the schema default
+		acc, prod   string
+		wantEnabled bool
+	}{
+		{"default endpoint: enabled", "", "", "", true},
+		{"Confluent Cloud for Government endpoint: disabled", "https://api.confluentgov.com", "", "", false},
+		{"hermetic acceptance test: disabled", "", "1", "", false},
+		{"live production test: enabled", "", "1", "1", true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			restorePublishedTelemetry(t)
+			publishedTelemetry.Store(nil)
+			t.Setenv(disableProviderAnalyticsEnvVar, "")
+			t.Setenv("TF_ACC", tc.acc)
+			t.Setenv("TF_ACC_PROD", tc.prod)
+			raw := map[string]interface{}{"cloud_api_key": "test-key", "cloud_api_secret": "test-secret"}
+			if tc.endpoint != "" {
+				raw["endpoint"] = tc.endpoint
+			}
+			p := New("test", "")()
+			d := schema.TestResourceDataRaw(t, p.Schema, raw)
+			if _, diags := providerConfigure(context.Background(), d, p, "test", ""); diags.HasError() {
+				t.Fatalf("providerConfigure failed: %v", diags)
+			}
+			rt := publishedTelemetry.Load()
+			if rt == nil {
+				t.Fatal("providerConfigure published no telemetry runtime")
+			}
+			// Stop the transport an enabled runtime starts.
+			if c, ok := rt.reporter.(interface{ Close() }); ok {
+				c.Close()
+			}
+			if enabled := !rt.config.Disabled && rt.reporter != nil; enabled != tc.wantEnabled {
+				t.Errorf("reporting enabled = %v, want %v", enabled, tc.wantEnabled)
+			}
+		})
+	}
+}
+
+// closeRecordingReporter is a telemetryReporter that records whether Close was called.
+type closeRecordingReporter struct {
+	closed bool
+}
+
+func (c *closeRecordingReporter) Report(telemetry.Usage) {}
+func (c *closeRecordingReporter) Close()                 { c.closed = true }
+
+// TestPublishTelemetryRuntime_ClosesPriorTransport checks that reconfiguring closes
+// the previously published reporter, so repeated in-process configuration does not
+// leak transport workers.
+func TestPublishTelemetryRuntime_ClosesPriorTransport(t *testing.T) {
+	restorePublishedTelemetry(t)
+	t.Setenv(disableProviderAnalyticsEnvVar, "")
+
+	prior := &closeRecordingReporter{}
+	publishedTelemetry.Store(&telemetryRuntime{config: telemetry.NewConfig(false), reporter: prior})
+
+	publishTelemetryRuntime(context.Background(), defaultCloudEndpoint, "ua", "cloud-key", "cloud-secret", nil, nil, false)
+
+	if !prior.closed {
+		t.Error("prior reporter was not closed on reconfiguration")
+	}
+	// Stop the transport this call started.
+	if rt := publishedTelemetry.Load(); rt != nil {
+		if closer, ok := rt.reporter.(interface{ Close() }); ok {
+			closer.Close()
+		}
 	}
 }
 

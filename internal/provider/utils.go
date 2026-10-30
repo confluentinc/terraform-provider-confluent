@@ -74,6 +74,7 @@ import (
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	switchoverv1 "github.com/confluentinc/ccloud-sdk-go-v2/switchover/v1"
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
@@ -112,6 +113,25 @@ func (c *Client) byokV1ApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for BYOK client")
+	return ctx
+}
+
+func (c *Client) switchoverV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Switchover client: %v", err))
+		}
+		return context.WithValue(ctx, switchoverv1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, switchoverv1.ContextBasicAuth, switchoverv1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Switchover client")
 	return ctx
 }
 
@@ -244,7 +264,9 @@ func (c *Client) certificateAuthorityV2ApiContext(ctx context.Context) context.C
 
 func (c *Client) camV1ApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), camv1.ContextBasicAuth, camv1.BasicAuth{
+		// Keep the operation's values (for client analytics) but not its deadline, so
+		// provisioning waits keep their own timeout.
+		return context.WithValue(context.WithoutCancel(ctx), camv1.ContextBasicAuth, camv1.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -1085,6 +1107,16 @@ func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
 	return normalizeCrn(old) == normalizeCrn(new)
 }
 
+// suppressCreateOnlyAttributeRemoval suppresses the diff when a create-only attribute is
+// removed from configuration (the new value is empty). The value only ever takes effect at
+// creation, so removing it cannot change anything server-side; without this, ForceNew would turn
+// removal into a destroy-and-recreate. Changing it to a different value still replaces the
+// resource. Referenced by every cli-terraform-generator create_query_params attribute
+// (assigned_resource_owner).
+func suppressCreateOnlyAttributeRemoval(_, _, newValue string, _ *schema.ResourceData) bool {
+	return newValue == ""
+}
+
 // suppressSameValueIgnoringCase suppresses diffs when the two values differ only
 // by case, for example "AWS" == "aws".
 func suppressSameValueIgnoringCase(k, old, new string, d *schema.ResourceData) bool {
@@ -1581,6 +1613,35 @@ func (c *Client) rtceV1ApiContext(ctx context.Context) context.Context {
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for rtceV1 client")
 	return ctx
+}
+
+// normalizeGatewayPhases normalizes phase values to lowercase for API
+func normalizeGatewayPhases(phases []string) []string {
+	if len(phases) == 0 {
+		return phases
+	}
+
+	normalized := make([]string, len(phases))
+	validPhases := map[string]string{
+		"PROVISIONING":   "provisioning",
+		"CREATED":        "created",
+		"ACTIVE":         "active", // API expects "active" but returns "ready" in response, so map "ready" input to "active" for API filter
+		"READY":          "active",
+		"FAILED":         "failed",
+		"DEPROVISIONING": "deprovisioning",
+		"EXPIRED":        "expired",
+	}
+
+	for i, phase := range phases {
+		upperPhase := strings.ToUpper(strings.TrimSpace(phase))
+		if mappedPhase, ok := validPhases[upperPhase]; ok {
+			normalized[i] = mappedPhase
+		} else {
+			normalized[i] = strings.ToLower(upperPhase)
+		}
+	}
+
+	return normalized
 }
 
 func (c *Client) notificationsV1ApiContext(ctx context.Context) context.Context {

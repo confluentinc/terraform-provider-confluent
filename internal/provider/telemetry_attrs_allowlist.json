@@ -52,6 +52,7 @@
   ],
   "confluent_catalog_integration": [
     "aws_glue",
+    "biglake_metastore",
     "credentials",
     "display_name",
     "environment",
@@ -75,6 +76,7 @@
     "serial_numbers"
   ],
   "confluent_certificate_pool": [
+    "assigned_resource_owner",
     "certificate_authority",
     "description",
     "display_name",
@@ -217,6 +219,7 @@
     "query",
     "rest_endpoint",
     "session_options",
+    "start_mode",
     "stopped",
     "table_options",
     "watermark"
@@ -252,6 +255,7 @@
     "filter"
   ],
   "confluent_identity_pool": [
+    "assigned_resource_owner",
     "description",
     "display_name",
     "filter",
@@ -499,7 +503,6 @@
     "cloud",
     "display_name",
     "environment",
-    "id",
     "status",
     "usages"
   ],
@@ -553,6 +556,7 @@
   "confluent_schema_registry_cluster_config": [
     "compatibility_group",
     "compatibility_level",
+    "compatibility_policy",
     "credentials",
     "normalize",
     "rest_endpoint",
@@ -591,14 +595,17 @@
   ],
   "confluent_service_account": [
     "api_version",
+    "assigned_resource_owner",
     "description",
     "display_name",
     "kind"
   ],
   "confluent_subject_config": [
     "alias",
+    "alias_for_deks",
     "compatibility_group",
     "compatibility_level",
+    "compatibility_policy",
     "credentials",
     "normalize",
     "rest_endpoint",
@@ -613,6 +620,22 @@
     "schema_registry_cluster",
     "subject_name"
   ],
+  "confluent_switchover_endpoint": [
+    "display_name",
+    "endpoints",
+    "parent_resource_crn",
+    "phase",
+    "target"
+  ],
+  "confluent_switchover_pair": [
+    "active_member",
+    "display_name",
+    "environment_crn",
+    "failover_type",
+    "first_active",
+    "members",
+    "phase"
+  ],
   "confluent_tableflow_topic": [
     "azure_data_lake_storage_gen_2",
     "byob_aws",
@@ -623,6 +646,7 @@
     "enable_partitioning",
     "environment",
     "error_handling",
+    "google_cloud_storage",
     "kafka_cluster",
     "managed_storage",
     "metadata_column_naming_scheme",

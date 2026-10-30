@@ -15,8 +15,14 @@
 package provider
 
 import (
+	"context"
+	"net/http"
 	"os"
+	"strconv"
+	"sync"
 	"sync/atomic"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
@@ -30,10 +36,20 @@ const (
 	// any non-empty value.
 	disableProviderAnalyticsEnvVar = "CONFLUENT_DISABLE_PROVIDER_ANALYTICS"
 
-	// defaultCloudEndpoint is the public Confluent Cloud API origin. It must match
-	// the schema default of the provider's "endpoint" argument; reporting is
-	// enabled only for an exact match, and any other endpoint disables it.
+	// defaultCloudEndpoint is the production Cloud API origin; it must match the
+	// "endpoint" schema default.
 	defaultCloudEndpoint = "https://api.confluent.cloud"
+
+	// stagingCloudEndpoint and develCloudEndpoint are the non-production Cloud API
+	// origins, enabled for reporting alongside production.
+	stagingCloudEndpoint = "https://api.stag.cpdev.cloud"
+	develCloudEndpoint   = "https://api.devel.cpdev.cloud"
+
+	// defaultMaxEventsPerRun caps the events one provider run reports.
+	defaultMaxEventsPerRun = 20000
+
+	// maxEventsPerRunEnvVar overrides the cap for load testing; positive integers only.
+	maxEventsPerRunEnvVar = "CONFLUENT_PROVIDER_ANALYTICS_MAX_EVENTS_PER_RUN"
 )
 
 // telemetryRuntime is the analytics state published once per process during
@@ -43,15 +59,26 @@ type telemetryRuntime struct {
 	config telemetry.Config
 	// reporter is the sink for an enabled runtime; nil when disabled.
 	reporter telemetryReporter
+	// confluentCloudHostsOnly reports only operations that made at least one API
+	// request, all to Confluent Cloud hosts (see publishedTelemetryHostPolicy).
+	confluentCloudHostsOnly bool
+	// maxEvents is the highest sequence reported; zero means uncapped.
+	maxEvents int64
+	// logCtx is the logger for the cap warning.
+	logCtx context.Context
+	// capWarnOnce logs the cap warning only once.
+	capWarnOnce sync.Once
 }
 
 // publishedTelemetry holds this process's runtime. The atomic pointer lets the
-// concurrent resource operations read it without locking.
+// concurrent resource operations read it without locking. A process global is safe
+// because Terraform runs each provider configuration (including each alias) in its
+// own plugin subprocess, so one process serves exactly one configuration.
 var publishedTelemetry atomic.Pointer[telemetryRuntime]
 
 // publishedTelemetryReporter is the reporter the wrapper holds. It forwards to
-// whatever configuration published, and drops when nothing is published yet or
-// reporting is disabled.
+// whatever configuration published, and drops when nothing is published yet,
+// reporting is disabled, or the event is past the run's cap.
 type publishedTelemetryReporter struct{}
 
 func (publishedTelemetryReporter) Report(u telemetry.Usage) {
@@ -59,7 +86,36 @@ func (publishedTelemetryReporter) Report(u telemetry.Usage) {
 	if rt == nil || rt.config.Disabled || rt.reporter == nil {
 		return
 	}
+	if rt.maxEvents > 0 && u.Sequence > rt.maxEvents {
+		rt.capWarnOnce.Do(func() {
+			tflog.Warn(rt.logCtx, "client-analytics event cap reached; events past it will not be reported for this run", map[string]interface{}{
+				"max_events": rt.maxEvents,
+			})
+		})
+		return
+	}
 	rt.reporter.Report(u)
+}
+
+// publishedTelemetryHostPolicy is the wrappers' host check. On the default endpoint
+// it reports an operation only if it made at least one API request and all of them
+// went to Confluent Cloud hosts, so a provider block that leaves endpoint unset but
+// manages, for example, Confluent Cloud for Government clusters never sends its
+// credentials to the commercial endpoint.
+func publishedTelemetryHostPolicy(h *apiHosts) bool {
+	rt := publishedTelemetry.Load()
+	if rt == nil || !rt.confluentCloudHostsOnly {
+		return true
+	}
+	return h.onlyConfluentCloud()
+}
+
+// telemetryEnabledEndpoints lists the Cloud API endpoints for which usage
+// reporting is enabled. Gov/FedRAMP hosts are intentionally excluded.
+var telemetryEnabledEndpoints = map[string]bool{
+	defaultCloudEndpoint: true,
+	stagingCloudEndpoint: true,
+	develCloudEndpoint:   true,
 }
 
 // telemetryOptOut reports whether analytics is disabled for this process.
@@ -67,21 +123,69 @@ func telemetryOptOut(endpoint string) bool {
 	if os.Getenv(disableProviderAnalyticsEnvVar) != "" {
 		return true
 	}
-	// Enable only for the production endpoint; every other value, including an
-	// empty endpoint (seen only in tests) and gov/FedRAMP hosts, disables.
-	return endpoint != defaultCloudEndpoint
+	// Enabled only for known Cloud endpoints; any other value disables.
+	return !telemetryEnabledEndpoints[endpoint]
 }
 
-// publishTelemetryRuntime computes the opt-out decision and publishes the runtime
-// the resource wrappers read, once at the end of provider configuration.
-//
-// The enabled sink is a no-op today; a real reporter must be concurrency-safe and
-// stay off during test runs (live tests use the production endpoint).
-func publishTelemetryRuntime(endpoint string) {
-	disabled := telemetryOptOut(endpoint)
+// telemetryMaxEventsPerRun returns the per-run event cap.
+func telemetryMaxEventsPerRun() int64 {
+	if n, err := strconv.ParseInt(os.Getenv(maxEventsPerRunEnvVar), 10, 64); err == nil && n > 0 {
+		return n
+	}
+	return defaultMaxEventsPerRun
+}
+
+// telemetryAuthFunc builds the per-request auth decorator from the provider's
+// top-level Cloud identity only — the OAuth/STS bearer token or the Cloud API
+// key/secret, never resource-scoped credentials. It returns nil when no top-level
+// identity is configured, which disables reporting. The bearer token is captured
+// by value so the background workers never race the provider's token refresh.
+func telemetryAuthFunc(cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken) func(context.Context) context.Context {
+	switch {
+	case oauth != nil && sts != nil && sts.AccessToken != "":
+		token := sts.AccessToken
+		return func(ctx context.Context) context.Context {
+			return telemetry.TokenAuthContext(ctx, token)
+		}
+	case cloudAPIKey != "" && cloudAPISecret != "":
+		return func(ctx context.Context) context.Context {
+			return telemetry.BasicAuthContext(ctx, cloudAPIKey, cloudAPISecret)
+		}
+	default:
+		return nil
+	}
+}
+
+// telemetryDisabledForTestMode suppresses telemetry for acceptance-only runs
+// (TF_ACC=1 without TF_ACC_PROD=1); live-production runs may emit.
+func telemetryDisabledForTestMode(acceptanceTestMode, liveProductionTestMode bool) bool {
+	return acceptanceTestMode && !liveProductionTestMode
+}
+
+// publishTelemetryRuntime decides whether reporting is enabled and publishes the
+// runtime the resource wrappers read, once at the end of provider configuration.
+// Reporting is enabled only when the process is not opted out and is on an enabled
+// endpoint, a top-level Cloud identity is configured, and the run is not a hermetic
+// acceptance test (live-production runs may emit). When enabled the sink is the
+// bounded-worker transport, limited on the default endpoint to operations that talked
+// only to Confluent Cloud (see publishedTelemetryHostPolicy); otherwise it is nil and
+// every event is dropped.
+func publishTelemetryRuntime(ctx context.Context, endpoint, userAgent, cloudAPIKey, cloudAPISecret string, oauth *OAuthToken, sts *STSToken, disabledForTestMode bool) {
+	authFunc := telemetryAuthFunc(cloudAPIKey, cloudAPISecret, oauth, sts)
+	disabled := telemetryOptOut(endpoint) || authFunc == nil || disabledForTestMode
 	rt := &telemetryRuntime{config: telemetry.NewConfig(disabled)}
 	if !disabled {
-		rt.reporter = noopTelemetryReporter{}
+		poster := telemetry.NewSDKPoster(endpoint, &http.Client{}, userAgent, authFunc)
+		rt.reporter = telemetry.NewTransport(poster, ctx)
+		rt.confluentCloudHostsOnly = endpoint == defaultCloudEndpoint
+		rt.maxEvents = telemetryMaxEventsPerRun()
+		rt.logCtx = context.WithoutCancel(ctx)
 	}
-	publishedTelemetry.Store(rt)
+	// Close any prior transport so repeated in-process configuration (the test
+	// harness) does not leak worker goroutines; production configures once.
+	if prev := publishedTelemetry.Swap(rt); prev != nil {
+		if closer, ok := prev.reporter.(interface{ Close() }); ok {
+			closer.Close()
+		}
+	}
 }
