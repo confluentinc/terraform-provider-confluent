@@ -1449,7 +1449,7 @@ func testAccCheckMaterializedTableUnmanagedOptionsConfig(mockServerUrl, resource
 
 // TestAccFlinkMaterializedTableColumnKindDefaults verifies that omitting column_*_kind sends each
 // column's block kind (Physical, Computed, Metadata) on create and update instead of an empty kind,
-// and that the defaults match the kinds returned on read, so re-planning shows no diff.
+// and that re-planning shows no diff once the API returns the kinds.
 func TestAccFlinkMaterializedTableColumnKindDefaults(t *testing.T) {
 	ctx := context.Background()
 
@@ -1528,6 +1528,7 @@ func TestAccFlinkMaterializedTableColumnKindDefaults(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedTableExists(fullResourceLabel),
 					resource.TestCheckResourceAttr(fullResourceLabel, "columns.#", "3"),
+					// Read stores the kinds the API returns.
 					resource.TestCheckResourceAttr(fullResourceLabel, "columns.0.columns_physical.0.column_physical_kind", "Physical"),
 					resource.TestCheckResourceAttr(fullResourceLabel, "columns.1.columns_computed.0.column_computed_kind", "Computed"),
 					resource.TestCheckResourceAttr(fullResourceLabel, "columns.2.columns_metadata.0.column_metadata_kind", "Metadata"),
@@ -1539,7 +1540,7 @@ func TestAccFlinkMaterializedTableColumnKindDefaults(t *testing.T) {
 				),
 			},
 			{
-				// The defaults match the kinds the API echoes, so re-planning is a no-op.
+				// The API echoes each block's kind, so re-planning is a no-op.
 				Config:             testAccCheckMaterializedTableColumnKindDefaultsConfig(mockTestServerUrl, resourceLabel, columnKindsDisplayName, ""),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
