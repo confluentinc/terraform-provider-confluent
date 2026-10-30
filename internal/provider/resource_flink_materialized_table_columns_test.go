@@ -73,7 +73,8 @@ func TestExpandAllColumnsSkipsEmptyPhysicalBlock(t *testing.T) {
 }
 
 // materializedTableState returns the state of an existing table with the given attributes, plus the
-// attributes Read always sets, so planning against it updates the table in place instead of replacing it.
+// distribution, options, and stopped attributes as Read writes them, so planning against it updates the
+// table in place instead of replacing it.
 func materializedTableState(attributes map[string]string) *terraform.InstanceState {
 	state := map[string]string{
 		"id":                "env-abc123/lkc-01/t",
@@ -190,19 +191,40 @@ func TestColumnKindPlan(t *testing.T) {
 
 // TestColumnKindPlanIgnoresUnknownValues verifies that a physical column's name, type, or comment being
 // unknown at plan time does not change the planned kind, so the plan stays the same once the value
-// resolves to empty.
+// resolves to empty, on create and on an update that adds the column.
 func TestColumnKindPlanIgnoresUnknownValues(t *testing.T) {
-	kindKey := fmt.Sprintf("columns.0.%s.0.%s", paramColumnPhysical, paramPhysicalKind)
-	for _, attribute := range []string{paramPhysicalName, paramPhysicalType, paramPhysicalComment} {
-		t.Run(attribute, func(t *testing.T) {
-			plan := func(value string) *terraform.ResourceAttrDiff {
-				column := map[string]interface{}{attribute: value}
-				return planColumns(t, nil, []interface{}{map[string]interface{}{paramColumnPhysical: []interface{}{column}}})[kindKey]
-			}
-			if unknown, resolved := plan(unknownConfigValue), plan(""); unknown != nil || resolved != nil {
-				t.Errorf("expected no planned kind, got %+v while unknown and %+v once resolved", unknown, resolved)
-			}
-		})
+	existing := map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{paramPhysicalName: "a", paramPhysicalType: "INT"}}}
+	state := materializedTableState(map[string]string{
+		"columns.#":                                            "1",
+		"columns.0.columns_physical.#":                         "1",
+		"columns.0.columns_computed.#":                         "0",
+		"columns.0.columns_metadata.#":                         "0",
+		"columns.0.columns_physical.0.column_physical_name":    "a",
+		"columns.0.columns_physical.0.column_physical_type":    "INT",
+		"columns.0.columns_physical.0.column_physical_comment": "",
+		"columns.0.columns_physical.0.column_physical_kind":    physicalColumnKind,
+	})
+	tests := []struct {
+		name    string
+		state   *terraform.InstanceState
+		columns []interface{}
+	}{
+		{name: "create", state: nil, columns: nil},
+		{name: "update", state: state, columns: []interface{}{existing}},
+	}
+	for _, tt := range tests {
+		for _, attribute := range []string{paramPhysicalName, paramPhysicalType, paramPhysicalComment} {
+			t.Run(fmt.Sprintf("%s/%s", tt.name, attribute), func(t *testing.T) {
+				kindKey := fmt.Sprintf("columns.%d.%s.0.%s", len(tt.columns), paramColumnPhysical, paramPhysicalKind)
+				plan := func(value string) *terraform.ResourceAttrDiff {
+					column := map[string]interface{}{paramColumnPhysical: []interface{}{map[string]interface{}{attribute: value}}}
+					return planColumns(t, tt.state, append(append([]interface{}{}, tt.columns...), column))[kindKey]
+				}
+				if unknown, resolved := plan(unknownConfigValue), plan(""); unknown != nil || resolved != nil {
+					t.Errorf("expected no planned kind, got %+v while unknown and %+v once resolved", unknown, resolved)
+				}
+			})
+		}
 	}
 }
 
