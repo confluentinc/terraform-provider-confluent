@@ -26,7 +26,8 @@ import (
 // Bounded-worker transport for client-analytics events. Report enqueues an event
 // and returns; a fixed pool of workers sends it in the background, so a slow or
 // unreachable backend never delays the caller. Delivery is best-effort: a full
-// queue and a failed send are both logged and dropped, with no retries.
+// queue and a failed send are both logged and dropped, with no retries. At
+// process exit, Drain gives unsent events a bounded wait.
 
 const (
 	// defaultWorkers is the fixed number of concurrent senders, so a slow backend
@@ -64,6 +65,17 @@ type Transport struct {
 	logCtx    context.Context
 	done      chan struct{}
 	closeOnce sync.Once
+
+	// mu guards the fields below, which let Drain wait for unsent events.
+	mu sync.Mutex
+	// pending counts events that are queued or being sent.
+	pending int
+	// idle is closed whenever pending is zero.
+	idle chan struct{}
+	// activeAt is when pending last rose from zero or an event last settled.
+	activeAt time.Time
+	// lastFailed reports whether the most recently settled send failed.
+	lastFailed bool
 }
 
 // NewTransport starts a Transport with the default pool size, queue depth, and
@@ -85,7 +97,9 @@ func newTransport(poster Poster, logCtx context.Context, workers, queueDepth int
 		timeout: timeout,
 		logCtx:  context.WithoutCancel(logCtx),
 		done:    make(chan struct{}),
+		idle:    make(chan struct{}),
 	}
+	close(t.idle)
 	for i := 0; i < workers; i++ {
 		go t.worker()
 	}
@@ -95,13 +109,29 @@ func newTransport(poster Poster, logCtx context.Context, workers, queueDepth int
 // Report hands one Usage to the worker pool. It never blocks: when the queue is
 // full the event is dropped and logged, so telemetry can never slow the caller.
 func (t *Transport) Report(u Usage) {
-	select {
-	case t.queue <- u:
-	default:
+	if !t.enqueue(u) {
 		tflog.Debug(t.logCtx, "dropped client-analytics event: transport queue full", map[string]interface{}{
 			"resource_type": u.ResourceType,
 			"operation":     string(u.Operation),
 		})
+	}
+}
+
+// enqueue queues u without blocking and reports whether it was queued. It holds
+// mu across the send so a queued event is always counted as pending.
+func (t *Transport) enqueue(u Usage) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	select {
+	case t.queue <- u:
+		if t.pending == 0 {
+			t.idle = make(chan struct{})
+			t.activeAt = time.Now()
+		}
+		t.pending++
+		return true
+	default:
+		return false
 	}
 }
 
@@ -114,12 +144,25 @@ func (t *Transport) worker() {
 			if !ok {
 				return
 			}
-			t.deliver(u)
+			t.settle(t.deliver(u))
 		}
 	}
 }
 
-func (t *Transport) deliver(u Usage) {
+// settle marks one pending event as sent or dropped.
+func (t *Transport) settle(sent bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.pending--
+	t.activeAt = time.Now()
+	t.lastFailed = !sent
+	if t.pending == 0 {
+		close(t.idle)
+	}
+}
+
+// deliver sends u and reports whether it was sent; a panic counts as not sent.
+func (t *Transport) deliver(u Usage) (sent bool) {
 	// A panic from Post runs on this worker goroutine, outside the caller's
 	// recover; catch it so a bad send can never crash the process.
 	defer func() {
@@ -140,6 +183,35 @@ func (t *Transport) deliver(u Usage) {
 			"operation":     string(u.Operation),
 			"error":         err.Error(),
 		})
+		return false
+	}
+	return true
+}
+
+// Drain waits until no event is queued or being sent, and reports whether it got
+// there. It waits at most until timeout after the transport was last active
+// before the call (pending rose from zero or an event settled), and not at all
+// when the most recently settled send failed, so a failing or stuck backend is
+// not waited on. It is for process exit: it does not stop the workers, and a
+// send still running when it returns is abandoned.
+func (t *Transport) Drain(timeout time.Duration) bool {
+	t.mu.Lock()
+	idle, pending, activeAt, lastFailed := t.idle, t.pending, t.activeAt, t.lastFailed
+	t.mu.Unlock()
+	if pending == 0 {
+		return true
+	}
+	wait := time.Until(activeAt.Add(timeout))
+	if lastFailed || wait <= 0 {
+		return false
+	}
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case <-idle:
+		return true
+	case <-timer.C:
+		return false
 	}
 }
 
