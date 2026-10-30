@@ -74,13 +74,23 @@ func kafkaResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "The availability zone configuration of the Kafka cluster.",
 				ValidateFunc: validation.StringInSlice(acceptedAvailabilityZones, false),
+				// old is the availability in the Terraform state (refreshed from the API) and new is the
+				// availability in the configuration.
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					// Suppress diff for equivalent availability values during V1 to V2 billing model migration
 					// SINGLE_ZONE ↔ LOW and MULTI_ZONE ↔ HIGH  should not trigger drift
-					return (old == singleZone && new == lowAvailability) ||
+					isEquivalentAvailability := (old == singleZone && new == lowAvailability) ||
 						(old == lowAvailability && new == singleZone) ||
 						(old == multiZone && new == highAvailability) ||
 						(old == highAvailability && new == multiZone)
+
+					// Suppress when the API returns a lower availability than the configured one. Availability
+					// downgrades (MULTI_ZONE -> SINGLE_ZONE, HIGH -> LOW) are not supported through the API, but Confluent
+					// can apply them (e.g. incidents or product exceptions), and availability is ForceNew.
+					isAvailabilityDowngraded := (old == singleZone && new == multiZone) ||
+						(old == lowAvailability && new == highAvailability)
+
+					return isEquivalentAvailability || isAvailabilityDowngraded
 				},
 			},
 			paramCloud: {
