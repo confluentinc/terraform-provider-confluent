@@ -1,0 +1,140 @@
+//go:build live_test && (all || core)
+
+// Copyright 2026 Confluent Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package provider
+
+import (
+	"fmt"
+	"os"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+)
+
+const (
+	notificationsLiveClusterDataSource = "data.confluent_kafka_cluster.notifications_live"
+	notificationsLiveIntegration       = "confluent_notifications_integration.notifications_live"
+)
+
+type notificationsLiveEnv struct {
+	endpoint           string
+	apiKey             string
+	apiSecret          string
+	dedicatedClusterId string
+	notificationTypeId string
+	slackWebhookUrl    string
+}
+
+// loadNotificationsLiveEnv skips the test unless TF_ACC_PROD is set and fails it when a
+// variable the caller asked for is missing.
+func loadNotificationsLiveEnv(t *testing.T, needCluster, needSubscription bool) notificationsLiveEnv {
+	t.Helper()
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	env := notificationsLiveEnv{
+		endpoint:           resolveNotificationsLiveEndpoint(),
+		apiKey:             os.Getenv("CONFLUENT_CLOUD_API_KEY"),
+		apiSecret:          os.Getenv("CONFLUENT_CLOUD_API_SECRET"),
+		dedicatedClusterId: os.Getenv("KAFKA_DEDICATED_AWS_CLUSTER_ID"),
+		notificationTypeId: os.Getenv("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID"),
+		slackWebhookUrl:    os.Getenv("CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL"),
+	}
+
+	required := map[string]string{
+		"CONFLUENT_CLOUD_API_KEY":    env.apiKey,
+		"CONFLUENT_CLOUD_API_SECRET": env.apiSecret,
+	}
+	if needCluster {
+		required["KAFKA_DEDICATED_AWS_CLUSTER_ID"] = env.dedicatedClusterId
+	}
+	if needSubscription {
+		required["CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID"] = env.notificationTypeId
+		required["CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL"] = env.slackWebhookUrl
+	}
+	for name, value := range required {
+		if value == "" {
+			t.Fatalf("%s must be set for notifications live tests", name)
+		}
+	}
+	return env
+}
+
+// resolveNotificationsLiveEndpoint returns the Confluent Cloud API endpoint.
+// Priority: CONFLUENT_CLOUD_ENDPOINT (full URL override) > TF_ACC_ENV (shorthand) > prod default.
+func resolveNotificationsLiveEndpoint() string {
+	if ep := os.Getenv("CONFLUENT_CLOUD_ENDPOINT"); ep != "" {
+		return ep
+	}
+	switch os.Getenv("TF_ACC_ENV") {
+	case "devel":
+		return "https://api.devel.cpdev.cloud"
+	case "stag":
+		return "https://api.stag.cpdev.cloud"
+	default:
+		return "https://api.confluent.cloud"
+	}
+}
+
+func (env notificationsLiveEnv) providerConfig() string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = %q
+		cloud_api_key    = %q
+		cloud_api_secret = %q
+	}
+	`, env.endpoint, env.apiKey, env.apiSecret)
+}
+
+// clusterConfig reads the long-lived dedicated cluster in the live-test environment. Its
+// rbac_crn is the CRN the notifications API resolves to a resource name and scope; a value
+// that isn't a CRN of an existing resource is rejected by the authorization check.
+func (env notificationsLiveEnv) clusterConfig() string {
+	return fmt.Sprintf(`
+	data "confluent_kafka_cluster" "notifications_live" {
+		id = %q
+		environment {
+			id = %q
+		}
+	}
+	`, env.dedicatedClusterId, liveTestEnvironmentId)
+}
+
+func (env notificationsLiveEnv) integrationConfig(randomSuffix int) string {
+	return fmt.Sprintf(`
+	resource "confluent_notifications_integration" "notifications_live" {
+		display_name = "tf_live_notifications_%d"
+		slack_target {
+			webhook_url = %q
+		}
+	}
+	`, randomSuffix, env.slackWebhookUrl)
+}
+
+func testAccCheckNotificationsLiveExists(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("resource ID is not set")
+		}
+		return nil
+	}
+}
