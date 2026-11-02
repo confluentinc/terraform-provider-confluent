@@ -40,7 +40,7 @@ func TestAccResourcePreferenceLive(t *testing.T) {
 				Config: testAccResourcePreferenceLiveConfig(env, label, "DISABLED"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "resource_type", "CLUSTER"),
 					resource.TestCheckResourceAttr(address, "current_state", "DISABLED"),
 				),
@@ -74,7 +74,7 @@ func TestAccResourcePreferenceUpdateLive(t *testing.T) {
 				Config: testAccResourcePreferenceLiveConfig(env, label, "ENABLED"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "current_state", "ENABLED"),
 				),
 			},
@@ -95,7 +95,7 @@ func TestAccResourcePreferenceMinimalLive(t *testing.T) {
 				Config: testAccResourcePreferenceLiveConfig(env, label, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "resource_type", "CLUSTER"),
 					resource.TestCheckResourceAttrSet(address, "current_state"),
 				),
@@ -110,11 +110,11 @@ func testAccResourcePreferenceLiveConfig(env notificationsLiveEnv, label, curren
 	if currentState != "" {
 		stateLine = fmt.Sprintf("current_state = %q", currentState)
 	}
-	return env.providerConfig() + env.clusterConfig() + fmt.Sprintf(`
+	return env.providerConfig() + fmt.Sprintf(`
 	resource "confluent_notifications_resource_preference" %q {
-		resource      = %s.rbac_crn
+		resource      = %q
 		resource_type = "CLUSTER"
 		%s
 	}
-	`, label, notificationsLiveClusterDataSource, stateLine)
+	`, label, env.clusterCrn(), stateLine)
 }

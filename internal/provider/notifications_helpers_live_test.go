@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	notificationsLiveClusterDataSource = "data.confluent_kafka_cluster.notifications_live"
-	notificationsLiveIntegration       = "confluent_notifications_integration.notifications_live"
+	// notificationsLiveNotificationTypeId is "Kafka cluster expansion complete", whose resource
+	// type is CLUSTER.
+	notificationsLiveNotificationTypeId = "nt-XpNKG"
+	notificationsLiveIntegration        = "confluent_notifications_integration.notifications_live"
 )
 
 type notificationsLiveEnv struct {
@@ -52,7 +54,7 @@ func loadNotificationsLiveEnv(t *testing.T, needCluster, needSubscription bool) 
 		apiKey:             os.Getenv("CONFLUENT_CLOUD_API_KEY"),
 		apiSecret:          os.Getenv("CONFLUENT_CLOUD_API_SECRET"),
 		dedicatedClusterId: os.Getenv("KAFKA_DEDICATED_AWS_CLUSTER_ID"),
-		notificationTypeId: os.Getenv("CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID"),
+		notificationTypeId: notificationsLiveNotificationTypeId,
 		slackWebhookUrl:    os.Getenv("CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL"),
 	}
 
@@ -64,7 +66,6 @@ func loadNotificationsLiveEnv(t *testing.T, needCluster, needSubscription bool) 
 		required["KAFKA_DEDICATED_AWS_CLUSTER_ID"] = env.dedicatedClusterId
 	}
 	if needSubscription {
-		required["CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID"] = env.notificationTypeId
 		required["CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL"] = env.slackWebhookUrl
 	}
 	for name, value := range required {
@@ -101,18 +102,13 @@ func (env notificationsLiveEnv) providerConfig() string {
 	`, env.endpoint, env.apiKey, env.apiSecret)
 }
 
-// clusterConfig reads the long-lived dedicated cluster in the live-test environment. Its
-// rbac_crn is the CRN the notifications API resolves to a resource name and scope; a value
-// that isn't a CRN of an existing resource is rejected by the authorization check.
-func (env notificationsLiveEnv) clusterConfig() string {
-	return fmt.Sprintf(`
-	data "confluent_kafka_cluster" "notifications_live" {
-		id = %q
-		environment {
-			id = %q
-		}
-	}
-	`, env.dedicatedClusterId, liveTestEnvironmentId)
+// clusterCrn is the RBAC CRN of the long-lived dedicated cluster in the live-test environment,
+// the form the notifications API resolves to a resource name and scope. It's built here rather
+// than read with a confluent_kafka_cluster data source because ImportStateVerify fails on any
+// data source in the config.
+func (env notificationsLiveEnv) clusterCrn() string {
+	return fmt.Sprintf("crn://confluent.cloud/organization=%s/environment=%s/cloud-cluster=%s",
+		liveTestOrganizationId, liveTestEnvironmentId, env.dedicatedClusterId)
 }
 
 func (env notificationsLiveEnv) integrationConfig(randomSuffix int) string {

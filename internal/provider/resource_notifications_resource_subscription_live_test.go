@@ -41,7 +41,7 @@ func TestAccResourceSubscriptionLive(t *testing.T) {
 				Config: testAccResourceSubscriptionLiveConfig(env, label, randomSuffix, "ENABLED"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "resource_type", "CLUSTER"),
 					resource.TestCheckResourceAttr(address, "notification_type.0.id", env.notificationTypeId),
 					resource.TestCheckResourceAttr(address, "integrations.#", "1"),
@@ -79,7 +79,7 @@ func TestAccResourceSubscriptionUpdateLive(t *testing.T) {
 				Config: testAccResourceSubscriptionLiveConfig(env, label, randomSuffix, "DISABLED"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "current_state", "DISABLED"),
 				),
 			},
@@ -101,7 +101,7 @@ func TestAccResourceSubscriptionMinimalLive(t *testing.T) {
 				Config: testAccResourceSubscriptionLiveConfig(env, label, randomSuffix, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNotificationsLiveExists(address),
-					resource.TestCheckResourceAttrPair(address, "resource", notificationsLiveClusterDataSource, "rbac_crn"),
+					resource.TestCheckResourceAttr(address, "resource", env.clusterCrn()),
 					resource.TestCheckResourceAttr(address, "resource_type", "CLUSTER"),
 					resource.TestCheckResourceAttrSet(address, "current_state"),
 				),
@@ -116,9 +116,9 @@ func testAccResourceSubscriptionLiveConfig(env notificationsLiveEnv, label strin
 	if currentState != "" {
 		stateLine = fmt.Sprintf("current_state = %q", currentState)
 	}
-	return env.providerConfig() + env.clusterConfig() + env.integrationConfig(randomSuffix) + fmt.Sprintf(`
+	return env.providerConfig() + env.integrationConfig(randomSuffix) + fmt.Sprintf(`
 	resource "confluent_notifications_resource_subscription" %q {
-		resource      = %s.rbac_crn
+		resource      = %q
 		resource_type = "CLUSTER"
 		notification_type {
 			id = %q
@@ -126,5 +126,5 @@ func testAccResourceSubscriptionLiveConfig(env notificationsLiveEnv, label strin
 		integrations = [%s.id]
 		%s
 	}
-	`, label, notificationsLiveClusterDataSource, env.notificationTypeId, notificationsLiveIntegration, stateLine)
+	`, label, env.clusterCrn(), env.notificationTypeId, notificationsLiveIntegration, stateLine)
 }
