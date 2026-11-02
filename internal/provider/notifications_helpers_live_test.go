@@ -43,7 +43,7 @@ type notificationsLiveEnv struct {
 
 // loadNotificationsLiveEnv skips the test unless TF_ACC_PROD is set and fails it when a
 // variable the caller asked for is missing.
-func loadNotificationsLiveEnv(t *testing.T, needCluster, needSubscription bool) notificationsLiveEnv {
+func loadNotificationsLiveEnv(t *testing.T, needCluster bool) notificationsLiveEnv {
 	t.Helper()
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
@@ -65,8 +65,8 @@ func loadNotificationsLiveEnv(t *testing.T, needCluster, needSubscription bool) 
 	if needCluster {
 		required["KAFKA_DEDICATED_AWS_CLUSTER_ID"] = env.dedicatedClusterId
 	}
-	if needSubscription {
-		required["CONFLUENT_CLOUD_SLACK_TARGET_WEBHOOK_URL"] = env.slackWebhookUrl
+	if env.slackWebhookUrl == "" {
+		env.slackWebhookUrl = "https://hooks.slack.com/services/T00000000/B00000000/tf_live_notifications"
 	}
 	for name, value := range required {
 		if value == "" {

@@ -28,7 +28,7 @@ import (
 // resource, and all of them target the same dedicated cluster.
 
 func TestAccResourcePreferenceLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, false)
+	env := loadNotificationsLiveEnv(t, true)
 	label := fmt.Sprintf("test_live_resource_preference_%d", rand.Intn(100000))
 	address := fmt.Sprintf("confluent_notifications_resource_preference.%s", label)
 
@@ -55,7 +55,7 @@ func TestAccResourcePreferenceLive(t *testing.T) {
 }
 
 func TestAccResourcePreferenceUpdateLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, false)
+	env := loadNotificationsLiveEnv(t, true)
 	label := fmt.Sprintf("test_live_resource_preference_update_%d", rand.Intn(100000))
 	address := fmt.Sprintf("confluent_notifications_resource_preference.%s", label)
 
@@ -83,7 +83,7 @@ func TestAccResourcePreferenceUpdateLive(t *testing.T) {
 }
 
 func TestAccResourcePreferenceMinimalLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, false)
+	env := loadNotificationsLiveEnv(t, true)
 	label := fmt.Sprintf("test_live_resource_preference_minimal_%d", rand.Intn(100000))
 	address := fmt.Sprintf("confluent_notifications_resource_preference.%s", label)
 

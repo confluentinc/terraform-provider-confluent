@@ -28,7 +28,7 @@ import (
 // dedicated cluster to the same notification type, which the API allows only once.
 
 func TestAccResourceSubscriptionLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, true)
+	env := loadNotificationsLiveEnv(t, true)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_resource_subscription_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_resource_subscription.%s", label)
@@ -59,7 +59,7 @@ func TestAccResourceSubscriptionLive(t *testing.T) {
 }
 
 func TestAccResourceSubscriptionUpdateLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, true)
+	env := loadNotificationsLiveEnv(t, true)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_resource_subscription_update_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_resource_subscription.%s", label)
@@ -88,7 +88,7 @@ func TestAccResourceSubscriptionUpdateLive(t *testing.T) {
 }
 
 func TestAccResourceSubscriptionMinimalLive(t *testing.T) {
-	env := loadNotificationsLiveEnv(t, true, true)
+	env := loadNotificationsLiveEnv(t, true)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_resource_subscription_minimal_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_resource_subscription.%s", label)
