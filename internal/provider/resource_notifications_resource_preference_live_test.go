@@ -49,6 +49,9 @@ func resolveResourcePreferenceEndpoint() string {
 }
 
 func TestAccResourcePreferenceLive(t *testing.T) {
+	// Must run before t.Parallel(), which blocks until the parallel phase starts.
+	t.Skip("Skipping until APIE-2083 is fixed (CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID not set in live-test env; HTTP 500 from POST /notifications/v1/resource-preferences)")
+
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
@@ -97,6 +100,9 @@ func TestAccResourcePreferenceLive(t *testing.T) {
 }
 
 func TestAccResourcePreferenceUpdateLive(t *testing.T) {
+	// Must run before t.Parallel(), which blocks until the parallel phase starts.
+	t.Skip("Skipping until APIE-2083 is fixed (CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID not set in live-test env; HTTP 500 from POST /notifications/v1/resource-preferences)")
+
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
@@ -151,6 +157,9 @@ func TestAccResourcePreferenceUpdateLive(t *testing.T) {
 }
 
 func TestAccResourcePreferenceMinimalLive(t *testing.T) {
+	// Must run before t.Parallel(), which blocks until the parallel phase starts.
+	t.Skip("Skipping until APIE-2083 is fixed (CONFLUENT_CLOUD_NOTIFICATION_TYPE_ID not set in live-test env; HTTP 500 from POST /notifications/v1/resource-preferences)")
+
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
