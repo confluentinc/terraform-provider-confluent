@@ -17,9 +17,13 @@
 package provider
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
+
+	notificationsv1 "github.com/confluentinc/ccloud-sdk-go-v2/notifications/v1"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -120,6 +124,52 @@ func (env notificationsLiveEnv) integrationConfig(randomSuffix int) string {
 		}
 	}
 	`, randomSuffix, env.slackWebhookUrl)
+}
+
+// deleteOrgSubscriptions removes every org-level subscription to the test notification type.
+// The API allows one per type, and the org can already hold one that no test created.
+func (env notificationsLiveEnv) deleteOrgSubscriptions(t *testing.T) {
+	t.Helper()
+	cfg := notificationsv1.NewConfiguration()
+	cfg.Servers[0].URL = env.endpoint
+	api := notificationsv1.NewAPIClient(cfg).SubscriptionsNotificationsV1Api
+	ctx := context.WithValue(context.Background(), notificationsv1.ContextBasicAuth, notificationsv1.BasicAuth{
+		UserName: env.apiKey,
+		Password: env.apiSecret,
+	})
+
+	var ids []string
+	pageToken := ""
+	for {
+		req := api.ListNotificationsV1Subscriptions(ctx).PageSize(100)
+		if pageToken != "" {
+			req = req.PageToken(pageToken)
+		}
+		list, _, err := req.Execute()
+		if err != nil {
+			t.Fatalf("listing notification subscriptions: %s", createDescriptiveError(err))
+		}
+		for _, sub := range list.GetData() {
+			if sub.GetNotificationType().Id == env.notificationTypeId {
+				ids = append(ids, sub.GetId())
+			}
+		}
+		meta := list.GetMetadata()
+		next := meta.GetNext()
+		if next == "" {
+			break
+		}
+		if pageToken, err = extractPageToken(next); err != nil {
+			t.Fatalf("paging notification subscriptions: %s", err)
+		}
+	}
+
+	for _, id := range ids {
+		resp, err := api.DeleteNotificationsV1Subscription(ctx, id).Execute()
+		if err != nil && (resp == nil || resp.StatusCode != http.StatusNotFound) {
+			t.Fatalf("deleting existing notification subscription %s: %s", id, createDescriptiveError(err, resp))
+		}
+	}
 }
 
 func testAccCheckNotificationsLiveExists(resourceName string) resource.TestCheckFunc {

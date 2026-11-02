@@ -29,6 +29,7 @@ import (
 
 func TestAccSubscriptionLive(t *testing.T) {
 	env := loadNotificationsLiveEnv(t, false)
+	env.deleteOrgSubscriptions(t)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_subscription_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_subscription.%s", label)
@@ -58,6 +59,7 @@ func TestAccSubscriptionLive(t *testing.T) {
 
 func TestAccSubscriptionUpdateLive(t *testing.T) {
 	env := loadNotificationsLiveEnv(t, false)
+	env.deleteOrgSubscriptions(t)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_subscription_update_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_subscription.%s", label)
@@ -86,6 +88,7 @@ func TestAccSubscriptionUpdateLive(t *testing.T) {
 
 func TestAccSubscriptionMinimalLive(t *testing.T) {
 	env := loadNotificationsLiveEnv(t, false)
+	env.deleteOrgSubscriptions(t)
 	randomSuffix := rand.Intn(100000)
 	label := fmt.Sprintf("test_live_subscription_minimal_%d", randomSuffix)
 	address := fmt.Sprintf("confluent_notifications_subscription.%s", label)
