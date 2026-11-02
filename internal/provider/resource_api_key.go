@@ -61,10 +61,14 @@ func apiKeyResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramExpiresAt: {
-				Type:        schema.TypeString,
-				Optional:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				// Computed: when expires_at is omitted, the server may still set one (an organization's
+				// maximum API key expiration), so the returned value must be accepted into state instead
+				// of being planned away - with ForceNew that would replace the key on every apply.
+				Computed:    true,
 				ForceNew:    true,
-				Description: "The date on which this API key expires, as an ISO 8601 UTC date (for example, \"2026-12-31\"). The key remains valid through the end of this date. If not set, the API key never expires.",
+				Description: "The date on which this API key expires, as an ISO 8601 UTC date (for example, \"2026-12-31\"). The key remains valid through the end of this date. If not set, the API key never expires, unless the organization sets a maximum API key expiration, in which case the key expires at that maximum.",
 				ValidateFunc: func(i interface{}, k string) ([]string, []error) {
 					v, ok := i.(string)
 					if !ok {

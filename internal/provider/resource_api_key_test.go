@@ -801,6 +801,20 @@ func TestAccGlobalApiKey(t *testing.T) {
 }
 
 func TestAccCloudApiKey(t *testing.T) {
+	testAccCloudApiKey(t, "2026-12-31")
+}
+
+// TestAccCloudApiKeyOrgMaxExpiration covers an organization with a maximum API key expiration: the config
+// omits expires_at, so none is sent, and the server applies the organization's maximum and returns it. The
+// returned date must land in state without a diff - the framework's post-apply plan check would otherwise
+// fail on a replacement (expires_at is ForceNew) - and the update step must stay in place (one create).
+func TestAccCloudApiKeyOrgMaxExpiration(t *testing.T) {
+	testAccCloudApiKey(t, "")
+}
+
+// testAccCloudApiKey runs the Cloud API key lifecycle. expiresAt is the configured expires_at, or "" to
+// omit it; the mock server returns expires_at "2026-12-31" either way.
+func testAccCloudApiKey(t *testing.T, expiresAt string) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -817,7 +831,13 @@ func TestAccCloudApiKey(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_cloud_api_key.json")
+	// The create must send expires_at exactly when it is configured.
+	createBodyMatcher := wiremock.NotMatching("(?s).*expires_at.*")
+	if expiresAt != "" {
+		createBodyMatcher = wiremock.Contains(fmt.Sprintf(`"expires_at":"%s"`, expiresAt))
+	}
 	createCloudApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
+		WithBodyPattern(createBodyMatcher).
 		InScenario(cloudApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
@@ -927,7 +947,7 @@ func TestAccCloudApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, testShouldDisableBefore, ownerId, ownerApiVersion, ownerKind),
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, testShouldDisableBefore, ownerId, ownerApiVersion, ownerKind, expiresAt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -950,7 +970,7 @@ func TestAccCloudApiKey(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, testShouldDisableAfter, ownerId, ownerApiVersion, ownerKind),
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, testShouldDisableAfter, ownerId, ownerApiVersion, ownerKind, expiresAt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -1051,7 +1071,12 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
-func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind string) string {
+// testAccCheckCloudApiKeyConfig renders a Cloud API key; expiresAt "" omits expires_at.
+func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, expiresAt string) string {
+	expiresAtLine := ""
+	if expiresAt != "" {
+		expiresAtLine = fmt.Sprintf("expires_at = %q", expiresAt)
+	}
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -1059,7 +1084,7 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
-		expires_at = "2026-12-31"
+		%s
 		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
@@ -1067,7 +1092,7 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 			kind = "%s"
 		}
 	}
-	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind)
+	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, expiresAtLine, shouldDisable, ownerId, ownerApiVersion, ownerKind)
 }
 
 func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
@@ -1129,5 +1154,32 @@ func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {
 		}
 
 		return nil
+	}
+}
+
+// TestApiKeyExpiresAtSchema pins expires_at's schema: Optional and Computed so a server-applied
+// expiration (an organization's maximum) is accepted into state when the config omits it, and ForceNew
+// because an API key's expiration can't be changed after creation. The validator only accepts a
+// YYYY-MM-DD date.
+func TestApiKeyExpiresAtSchema(t *testing.T) {
+	s := apiKeyResource().Schema[paramExpiresAt]
+	if !s.Optional || !s.Computed || !s.ForceNew {
+		t.Fatalf("expires_at must be Optional, Computed and ForceNew, got Optional=%t Computed=%t ForceNew=%t", s.Optional, s.Computed, s.ForceNew)
+	}
+
+	for _, tc := range []struct {
+		value   interface{}
+		wantErr bool
+	}{
+		{value: "2026-12-31"},
+		{value: "12/31/2026", wantErr: true},
+		{value: "2026-12-31T23:59:59Z", wantErr: true},
+		{value: "", wantErr: true},
+		{value: 20261231, wantErr: true},
+	} {
+		_, errs := s.ValidateFunc(tc.value, paramExpiresAt)
+		if gotErr := len(errs) > 0; gotErr != tc.wantErr {
+			t.Errorf("ValidateFunc(%v): got errors %v, want error=%t", tc.value, errs, tc.wantErr)
+		}
 	}
 }
