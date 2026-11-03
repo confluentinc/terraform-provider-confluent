@@ -245,6 +245,8 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	}
 
 	retryClient.ErrorHandler = customErrorHandler
+	// Note each attempt's outcome for client analytics; the decision is still DefaultRetryPolicy's.
+	retryClient.CheckRetry = recordingRetryPolicy(retryablehttp.DefaultRetryPolicy)
 	if f.useRateLimitBackoff {
 		retryClient.Backoff = rateLimitBackoff
 	}
@@ -258,6 +260,7 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	standardClient.Transport = &loggingTransport{
 		transport: standardClient.Transport,
 		ctx:       f.ctx,
+		retryMax:  retryClient.RetryMax,
 	}
 
 	return standardClient
@@ -349,6 +352,9 @@ func (l retryClientLogger) additionalFields(keysAndValues []interface{}) map[str
 type loggingTransport struct {
 	transport http.RoundTripper
 	ctx       context.Context
+	// retryMax is the wrapped retry client's RetryMax, used to tell a request that ran
+	// out of retries from one whose context ended mid-retry.
+	retryMax int
 }
 
 func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -357,8 +363,11 @@ func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		recordAPIHost(req.Context(), req.URL.Hostname())
 	}
 
-	// 1. Call the original transport to do the actual HTTP work
+	// 1. Call the original transport to do the actual HTTP work. It runs every retry,
+	// so this sees one call per request and the tracker sees each attempt.
+	req, attempts := withRequestAttempts(req)
 	resp, err := t.transport.RoundTrip(req)
+	finishRequest(req, attempts, t.retryMax)
 
 	// 2. Add our logging logic on top to output request_id for HTTP requests
 	if err == nil && resp != nil && resp.Header != nil && req.URL != nil {
