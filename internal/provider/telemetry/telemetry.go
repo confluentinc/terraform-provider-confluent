@@ -117,6 +117,29 @@ type Usage struct {
 	// StackFrames is a trimmed stack trace, populated only on the panic path
 	// and omitted otherwise.
 	StackFrames []string `json:"stack_frames,omitempty"`
+
+	// RetryCount is how many times the operation's API requests were retried, in
+	// total: every attempt after a request's first. Zero when nothing was retried.
+	RetryCount int `json:"retry_count"`
+
+	// RateLimitRetryCount is the part of RetryCount made after an HTTP 429.
+	RateLimitRetryCount int `json:"rate_limit_retry_count"`
+
+	// RetriesExhausted reports whether at least one API request gave up because it
+	// had no retries left. A retried operation that did not exhaust its retries
+	// recovered from them, unless it failed for another reason.
+	RetriesExhausted bool `json:"retries_exhausted"`
+
+	// RetryStatusCode is the HTTP status that last triggered a retry of the request
+	// that ran out of retries, or failing that of the first retried request, such
+	// as 429 or 503. Zero when nothing was retried or that attempt got no response.
+	RetryStatusCode int `json:"retry_status_code,omitempty"`
+
+	// RetryEndpoint names the request RetryStatusCode describes by its method, API
+	// group, version and top-level collection only, such as
+	// "GET connect/v1/environments", or "<METHOD> other" for any other path. It
+	// never carries an ID, a name or a query string. Empty when nothing was retried.
+	RetryEndpoint string `json:"retry_endpoint,omitempty"`
 }
 
 // Config is the process-scoped telemetry configuration captured once during
