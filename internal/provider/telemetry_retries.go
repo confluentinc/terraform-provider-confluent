@@ -139,25 +139,34 @@ func recordingRetryPolicy(policy retryablehttp.CheckRetry) retryablehttp.CheckRe
 	}
 }
 
+// apiGroups are the Confluent Cloud API groups the provider calls, taken from the paths of the
+// ccloud-sdk-go-v2 clients it uses. Each starts paths of the form /<group>/<version>/<collection>, with a
+// fixed collection name in third place. A path whose first segment is any other value, such as Schema
+// Registry's /subjects/<subject>, may hold a user's name there, so it is reported as "other". A group added
+// later is also reported as "other" until it's listed here.
+var apiGroups = map[string]bool{
+	"artifact": true, "byok": true, "cam": true, "catalog": true, "ccpm": true, "cmk": true, "connect": true,
+	"dek-registry": true, "endpoint": true, "fcpm": true, "iam": true, "kafka": true, "kafka-quotas": true,
+	"ksqldbcm": true, "networking": true, "notifications": true, "org": true, "pim": true, "rtce": true,
+	"sql": true, "srcm": true, "sts": true, "switchover": true, "tableflow": true,
+}
+
 var (
-	apiGroupSegment   = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
-	apiVersionSegment = regexp.MustCompile(`^v[0-9]+[a-z0-9]*$`)
+	apiVersionSegment = regexp.MustCompile(`^v[0-9]+((alpha|beta)[0-9]+)?$`)
 	collectionSegment = regexp.MustCompile(`^[a-z]+(-[a-z]+)*$`)
 )
 
-// retryEndpoint names req's endpoint without any value from its URL: the method,
-// then the API group, version and top-level collection, as in
-// "GET connect/v1/environments". Confluent Cloud paths start
-// /<group>/<version>/<collection>; IDs and names only appear after that, and the
-// query string is dropped. Any other path, such as Schema Registry's /subjects/...,
-// is reported as "other" rather than risk reporting a name.
+// retryEndpoint names req's endpoint without any value from its URL: the method, then the API group,
+// version and top-level collection, as in "GET connect/v1/environments". IDs and names only appear after
+// the collection, and the query string is dropped. A path outside the known API groups (see apiGroups) is
+// reported as "other" rather than risk reporting a name.
 func retryEndpoint(req *http.Request) string {
 	method := strings.ToUpper(req.Method)
 	if req.URL == nil {
 		return method + " other"
 	}
 	segs := strings.Split(strings.Trim(req.URL.Path, "/"), "/")
-	if len(segs) < 2 || !apiGroupSegment.MatchString(segs[0]) || !apiVersionSegment.MatchString(segs[1]) {
+	if len(segs) < 2 || !apiGroups[segs[0]] || !apiVersionSegment.MatchString(segs[1]) {
 		return method + " other"
 	}
 	endpoint := segs[0] + "/" + segs[1]
