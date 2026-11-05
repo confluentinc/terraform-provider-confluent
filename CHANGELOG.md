@@ -1,3 +1,15 @@
+## 2.94.0 (November 6th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.93.0...v2.94.0)
+
+**New features:**
+* Added support for new `confluent_notifications_subscription` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_subscription) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notifications_subscription), `confluent_notifications_resource_subscription` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_resource_subscription) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notifications_resource_subscription), and `confluent_notifications_resource_preference` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_notifications_resource_preference) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notifications_resource_preference).
+* Added support for a new `confluent_notification_type` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_notification_type).
+
+**Bug fixes:**
+* Fixed a rare issue where the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) could plan a destroy and recreate if the cluster's `availability` was lowered on the Confluent side (`MULTI_ZONE` to `SINGLE_ZONE`, or `HIGH` to `LOW`).
+* Removed the 25-entry limit on `cidr_blocks` in the `confluent_ip_group` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ip_group) and on `ip_groups` in the `confluent_ip_filter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ip_filter). The API now enforces the IP filtering quota at apply time.
+
 ## 2.93.0 (October 29th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.92.0...v2.93.0)
