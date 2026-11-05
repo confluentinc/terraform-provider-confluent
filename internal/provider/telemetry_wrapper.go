@@ -150,6 +150,7 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 		ctx, hosts := withAPIHosts(ctx)
+		ctx, retries := withAPIRetries(ctx)
 
 		// Recover a panic from the CRUD call and return it as error diagnostics
 		// instead of letting it crash the process.
@@ -165,7 +166,9 @@ func wrapContextFunc(resourceType string, resourceSchema map[string]*schema.Sche
 			if rec == nil {
 				changed = changedAttributeNames(d, resourceSchema, op)
 			}
-			return cfg.buildUsage(resourceType, op, seq, timer, changed, rec != nil || diags.HasError(), stack)
+			u := cfg.buildUsage(resourceType, op, seq, timer, changed, rec != nil || diags.HasError(), stack)
+			retries.apply(&u)
+			return u
 		})
 		return diags
 	}
@@ -178,6 +181,7 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 		seq := telemetry.NextSequence()
 		timer := telemetry.StartTimer()
 		ctx, hosts := withAPIHosts(ctx)
+		ctx, retries := withAPIRetries(ctx)
 
 		// Recover an import panic as an error, discarding any partial result.
 		rec, stack := runGuarded(func() { imported, err = inner(ctx, d, meta) })
@@ -187,7 +191,9 @@ func wrapImportFunc(resourceType string, resourceSchema map[string]*schema.Schem
 		}
 
 		reportSafely(cfg, hosts, func() telemetry.Usage {
-			return cfg.buildUsage(resourceType, telemetry.OperationImport, seq, timer, []string{}, rec != nil || err != nil, stack)
+			u := cfg.buildUsage(resourceType, telemetry.OperationImport, seq, timer, []string{}, rec != nil || err != nil, stack)
+			retries.apply(&u)
+			return u
 		})
 		return imported, err
 	}
