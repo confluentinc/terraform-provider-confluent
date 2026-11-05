@@ -79,6 +79,7 @@ func kafkaMirrorTopicResource() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
+			Update: schema.DefaultTimeout(kafkaMirrorTopicUpdateTimeout),
 			Delete: schema.DefaultTimeout(kafkaMirrorTopicDeleteTimeout),
 		},
 	}
@@ -292,7 +293,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err != nil {
 				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, stateActive, statePaused, meta.(*Client).isAcceptanceTestMode); err != nil {
+			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, stateActive, statePaused, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldResumeKafkaMirrorTopic {
@@ -305,7 +306,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err != nil {
 				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, statePaused, stateActive, meta.(*Client).isAcceptanceTestMode); err != nil {
+			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, statePaused, stateActive, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldFailoverKafkaMirrorTopic {
@@ -318,7 +319,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err != nil {
 				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode); err != nil {
+			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldPromoteKafkaMirrorTopic {
@@ -331,7 +332,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err != nil {
 				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode); err != nil {
+			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else {

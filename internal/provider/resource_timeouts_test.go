@@ -41,7 +41,7 @@ var expectedResourceTimeouts = map[string]operationTimeouts{
 	"confluent_flink_statement":                    {create: 6 * time.Hour, update: 20 * time.Minute, delete: 20 * time.Minute},
 	"confluent_gateway":                            {create: 2 * time.Hour},
 	"confluent_kafka_cluster":                      {create: 72 * time.Hour, update: 72 * time.Hour, delete: 30 * time.Minute},
-	"confluent_kafka_mirror_topic":                 {delete: time.Hour},
+	"confluent_kafka_mirror_topic":                 {update: 20 * time.Minute, delete: time.Hour},
 	"confluent_kafka_topic":                        {delete: time.Hour},
 	"confluent_ksql_cluster":                       {create: 12 * time.Hour, delete: time.Hour},
 	"confluent_network":                            {create: 2 * time.Hour, delete: 5 * time.Hour},
@@ -54,6 +54,7 @@ var expectedResourceTimeouts = map[string]operationTimeouts{
 	"confluent_rtce_topic":                         {create: time.Hour, delete: time.Hour},
 	"confluent_schema_exporter":                    {create: 12 * time.Hour, update: 12 * time.Hour},
 	"confluent_switchover_pair":                    {create: 30 * time.Minute},
+	"confluent_switchover_endpoint":                {delete: 20 * time.Minute},
 	"confluent_tf_importer":                        {create: 8 * time.Hour},
 	"confluent_transit_gateway_attachment":         {create: 2 * time.Hour, delete: 5 * time.Hour},
 }

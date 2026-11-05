@@ -356,7 +356,7 @@ func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName,
 	return nil
 }
 
-func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string, isAcceptanceTestMode bool) error {
+func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(2*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	pendingStatuses := []string{currentStatus}
 	if targetStatus == stateStopped {
@@ -366,7 +366,7 @@ func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClie
 		Pending:      pendingStatuses,
 		Target:       []string{targetStatus},
 		Refresh:      kafkaMirrorTopicUpdateStatus(c.apiContext(ctx), c, clusterId, linkName, mirrorTopicName),
-		Timeout:      5 * time.Minute,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}

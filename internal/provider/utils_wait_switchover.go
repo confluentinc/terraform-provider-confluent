@@ -75,7 +75,7 @@ func switchoverPairProvisionStatus(ctx context.Context, c *Client, environmentId
 // waitForSwitchoverEndpointToBeDeleted blocks until GET on the endpoint returns 404. Without it the
 // parent pair's delete, which Terraform issues right after this one returns, is rejected with a 409
 // because the endpoint still exists on the server.
-func waitForSwitchoverEndpointToBeDeleted(ctx context.Context, c *Client, environmentId, endpointId string) error {
+func waitForSwitchoverEndpointToBeDeleted(ctx context.Context, c *Client, environmentId, endpointId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 15*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
@@ -91,7 +91,7 @@ func waitForSwitchoverEndpointToBeDeleted(ctx context.Context, c *Client, enviro
 			}
 			return endpoint, stateInProgress, nil
 		},
-		Timeout:      switchoverEndpointDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -123,7 +123,7 @@ const (
 	// Pair provisioning establishes the DR relationship between two clusters.
 	switchoverPairCreateTimeout = 30 * time.Minute
 	// Endpoint deletes are quick but asynchronous (202).
-	switchoverEndpointDeleteTimeout = 15 * time.Minute
+	switchoverEndpointDeleteTimeout = 20 * time.Minute
 )
 
 // rejectSwitchoverImmutableChanges is a CustomizeDiff that fails the plan when an attribute the
