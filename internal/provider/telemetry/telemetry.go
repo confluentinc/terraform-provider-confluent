@@ -122,9 +122,6 @@ type Usage struct {
 	// total: every attempt after a request's first. Zero when nothing was retried.
 	RetryCount int `json:"retry_count"`
 
-	// RateLimitRetryCount is the part of RetryCount made after an HTTP 429.
-	RateLimitRetryCount int `json:"rate_limit_retry_count"`
-
 	// RetriesExhausted reports whether at least one API request gave up because it
 	// had no retries left. A retried operation that did not exhaust its retries
 	// recovered from them, unless it failed for another reason.

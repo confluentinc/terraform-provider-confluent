@@ -29,12 +29,11 @@ import (
 // apiRetries records how an operation's API requests were retried, so its usage
 // event can say whether the retries recovered or ran out.
 type apiRetries struct {
-	mu               sync.Mutex
-	retries          int    // attempts beyond the first, across all requests
-	rateLimitRetries int    // retries made after an HTTP 429
-	exhausted        bool   // at least one request gave up with no retries left
-	status           int    // status that last triggered a retry of the reported request; 0 for a transport error
-	endpoint         string // sanitized endpoint of the reported request (see retryEndpoint)
+	mu        sync.Mutex
+	retries   int    // attempts beyond the first, across all requests
+	exhausted bool   // at least one request gave up with no retries left
+	status    int    // status that last triggered a retry of the reported request; 0 for a transport error
+	endpoint  string // sanitized endpoint of the reported request (see retryEndpoint)
 }
 
 type apiRetriesKey struct{}
@@ -55,7 +54,6 @@ func (r *apiRetries) record(req *http.Request, a *requestAttempts, exhausted boo
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.retries += a.attempts - 1
-	r.rateLimitRetries += a.rateLimitRetries
 	if (exhausted && !r.exhausted) || r.endpoint == "" {
 		r.status = a.retryStatus
 		r.endpoint = retryEndpoint(req)
@@ -71,7 +69,6 @@ func (r *apiRetries) apply(u *telemetry.Usage) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	u.RetryCount = r.retries
-	u.RateLimitRetryCount = r.rateLimitRetries
 	u.RetriesExhausted = r.exhausted
 	u.RetryStatusCode = r.status
 	u.RetryEndpoint = r.endpoint
@@ -81,11 +78,10 @@ func (r *apiRetries) apply(u *telemetry.Usage) {
 // installs it and recordingRetryPolicy updates it after every attempt. The loop runs
 // its attempts one after another, so it needs no lock.
 type requestAttempts struct {
-	attempts         int  // attempts completed so far
-	rateLimitRetries int  // attempts made after an HTTP 429
-	lastStatus       int  // status of the latest attempt; 0 for a transport error
-	retryStatus      int  // status of the latest attempt the policy wanted to retry
-	wantedRetry      bool // the retry policy asked to retry the latest attempt
+	attempts    int  // attempts completed so far
+	lastStatus  int  // status of the latest attempt; 0 for a transport error
+	retryStatus int  // status of the latest attempt the policy wanted to retry
+	wantedRetry bool // the retry policy asked to retry the latest attempt
 }
 
 type requestAttemptsKey struct{}
@@ -121,10 +117,6 @@ func recordingRetryPolicy(policy retryablehttp.CheckRetry) retryablehttp.CheckRe
 	return func(ctx context.Context, resp *http.Response, err error) (bool, error) {
 		retry, checkErr := policy(ctx, resp, err)
 		if a, ok := ctx.Value(requestAttemptsKey{}).(*requestAttempts); ok && a != nil {
-			// An attempt after the first is a retry of the one before it.
-			if a.attempts > 0 && a.lastStatus == http.StatusTooManyRequests {
-				a.rateLimitRetries++
-			}
 			a.attempts++
 			a.lastStatus = 0
 			if resp != nil {

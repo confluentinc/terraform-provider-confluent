@@ -84,7 +84,7 @@ func TestRetryTelemetryThroughRetryClient(t *testing.T) {
 			wantRequests: 3,
 			maxRetries:   4,
 			statuses:     []int{429, 429},
-			want:         telemetry.Usage{RetryCount: 2, RateLimitRetryCount: 2, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
+			want:         telemetry.Usage{RetryCount: 2, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
 		},
 		"server error recovered": {
 			wantRequests: 2,
@@ -96,13 +96,13 @@ func TestRetryTelemetryThroughRetryClient(t *testing.T) {
 			wantRequests: 3,
 			maxRetries:   2,
 			statuses:     []int{429, 429, 429},
-			want:         telemetry.Usage{RetryCount: 2, RateLimitRetryCount: 2, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
+			want:         telemetry.Usage{RetryCount: 2, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
 		},
 		"mixed statuses exhausted": {
 			wantRequests: 3,
 			maxRetries:   2,
 			statuses:     []int{503, 429, 429},
-			want:         telemetry.Usage{RetryCount: 2, RateLimitRetryCount: 1, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
+			want:         telemetry.Usage{RetryCount: 2, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"},
 		},
 		"zero retries configured": {
 			wantRequests: 1,
@@ -158,7 +158,7 @@ func TestRetryTelemetryAggregatesRequestsAndReportsTheExhaustedOne(t *testing.T)
 	sendWithRetries(t, ctx, 4, recovered, "/iam/v2/service-accounts/sa-123")
 	sendWithRetries(t, ctx, 1, exhausted, "/connect/v1/environments/env-123")
 
-	want := telemetry.Usage{RetryCount: 2, RateLimitRetryCount: 1, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"}
+	want := telemetry.Usage{RetryCount: 2, RetriesExhausted: true, RetryStatusCode: 429, RetryEndpoint: "GET connect/v1/environments"}
 	if got := usageFor(retries); !reflect.DeepEqual(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
@@ -260,7 +260,7 @@ func TestWrapperReportsRetryTelemetry(t *testing.T) {
 		t.Fatalf("expected 1 event, got %d", rec.count())
 	}
 	u := rec.snapshot()[0]
-	if !u.Error || !u.RetriesExhausted || u.RetryCount != 2 || u.RateLimitRetryCount != 2 || u.RetryStatusCode != 429 || u.RetryEndpoint != "GET connect/v1/environments" {
+	if !u.Error || !u.RetriesExhausted || u.RetryCount != 2 || u.RetryStatusCode != 429 || u.RetryEndpoint != "GET connect/v1/environments" {
 		t.Errorf("unexpected retry telemetry on the event: %+v", u)
 	}
 }
