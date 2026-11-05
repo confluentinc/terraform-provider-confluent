@@ -32,6 +32,7 @@ import (
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	configurationcontrolv1 "github.com/confluentinc/ccloud-sdk-go-v2/configurationcontrol/v1"
 	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
@@ -134,6 +135,7 @@ type Client struct {
 	isOAuthEnabled                  bool
 	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
+	configurationControlV1Client    *configurationcontrolv1.APIClient
 	switchoverV1Client              *switchoverv1.APIClient
 	// cli-tfgen:tf-client-fields
 }
@@ -462,6 +464,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_notifications_resource_preference":   resourcePreferenceResource(),
 				"confluent_notifications_resource_subscription": resourceSubscriptionResource(),
 				"confluent_notifications_subscription":          subscriptionResource(),
+				"confluent_client_request_policy":               clientRequestPolicyResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
@@ -631,6 +634,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
+	configurationControlV1Cfg := configurationcontrolv1.NewConfiguration()
 	switchoverV1Cfg := switchoverv1.NewConfiguration()
 	// cli-tfgen:tf-client-cfg
 
@@ -666,6 +670,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
+	configurationControlV1Cfg.Servers[0].URL = endpoint
 	switchoverV1Cfg.Servers[0].URL = endpoint
 	// cli-tfgen:tf-client-endpoint
 
@@ -702,6 +707,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
+	configurationControlV1Cfg.UserAgent = userAgent
 	switchoverV1Cfg.UserAgent = userAgent
 	// cli-tfgen:tf-client-useragent
 
@@ -750,6 +756,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	configurationControlV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	switchoverV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	// cli-tfgen:tf-client-httpclient
 
@@ -831,6 +838,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
+		configurationControlV1Client:    configurationcontrolv1.NewAPIClient(configurationControlV1Cfg),
 		switchoverV1Client:              switchoverv1.NewAPIClient(switchoverV1Cfg),
 		// cli-tfgen:tf-client-literal
 		userAgent:                  userAgent,
