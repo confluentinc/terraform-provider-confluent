@@ -78,6 +78,9 @@ func kafkaMirrorTopicResource() *schema.Resource {
 				},
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(kafkaMirrorTopicDeleteTimeout),
+		},
 	}
 }
 
@@ -215,7 +218,7 @@ func kafkaMirrorTopicDelete(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error deleting Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForKafkaMirrorTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, mirrorTopicName, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForKafkaMirrorTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, mirrorTopicName, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Kafka Mirror Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 

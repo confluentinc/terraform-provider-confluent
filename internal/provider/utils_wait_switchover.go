@@ -36,13 +36,13 @@ import (
 // waitForSwitchoverPairToProvision blocks until a newly created pair leaves PROVISIONING. Without it
 // a confluent_switchover_endpoint created in the same apply is rejected with a 409 because its
 // parent is still provisioning.
-func waitForSwitchoverPairToProvision(ctx context.Context, c *Client, environmentId, pairId string) error {
+func waitForSwitchoverPairToProvision(ctx context.Context, c *Client, environmentId, pairId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 15*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReadyToFailover},
 		Refresh:      switchoverPairProvisionStatus(ctx, c, environmentId, pairId),
-		Timeout:      switchoverPairCreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
