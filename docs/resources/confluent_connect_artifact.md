@@ -47,6 +47,14 @@ In addition to the arguments listed above, the following computed attributes are
 
 * `id` - (String) The ID of the Connect Artifact.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `1h`) How long to wait for the Connect artifact to be ready, after its file is uploaded.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** Set `artifact_file = ""` or use `IMPORT_ARTIFACT_FILENAME` environment variables before importing a Connect Artifact.

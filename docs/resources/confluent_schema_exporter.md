@@ -143,6 +143,15 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** Please refer [this guide](https://docs.confluent.io/cloud/current/sr/schema-linking.html) for more exporter instructions.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `12h`) How long to wait for the schema exporter to be running.
+- `update` - (Default `12h`) How long to wait for the schema exporter to be running again after it's updated or resumed.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 You can import a Schema Exporter by using the Schema Registry cluster ID, Schema Exporter name in the format `<Schema Registry cluster ID>/<Schema Exporter name>`, for example:

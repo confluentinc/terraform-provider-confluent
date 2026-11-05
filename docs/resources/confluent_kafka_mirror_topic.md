@@ -75,6 +75,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Kafka mirror topic, in the format `<Kafka cluster ID>/<Cluster link name>/<Kafka Mirror Topic name>`, for example, `lkc-abc123/my-cluster-link/orders-123`.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `delete` - (Default `1h`) How long to wait for the mirror topic to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** `IMPORT_KAFKA_API_KEY` (`kafka_cluster.credentials.key`), `IMPORT_KAFKA_API_SECRET` (`kafka_cluster.credentials.secret`), and `IMPORT_KAFKA_REST_ENDPOINT` (`kafka_cluster.rest_endpoint`) environment variables must be set before importing a Kafka mirror topic.

@@ -308,6 +308,16 @@ In addition to the preceding arguments, the following attributes are exported:
   - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (for example, `https://lkc-abc123-apfoo123.eu-west-3.aws.accesspoint.glb.confluent.cloud:443`).
   - `connection_type` - (Required String) The type of connection used for the endpoint (for example, `PRIVATE_NETWORK_INTERFACE`).
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `72h` for Dedicated clusters, `1h` for all other cluster types) How long to wait for the Kafka cluster to be provisioned.
+- `update` - (Default `72h`) How long to wait for a Dedicated Kafka cluster to finish resizing after a `cku` change.
+- `delete` - (Default `30m`) How long to wait for the Kafka cluster to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Kafka cluster.

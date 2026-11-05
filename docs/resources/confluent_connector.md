@@ -359,6 +359,15 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the connector, for example, `lcc-abc123`.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `24h`) How long to wait for the connector to be provisioned.
+- `update` - (Default `1h`) How long to wait for the connector to be paused or resumed, or for its offsets to be updated.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** Set `config_sensitive = {}` and do not specify `offsets` block before importing a connector.

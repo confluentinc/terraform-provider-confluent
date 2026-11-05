@@ -193,6 +193,26 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. Before each retry, a rate-limited request waits at least as long as the API asks in its `Retry-After` response header, which is 1 second for the per-second limits of the control-plane APIs at `api.confluent.cloud`. Other failures, and rate-limited requests without that header, wait 1, 2, 4, 8, 16 and then 30 seconds, so a higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
+## Timeouts
+
+Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error.
+
+Unless a resource's documentation says otherwise, each operation is limited to 20 minutes, and so is each data source read. Resources whose operations wait for Confluent Cloud to finish work in the background, such as provisioning a Dedicated Kafka cluster or deleting a network, set longer defaults for those operations and accept a `timeouts` block for them. The **Timeouts** section of the resource's page lists the operations you can set and their defaults. A value in the `timeouts` block can be higher or lower than the default:
+
+```terraform
+resource "confluent_kafka_cluster" "dedicated" {
+  # ...
+
+  timeouts {
+    create = "96h"
+  }
+}
+```
+
+-> **Note:** A `timeouts` block accepts only the operations listed for that resource. Values use Go duration syntax, such as `90m` or `6h`.
+
+-> **Note:** If a create runs out of time after Confluent Cloud has started creating the resource, Terraform usually saves the resource as tainted, and the next `terraform apply` destroys and re-creates it. If the resource finishes provisioning later, run `terraform untaint` to keep it.
+
 ## Helpful Links/Information
 
 * [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
