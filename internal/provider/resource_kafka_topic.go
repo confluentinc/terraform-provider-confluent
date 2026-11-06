@@ -37,12 +37,17 @@ var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "m
 	"message.timestamp.difference.max.ms", "message.timestamp.before.max.ms", "message.timestamp.after.max.ms",
 	"message.timestamp.type", "min.compaction.lag.ms", "min.insync.replicas",
 	"retention.bytes", "retention.ms", "segment.bytes", "segment.ms", "confluent.key.schema.validation", "confluent.value.schema.validation",
-	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy", "confluent.schema.validation.context.name"}
+	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy", "confluent.schema.validation.context.name",
+	"confluent.key.association", "confluent.value.association"}
 
 // Read-only topic settings
 var ignoredTopicSettings = []string{
 	"confluent.topic.type",
 }
+
+// SR Association configs (Project Odyssey) hold a JSON document that the server enriches and re-formats, so
+// they are compared semantically (suppressTopicConfigDiff).
+var associationTopicSettings = []string{"confluent.key.association", "confluent.value.association"}
 
 func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicRequestDataConfigs {
 	configResult := make([]kafkarestv3.CreateTopicRequestDataConfigs, len(configs))
@@ -102,9 +107,10 @@ func kafkaTopicResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
-				Computed:    true,
-				Description: "The custom topic settings to set (e.g., `\"cleanup.policy\" = \"compact\"`).",
+				Optional:         true,
+				Computed:         true,
+				Description:      "The custom topic settings to set (e.g., `\"cleanup.policy\" = \"compact\"`).",
+				DiffSuppressFunc: suppressTopicConfigDiff,
 			},
 			paramCredentials: credentialsSchema(),
 		},
@@ -699,6 +705,63 @@ func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestC
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topic %q Settings: %s", d.Id(), configJson), map[string]interface{}{"kafka_acl_id": d.Id()})
 
 	return config, nil
+}
+
+// suppressTopicConfigDiff suppresses diffs when the server normalizes and enriches JSON association configs
+func suppressTopicConfigDiff(k, old, new string, d *schema.ResourceData) bool {
+	configName := strings.TrimPrefix(k, fmt.Sprintf("%s.", paramConfigs))
+	if !stringInSlice(configName, associationTopicSettings, false) {
+		// Not an association config: fall back to the default (exact) comparison.
+		return false
+	}
+	return associationConfigsEquivalent(old, new)
+}
+
+// associationConfigsEquivalent compares only the fields the user actually specified, any extra field
+// the server adds on read-back (e.g. a "lifecycle"/"subject") is ignored.
+func associationConfigsEquivalent(old, new string) bool {
+	oldFields, okOld := parseAssociationConfig(old)
+	newFields, okNew := parseAssociationConfig(new)
+	if !okOld || !okNew {
+		// If either value can't be parsed as JSON, fall back to an exact comparison.
+		return old == new
+	}
+	for key, newVal := range newFields {
+		oldVal, ok := oldFields[key]
+		if !ok || normalizeAssociationValue(oldVal) != normalizeAssociationValue(newVal) {
+			return false
+		}
+	}
+	return true
+}
+
+// parseAssociationConfig parses an association config value into its top-level fields, returning
+// false if the value isn't a JSON object.
+func parseAssociationConfig(value string) (map[string]interface{}, bool) {
+	if value == "" {
+		return nil, false
+	}
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(value), &parsed); err != nil {
+		return nil, false
+	}
+	return parsed, true
+}
+
+func normalizeAssociationValue(v interface{}) string {
+	if s, ok := v.(string); ok {
+		if trimmed := strings.TrimSpace(s); strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
+			var inner interface{}
+			if err := json.Unmarshal([]byte(s), &inner); err == nil {
+				if compact, err := json.Marshal(inner); err == nil {
+					return string(compact)
+				}
+			}
+		}
+		return s
+	}
+	compact, _ := json.Marshal(v)
+	return string(compact)
 }
 
 func extractOldAndNewSettings(d *schema.ResourceData) (map[string]string, map[string]string) {
