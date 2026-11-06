@@ -93,6 +93,8 @@ The following arguments are supported:
 - `shared` - (Optional Boolean) The optional flag to control whether the DEK Registry has shared access to the KMS. Defaults to `false`.
 - `hard_delete` - (Optional Boolean) The optional flag to control whether a kek should be soft or hard deleted. Defaults to `false`.
 
+-> **Note:** DEKs can be automatically created by SR clients using CSFLE, so those DEKs have to be deleted manually before KEK can be hard deleted.
+
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Schema Registry API key, create a new Schema Registry API key, update the `credentials` block in all configuration files to use the new Schema Registry API key, run `terraform apply -target="confluent_schema_registry_kek.pii"`, and remove the old Schema Registry API key. Alternatively, in case the old Schema Registry API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_schema_registry_kek.pii" -out=rotate-schema-registry-api-key` and `terraform apply rotate-schema-registry-api-key` instead.
