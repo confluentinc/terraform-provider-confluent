@@ -123,7 +123,7 @@ const (
 	// Pair provisioning establishes the DR relationship between two clusters.
 	switchoverPairCreateTimeout = 30 * time.Minute
 	// Endpoint deletes are quick but asynchronous (202).
-	switchoverEndpointDeleteTimeout = 15 * time.Minute
+	switchoverEndpointDeleteTimeout = 20 * time.Minute
 )
 
 // rejectSwitchoverImmutableChanges is a CustomizeDiff that fails the plan when an attribute the

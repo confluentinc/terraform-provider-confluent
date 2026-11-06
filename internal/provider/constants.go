@@ -174,7 +174,7 @@ const (
 	kafkaClusterTypeStandard                             = "Standard"
 	kafkaMirrorTopicLoggingKey                           = "kafka_mirror_topic_id"
 	kafkaMirrorTopicDeleteTimeout                        = 1 * time.Hour
-	kafkaMirrorTopicUpdateTimeout                        = 5 * time.Minute
+	kafkaMirrorTopicUpdateTimeout                        = 20 * time.Minute
 	kafkaQuotasAPIWaitAfterCreate                        = 30 * time.Second
 	kafkaQuotasAPIWaitAfterUpdate                        = 15 * time.Second
 	kafkaRestAPIWaitAfterCreate                          = 10 * time.Second
