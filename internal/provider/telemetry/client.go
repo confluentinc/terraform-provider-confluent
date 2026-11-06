@@ -100,5 +100,16 @@ func toContractUsage(u Usage) terraformusagev1.TerraformUsageV1Usage {
 	if len(u.StackFrames) > 0 {
 		m.SetStackFrames(u.StackFrames)
 	}
+	// The retry count and flag are always sent, so 0 and false mean "not
+	// retried" rather than "this provider predates the fields". The status and
+	// endpoint describe a retried request, which always has an endpoint, so they
+	// are sent only when there is one; a status of 0 then means that attempt got
+	// no response, as the contract documents.
+	m.SetRetryCount(int32(u.RetryCount))
+	m.SetRetriesExhausted(u.RetriesExhausted)
+	if u.RetryEndpoint != "" {
+		m.SetRetryStatusCode(int32(u.RetryStatusCode))
+		m.SetRetryEndpoint(u.RetryEndpoint)
+	}
 	return *m
 }

@@ -286,3 +286,72 @@ func TestSDKPoster_MapsStackFrames(t *testing.T) {
 		t.Errorf("stack_frames = %v, want the two supplied frames in order", sf)
 	}
 }
+
+// TestSDKPoster_MapsRetryFields asserts the retry count and flag are always
+// sent, and the status and endpoint only for a retried request, including a
+// status of 0 for an attempt that got no response.
+func TestSDKPoster_MapsRetryFields(t *testing.T) {
+	tests := map[string]struct {
+		retryCount, retryStatusCode int
+		retriesExhausted            bool
+		retryEndpoint               string
+		want                        map[string]interface{}
+		wantAbsent                  []string
+	}{
+		"not retried": {
+			want:       map[string]interface{}{"retry_count": 0.0, "retries_exhausted": false},
+			wantAbsent: []string{"retry_status_code", "retry_endpoint"},
+		},
+		"rate limit exhausted": {
+			retryCount: 12, retriesExhausted: true, retryStatusCode: 429,
+			retryEndpoint: "GET connect/v1/environments",
+			want: map[string]interface{}{
+				"retry_count": 12.0, "retries_exhausted": true,
+				"retry_status_code": 429.0, "retry_endpoint": "GET connect/v1/environments",
+			},
+		},
+		"connection error exhausted": {
+			retryCount: 2, retriesExhausted: true, retryEndpoint: "POST iam/v2/api-keys",
+			want: map[string]interface{}{
+				"retry_count": 2.0, "retries_exhausted": true,
+				"retry_status_code": 0.0, "retry_endpoint": "POST iam/v2/api-keys",
+			},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := make(chan []byte, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				raw, _ := io.ReadAll(r.Body)
+				got <- raw
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer srv.Close()
+
+			p := NewSDKPoster(srv.URL, srv.Client(), "ua", nil)
+			u := sampleUsage()
+			u.RetryCount = tc.retryCount
+			u.RetriesExhausted = tc.retriesExhausted
+			u.RetryStatusCode = tc.retryStatusCode
+			u.RetryEndpoint = tc.retryEndpoint
+			if err := p.Post(context.Background(), u); err != nil {
+				t.Fatalf("Post returned error: %v", err)
+			}
+
+			var body map[string]interface{}
+			if err := json.Unmarshal(<-got, &body); err != nil {
+				t.Fatalf("unmarshal body: %v", err)
+			}
+			for k, want := range tc.want {
+				if v, ok := body[k]; !ok || v != want {
+					t.Errorf("%s = %v (present %t), want %v", k, v, ok, want)
+				}
+			}
+			for _, k := range tc.wantAbsent {
+				if v, ok := body[k]; ok {
+					t.Errorf("%s = %v, want it omitted", k, v)
+				}
+			}
+		})
+	}
+}
