@@ -628,9 +628,9 @@ func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topic
 func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: flinkStatementDeleteStatus(c.apiContext(ctx), c, statementName),
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      flinkStatementDeleteStatus(c.apiContext(ctx), c, statementName),
 		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
@@ -660,9 +660,9 @@ func waitForFlinkStatementToBeUpdated(ctx context.Context, c *FlinkRestClient, s
 	}
 
 	stateConf := &resource.StateChangeConf{
-		Pending: pendingStates,
-		Target:  targetStates,
-		Refresh: flinkStatementUpdatingStatus(c.apiContext(ctx), c, statementName, targetStatusMessage),
+		Pending:      pendingStates,
+		Target:       targetStates,
+		Refresh:      flinkStatementUpdatingStatus(c.apiContext(ctx), c, statementName, targetStatusMessage),
 		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
