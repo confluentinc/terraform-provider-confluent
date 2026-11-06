@@ -193,6 +193,10 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. Before each retry, a rate-limited request waits at least as long as the API asks in its `Retry-After` response header, which is 1 second for the per-second limits of the control-plane APIs at `api.confluent.cloud`. Other failures, and rate-limited requests without that header, wait 1, 2, 4, 8, 16 and then 30 seconds, so a higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
+## Network Connections
+
+The provider connects to the Confluent Cloud API (`endpoint`, `https://api.confluent.cloud` by default), to the Kafka, Schema Registry and Flink REST endpoints of the resources it manages, and, depending on your configuration, to your OAuth identity provider and to cloud storage for file uploads. It also sends usage telemetry to the Confluent Cloud API, which you can turn off by setting the `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` environment variable to any non-empty value. For the full list of destinations, and how to use a proxy, see the [Network Connections](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/network-connections) guide.
+
 ## Helpful Links/Information
 
 * [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
