@@ -76,6 +76,9 @@ func dnsForwarderResource() *schema.Resource {
 			paramForwardViaIp:          forwardViaIpDnsForwarderSchema(),
 			paramForwardViaGcpDnsZones: forwardViaGcpDnsZonesDnsForwarderSchema(),
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(networkingAPICreateTimeout),
+		},
 	}
 }
 
@@ -182,7 +185,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Wait for async provisioning to complete
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if err := waitForDnsForwarderToProvision(c.networkingDnsforwarderV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForDnsForwarderToProvision(c.networkingDnsforwarderV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for DNS forwarder %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 

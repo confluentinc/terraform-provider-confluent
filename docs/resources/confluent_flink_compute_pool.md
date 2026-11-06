@@ -55,6 +55,15 @@ In addition to the preceding arguments, the following attributes are exported:
 - `kind` - (Required String) The kind of the Flink Compute Pool, for example, `ComputePool`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Flink Compute Pool.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `1h`) How long to wait for the Flink compute pool to be provisioned.
+- `delete` - (Default `1h`) How long to wait for the Flink compute pool to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Flink Compute Pool.

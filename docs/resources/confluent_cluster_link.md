@@ -134,6 +134,14 @@ In addition to the preceding arguments, the following attributes are exported:
 - `id` - (Required String) The composite ID of the Cluster Link resource, in the format `<Kafka cluster ID>/<Cluster link name>`, for example, `lkc-abc123/my-cluster-link`.
 - `cluster_link_id` - (Required String) The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters, for example, `qz0HDEV-Qz2B5aPFpcWQJQ`.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `delete` - (Default `1h`) How long to wait for the cluster link to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 You can import a Kafka mirror topic by using the cluster link name, cluster link mode, cluster link connection mode,

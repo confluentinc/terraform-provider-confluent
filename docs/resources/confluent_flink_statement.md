@@ -231,6 +231,16 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** To start a statement from the last offsets of a previous statement, you can automatically reuse the offsets of a previous statement as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example, or inject `latest_offsets` as a [SQL hint](https://docs.confluent.io/cloud/current/flink/reference/statements/hints.html#examples).
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+
+- `create` - (Default `6h`) How long to wait for the statement to be running or completed.
+- `update` - (Default `20m`) How long to wait for the statement to be stopped or resumed.
+- `delete` - (Default `20m`) How long to wait for the statement to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 You can import a Flink statement by using the Flink Statement name, for example:

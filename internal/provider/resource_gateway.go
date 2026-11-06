@@ -70,6 +70,9 @@ func gatewayResource() *schema.Resource {
 			paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewayGatewaySchema(),
 			paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewayGatewaySchema(),
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(networkingAPICreateTimeout),
+		},
 	}
 }
 
@@ -324,7 +327,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	// Wait for async provisioning to complete
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if err := waitForGatewayToProvision(c.networkingGatewayV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForGatewayToProvision(c.networkingGatewayV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for gateway %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 

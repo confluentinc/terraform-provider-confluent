@@ -196,7 +196,7 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	// Wait for async provisioning to complete
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if err := waitForPrivateLinkAccessToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAccessToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for private link access %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -269,7 +269,7 @@ func privateLinkAccessDelete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForPrivateLinkAccessToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAccessToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for private link access %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
