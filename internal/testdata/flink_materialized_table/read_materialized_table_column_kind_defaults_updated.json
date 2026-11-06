@@ -1,0 +1,54 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table_column_kinds",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc-01",
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "stopped": false,
+    "table_options": {},
+    "session_options": {},
+    "columns": [
+      {
+        "name": "event_ts",
+        "type": "TIMESTAMP(3)",
+        "kind": "Physical"
+      },
+      {
+        "name": "event_hour",
+        "type": "BIGINT",
+        "kind": "Computed",
+        "expression": "HOUR(event_ts)",
+        "virtual": false
+      },
+      {
+        "name": "kafka_ts",
+        "type": "TIMESTAMP_LTZ(3)",
+        "kind": "Metadata",
+        "metadata_key": "timestamp",
+        "virtual": true
+      },
+      {
+        "name": "amount",
+        "type": "DOUBLE",
+        "kind": "Physical"
+      }
+    ],
+    "watermark": {
+      "column": "event_ts",
+      "expression": "event_ts - INTERVAL '5' SECOND"
+    },
+    "query": "SELECT * FROM payment_events;"
+  },
+  "status": {
+    "phase": "RUNNING",
+    "detail": "Materialized table is running.",
+    "warnings": [],
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table_column_kinds AS SELECT * FROM payment_events;",
+    "scaling_status": {},
+    "version": 2
+  }
+}

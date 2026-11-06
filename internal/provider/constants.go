@@ -71,6 +71,7 @@ const (
 	compatibilityLevelFull                    = "FULL"
 	compatibilityLevelFullTransitive          = "FULL_TRANSITIVE"
 	compatibilityLevelNone                    = "NONE"
+	computedColumnKind                        = "Computed"
 	computePoolLoggingKey                     = "compute_pool_id"
 	computePoolConfigLoggingKey               = "compute_pool_config_id"
 	configOAuthBearer                         = "OAUTHBEARER"
@@ -217,6 +218,7 @@ const (
 	localSecurityProtocolConfigKey                       = "local.security.protocol"
 	lowAvailability                                      = "LOW"
 	managedStorageSpecKind                               = "Managed"
+	metadataColumnKind                                   = "Metadata"
 	metadataColumnNamingSchemeDefault                    = "DEFAULT"
 	metadataColumnNamingSchemePortable                   = "PORTABLE"
 	modeImport                                           = "IMPORT"
@@ -704,6 +706,7 @@ const (
 	paramZones                                           = "zones"
 	// cli-tfgen:tf-constants
 	peeringLoggingKey                         = "peering_id"
+	physicalColumnKind                        = "Physical"
 	pluginLoggingKey                          = "plugin_key_id"
 	presignedUrlLocation                      = "PRESIGNED_URL_LOCATION"
 	principalPrefix                           = "User:"
