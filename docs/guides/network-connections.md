@@ -6,9 +6,9 @@ page_title: "Network Connections"
 
 This guide lists every destination the Confluent Terraform Provider connects to, so you can set up firewalls, egress allowlists and proxies for the machines that run Terraform.
 
-Terraform runs the provider as a plugin on the same machine or CI runner as `terraform plan` or `terraform apply`, and the provider makes every connection below from there. All of them use HTTPS on port 443, unless a URL you configure names another port.
+Terraform runs the provider as a plugin on the same machine or CI runner as `terraform plan` or `terraform apply`, and the provider makes every connection below from there. All of them use HTTPS on port 443, unless a URL you configure says otherwise. The provider never connects to Kafka brokers (port 9092).
 
-For most setups, allowing HTTPS to `*.confluent.cloud`, your identity provider (with OAuth) and your cloud's storage service (for file uploads) is enough. Confluent Cloud for Government uses different hostnames and isn't covered here.
+For most setups, allowing HTTPS to `*.confluent.cloud`, your identity provider (with OAuth) and, for file uploads, the storage service of the cloud the artifact or plugin is uploaded to is enough. Confluent Cloud for Government uses different hostnames and isn't covered here.
 
 Not covered here:
 
@@ -23,7 +23,7 @@ Not covered here:
 | `api.confluent.cloud/sts/v1/oauth2/token` | Exchanging your identity provider's token for a Confluent Cloud token | OAuth only: each time Terraform configures the provider, and again shortly before the Confluent Cloud token expires | Your identity provider's token |
 | `api.confluent.cloud/terraform-usage/v1/usages` | Usage telemetry, see [Usage Telemetry](#usage-telemetry) | After each resource create, read, update, delete and import | Cloud API key, or with OAuth, a Confluent Cloud token |
 
-To use a different Confluent Cloud API endpoint, set `endpoint` in the provider block. The API and the token exchange then use that endpoint, and usage telemetry is turned off.
+To use a different Confluent Cloud API endpoint, set `endpoint` in the provider block. The API and the token exchange then use that endpoint, and usage telemetry isn't sent (see [Usage Telemetry](#usage-telemetry)).
 
 ## Confluent Cloud Clusters
 
@@ -33,7 +33,7 @@ Hostnames depend on the cluster's networking: the examples below are for public 
 
 | Destination | Used for | Address from | Authentication |
 |---|---|---|---|
-| Kafka REST endpoint, for example `pkc-<id>.<region>.<cloud>.confluent.cloud` | Topics, ACLs, cluster settings, cluster links and mirror topics. `confluent_api_key` also uses it to check that a new Kafka API key works, unless `disable_wait_for_ready` is set. | `kafka_rest_endpoint` (`KAFKA_REST_ENDPOINT`), the resource's `rest_endpoint`, or `IMPORT_KAFKA_REST_ENDPOINT`. `confluent_cluster_link` and `confluent_kafka_mirror_topic` use the `rest_endpoint` in their Kafka cluster blocks. `confluent_api_key` reads the cluster's REST endpoint from the Confluent Cloud API. | Kafka API key, or with OAuth, your identity provider's token |
+| Kafka REST endpoint, for example `pkc-<id>.<region>.<cloud>.confluent.cloud` | Topics, ACLs, cluster settings, cluster links and mirror topics. `confluent_api_key` also uses it to check that a new Kafka API key works, unless `disable_wait_for_ready` is set. | `kafka_rest_endpoint` (`KAFKA_REST_ENDPOINT`), the resource's `rest_endpoint`, or `IMPORT_KAFKA_REST_ENDPOINT`. The `confluent_cluster_link` and `confluent_kafka_mirror_topic` resources use the `rest_endpoint` in their Kafka cluster blocks. `confluent_api_key` reads the cluster's REST endpoint from the Confluent Cloud API. | Kafka API key, or with OAuth, your identity provider's token |
 | Schema Registry endpoint, for example `psrc-<id>.<region>.<cloud>.confluent.cloud` | Schemas, subject and registry settings, schema exporters, and encryption keys (KEKs and DEKs). `confluent_schema` also calls it during plan to check schema changes. | `schema_registry_rest_endpoint` (`SCHEMA_REGISTRY_REST_ENDPOINT`), the resource's `rest_endpoint`, or `IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT` | Schema Registry API key, or with OAuth, your identity provider's token |
 | Stream Catalog, on the Schema Registry endpoint by default | Tags, business metadata, their bindings, and entity attributes | `catalog_rest_endpoint` (`CATALOG_REST_ENDPOINT`), else the Schema Registry endpoint; the resource's `rest_endpoint`; or `IMPORT_CATALOG_REST_ENDPOINT`, else `IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT` | Schema Registry API key, or with OAuth, your identity provider's token |
 | Flink endpoint, for example `flink.<region>.<cloud>.confluent.cloud` | Flink statements, connections and materialized tables | `flink_rest_endpoint` (`FLINK_REST_ENDPOINT`), the resource's `rest_endpoint`, or `IMPORT_FLINK_REST_ENDPOINT` | Flink API key, or with OAuth, your identity provider's token |
@@ -59,7 +59,7 @@ The provider sends a usage event for each resource operation to the Confluent Cl
 
 * the resource type and the operation (create, read, update, delete or import)
 * its start time, duration, and order within the run
-* whether it failed and, if the provider crashed, a stack trace of the provider's own source files and line numbers
+* whether it failed and, if the operation panicked, a stack trace of up to 50 source file names and line numbers, without local paths or values
 * the names of changed attributes, never their values
 * the provider and Terraform versions, the operating system and architecture, and a random ID for the provider process
 
@@ -68,7 +68,7 @@ Data sources aren't reported.
 Events are sent only when all of these are true:
 
 * `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` isn't set. Set it to any non-empty value, for example `true`, to turn telemetry off.
-* `endpoint` is `https://api.confluent.cloud`, the default. Any other value turns telemetry off.
+* `endpoint` is `https://api.confluent.cloud`, the default.
 * The provider is configured with a Cloud API key and secret (in the provider block or their environment variables), or with OAuth.
 * The operation made at least one request to the Confluent Cloud API or a cluster endpoint, and all of those went to `*.confluent.cloud` hosts. Identity provider and cloud storage requests aren't counted.
 
