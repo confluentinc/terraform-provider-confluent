@@ -143,8 +143,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1 h1:dkwRPO/UTsBPvHTZVG
 github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1/go.mod h1:sZ2nAt/EbWwYmnjIckI+dpi02MuE4AGX8K2f/0bfD5s=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0 h1:b5s9pHopcsLeBSfvkj3j4SdAsiPwigY0x6jdkXnzAbo=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0/go.mod h1:NqM6aLdXeXhf+JMc0Y39fZjU9pWSHfhosfYRp/DKHxk=
-github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0 h1:mjGRU9RhUy5loUE0rnFzjRvtIQX8Xjrr0GX/3wvMquU=
-github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.1.0/go.mod h1:r5fxmaF3i+GvjQyNRlaPhjwkLcq8HJrEMBjRuGs+GIM=
+github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.2.0 h1:KD/cZGgNwhLTNzjFy5iONQHGW0af1dcWWNsDwm4u9LQ=
+github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.2.0/go.mod h1:gVeE6mfGUaM0iYQHYxeXa4dgn2FgkTZIR+VU+a5C4ig=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=
 github.com/containerd/errdefs v1.0.0/go.mod h1:+YBYIdtsnF4Iw6nWZhJcqGSg/dwvV7tyJ/kCkyJ2k+M=
 github.com/containerd/errdefs/pkg v0.3.0 h1:9IKJ06FvyNlexW690DXuQNx2KA2cUJXx151Xdx3ZPPE=
