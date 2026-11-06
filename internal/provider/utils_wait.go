@@ -631,7 +631,6 @@ func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, s
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
 		Refresh: flinkStatementDeleteStatus(c.apiContext(ctx), c, statementName),
-		// Default timeout
 		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
@@ -664,7 +663,6 @@ func waitForFlinkStatementToBeUpdated(ctx context.Context, c *FlinkRestClient, s
 		Pending: pendingStates,
 		Target:  targetStates,
 		Refresh: flinkStatementUpdatingStatus(c.apiContext(ctx), c, statementName, targetStatusMessage),
-		// Default timeout
 		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
