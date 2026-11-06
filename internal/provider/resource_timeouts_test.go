@@ -49,7 +49,7 @@ var expectedResourceTimeouts = map[string]operationTimeouts{
 	"confluent_flink_statement":                    {create: 6 * time.Hour, update: 20 * time.Minute, delete: 20 * time.Minute},
 	"confluent_gateway":                            {create: 2 * time.Hour},
 	"confluent_kafka_cluster":                      {create: 72 * time.Hour, update: 72 * time.Hour, delete: 30 * time.Minute},
-	"confluent_kafka_mirror_topic":                 {update: 5 * time.Minute, delete: time.Hour},
+	"confluent_kafka_mirror_topic":                 {update: 20 * time.Minute, delete: time.Hour},
 	"confluent_kafka_topic":                        {delete: time.Hour},
 	"confluent_ksql_cluster":                       {create: 12 * time.Hour, delete: time.Hour},
 	"confluent_network":                            {create: 2 * time.Hour, delete: 5 * time.Hour},
@@ -62,7 +62,7 @@ var expectedResourceTimeouts = map[string]operationTimeouts{
 	"confluent_rtce_topic":                         {create: time.Hour, delete: time.Hour},
 	"confluent_schema_exporter":                    {create: 12 * time.Hour, update: 20 * time.Minute},
 	"confluent_switchover_pair":                    {create: 30 * time.Minute},
-	"confluent_switchover_endpoint":                {delete: 15 * time.Minute},
+	"confluent_switchover_endpoint":                {delete: 20 * time.Minute},
 	"confluent_tf_importer":                        {create: 8 * time.Hour},
 	"confluent_transit_gateway_attachment":         {create: 2 * time.Hour, delete: 5 * time.Hour},
 }
@@ -150,6 +150,14 @@ func TestResourceTimeoutsConfigDecode(t *testing.T) {
 	}
 }
 
+// Helpers that read a timeout on behalf of one CRUD operation.
+var crudHelperOps = map[string]string{
+	"flinkStatementStop":            "TimeoutUpdate",
+	"flinkStatementResume":          "TimeoutUpdate",
+	"resumeExporter":                "TimeoutUpdate",
+	"kafkaClusterCreateWaitTimeout": "TimeoutCreate",
+}
+
 // CRUD functions must only read their own operation's timeout, e.g. a Delete passing
 // d.Timeout(schema.TimeoutCreate) to its wait would silently use the wrong limit.
 func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
@@ -160,6 +168,7 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 		t.Fatal(err)
 	}
 	checked := 0
+	seenHelpers := map[string]bool{}
 	for _, path := range files {
 		if strings.HasSuffix(path, "_test.go") {
 			continue
@@ -178,6 +187,10 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 				if strings.HasSuffix(fd.Name.Name, suffix) {
 					want = op
 				}
+			}
+			if op, ok := crudHelperOps[fd.Name.Name]; ok {
+				want = op
+				seenHelpers[fd.Name.Name] = true
 			}
 			if want == "" {
 				continue
@@ -203,6 +216,11 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 	}
 	if checked == 0 {
 		t.Fatal("found no schema.Timeout* references; the check is broken")
+	}
+	for name := range crudHelperOps {
+		if !seenHelpers[name] {
+			t.Errorf("crudHelperOps lists %s, which no longer exists in resource_*.go; remove it", name)
+		}
 	}
 }
 
@@ -302,6 +320,13 @@ func TestStatusWaitsUseOperationTimeout(t *testing.T) {
 				continue
 			}
 			ast.Inspect(fd.Body, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok && fd.Name.Name != "kafkaClusterCreateWaitTimeout" {
+					for _, lhs := range assign.Lhs {
+						if id, ok := lhs.(*ast.Ident); ok && id.Name == "timeout" {
+							t.Errorf("%s: %s assigns timeout; pass the operation's timeout through unchanged", fset.Position(assign.Pos()), fd.Name.Name)
+						}
+					}
+				}
 				lit, ok := n.(*ast.CompositeLit)
 				if !ok {
 					return true
