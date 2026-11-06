@@ -195,7 +195,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 ## Network Connections
 
-The provider connects to the Confluent Cloud API (`endpoint`, `https://api.confluent.cloud` by default), to the REST endpoints of the Kafka, Schema Registry and Flink clusters it manages, and, depending on your configuration, to your OAuth identity provider and to cloud storage for file uploads. It also sends usage telemetry, which you can turn off with the `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` environment variable. For the full list of destinations, and how to use a proxy, see the [Network Connections](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/network-connections) guide.
+The provider connects to the Confluent Cloud API (`endpoint`, `https://api.confluent.cloud` by default), to the Kafka, Schema Registry and Flink REST endpoints of the resources it manages, and, depending on your configuration, to your OAuth identity provider and to cloud storage for file uploads. It also sends usage telemetry to the Confluent Cloud API, which you can turn off by setting the `CONFLUENT_DISABLE_PROVIDER_ANALYTICS` environment variable to any non-empty value. For the full list of destinations, and how to use a proxy, see the [Network Connections](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/network-connections) guide.
 
 ## Helpful Links/Information
 
