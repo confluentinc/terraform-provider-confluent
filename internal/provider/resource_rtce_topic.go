@@ -152,7 +152,7 @@ func rtceTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	d.SetId(createRtceTopicId(createEnvironmentId, createKafkaClusterId, createTopicName))
 
 	// Wait for async provisioning to complete
-	if err := waitForRtceTopicToProvision(c.rtceV1ApiContext(ctx), c, createEnvironmentId, createKafkaClusterId, createTopicName); err != nil {
+	if err := waitForRtceTopicToProvision(c.rtceV1ApiContext(ctx), c, createEnvironmentId, createKafkaClusterId, createTopicName, d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for RTCE topic %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -314,7 +314,7 @@ func rtceTopicDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForRtceTopicToBeDeleted(c.rtceV1ApiContext(ctx), c, environmentId, kafkaClusterId, topicName); err != nil {
+	if err := waitForRtceTopicToBeDeleted(c.rtceV1ApiContext(ctx), c, environmentId, kafkaClusterId, topicName, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for RTCE topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -417,13 +417,13 @@ func rtceTopicProvisionStatus(ctx context.Context, c *Client, environmentId stri
 }
 
 // waitForRtceTopicToProvision waits for the resource to reach a ready state
-func waitForRtceTopicToProvision(ctx context.Context, c *Client, environmentId string, kafkaClusterId string, topicName string) error {
+func waitForRtceTopicToProvision(ctx context.Context, c *Client, environmentId string, kafkaClusterId string, topicName string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{statePending, stateProvisioning},
 		Target:       []string{stateActive},
 		Refresh:      rtceTopicProvisionStatus(ctx, c, environmentId, kafkaClusterId, topicName),
-		Timeout:      rtceV1APICreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -454,13 +454,13 @@ func rtceTopicDeleteStatus(ctx context.Context, c *Client, environmentId string,
 }
 
 // waitForRtceTopicToBeDeleted waits for the resource to be fully deleted
-func waitForRtceTopicToBeDeleted(ctx context.Context, c *Client, environmentId string, kafkaClusterId string, topicName string) error {
+func waitForRtceTopicToBeDeleted(ctx context.Context, c *Client, environmentId string, kafkaClusterId string, topicName string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{"DELETING"},
 		Target:       []string{"DELETED"},
 		Refresh:      rtceTopicDeleteStatus(ctx, c, environmentId, kafkaClusterId, topicName),
-		Timeout:      rtceV1APIDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}

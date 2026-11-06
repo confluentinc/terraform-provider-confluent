@@ -63,6 +63,7 @@ const (
 	cloudKindInLowercase                      = "cloud"
 	clusterKind                               = "Cluster"
 	clusterLinkLoggingKey                     = "cluster_link_id"
+	clusterLinkDeleteTimeout                  = 1 * time.Hour
 	cmkApiVersion                             = "cmk/v2"
 	compatibilityLevelBackward                = "BACKWARD"
 	compatibilityLevelBackwardTransitive      = "BACKWARD_TRANSITIVE"
@@ -85,7 +86,7 @@ const (
 	connectionTypePeering                     = "PEERING"
 	connectionTypePrivateLink                 = "PRIVATELINK"
 	connectionTypeTransitGateway              = "TRANSITGATEWAY"
-	connectOffsetsAPIUpdateTimeout            = 1 * time.Hour
+	connectAPIUpdateTimeout                   = 1 * time.Hour
 	connectorConfigAttributeClass             = "connector.class"
 	connectorConfigAttributeName              = "name"
 	connectorConfigAttributePlugin            = "confluent.custom.plugin.id"
@@ -165,16 +166,20 @@ const (
 	kafkaClientQuotaLoggingKey                           = "kafka_client_quota_id"
 	kafkaClusterConfigLoggingKey                         = "kafka_cluster_config_id"
 	kafkaClusterLoggingKey                               = "kafka_cluster_id"
+	kafkaClusterDeleteTimeout                            = 30 * time.Minute
 	kafkaClusterTypeBasic                                = "Basic"
 	kafkaClusterTypeDedicated                            = "Dedicated"
 	kafkaClusterTypeEnterprise                           = "Enterprise"
 	kafkaClusterTypeFreight                              = "Freight"
 	kafkaClusterTypeStandard                             = "Standard"
 	kafkaMirrorTopicLoggingKey                           = "kafka_mirror_topic_id"
+	kafkaMirrorTopicDeleteTimeout                        = 1 * time.Hour
+	kafkaMirrorTopicUpdateTimeout                        = 20 * time.Minute
 	kafkaQuotasAPIWaitAfterCreate                        = 30 * time.Second
 	kafkaQuotasAPIWaitAfterUpdate                        = 15 * time.Second
 	kafkaRestAPIWaitAfterCreate                          = 10 * time.Second
 	kafkaTopicLoggingKey                                 = "kafka_topic_id"
+	kafkaTopicDeleteTimeout                              = 1 * time.Hour
 	kindAws                                              = "AwsKey"
 	kindAzure                                            = "AzureKey"
 	kindGcp                                              = "GcpKey"
@@ -728,6 +733,7 @@ const (
 	saslOAuthBearerTokenEndpointUrlConfigKey  = "sasl.oauthbearer.token.endpoint.url"
 	schemaEntityType                          = "sr_schema"
 	schemaExporterAPICreateTimeout            = 12 * time.Hour
+	schemaExporterAPIUpdateTimeout            = 20 * time.Minute
 	schemaExporterLoggingKey                  = "schema_exporter_id"
 	schemaLoggingKey                          = "schema_id"
 	schemaNotCompatibleErrorMessage           = `Compatibility check on the schema has failed against one or more versions in the subject, depending on how the compatibility is set.
@@ -768,6 +774,8 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	stateInactive                            = "INACTIVE"
 	stateInProgress                          = "IN_PROGRESS"
 	statementsAPICreateTimeout               = 6 * time.Hour
+	statementsAPIUpdateTimeout               = 20 * time.Minute
+	statementsAPIDeleteTimeout               = 20 * time.Minute
 	materializedTableAPICreateTimeout        = 6 * time.Hour
 	materializedTableAPIUpdateTimeout        = 20 * time.Minute
 	materializedTableAPIDeleteTimeout        = 20 * time.Minute

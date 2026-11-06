@@ -172,6 +172,15 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** Use `aws[0]`, `azure[0]`, or `gcp[0]` prefix for referencing these attributes, for example, `confluent_network.private-link.azure[0].private_link_service_aliases`.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
+
+- `create` - (Default `2h`) How long to wait for the network to be provisioned.
+- `delete` - (Default `5h`) How long to wait for the network to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Network.
