@@ -229,7 +229,7 @@ resource "azurerm_key_vault_secret" "connect-xyz-consumer-secret" {
 
 The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
 
-- `create` - (Default `20m`) How long to wait for the new API key to be ready to use. The provider doesn't wait when `disable_wait_for_ready` is `true`.
+- `create` - (Default `20m`) How long to wait for the new Cloud, Kafka, Tableflow or Global API key to be ready to use. Schema Registry and Flink API keys wait a fixed 1 minute, and ksqlDB API keys a fixed 5 minutes. The provider doesn't wait when `disable_wait_for_ready` is `true`.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 
