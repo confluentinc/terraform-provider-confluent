@@ -15,14 +15,18 @@
 package provider
 
 import (
+	"context"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -234,5 +238,191 @@ func TestKafkaClusterCreateWaitTimeout(t *testing.T) {
 				t.Fatalf("kafkaClusterCreateWaitTimeout(%q) = %s, want %s", tt.clusterType, got, tt.expected)
 			}
 		})
+	}
+}
+
+// Waits that keep a short fixed limit inside a longer operation, by design.
+var fixedLimitWaits = map[string]bool{
+	"waitForAnySchemaRegistryClusterToProvision": true,
+	"waitForTagToProvision":                      true,
+	"waitForBusinessMetadataToProvision":         true,
+	"waitForTagBindingToProvision":               true,
+	"waitForBusinessMetadataBindingToProvision":  true,
+}
+
+// Every other status-polling wait must stop at its operation's timeout, so a timeouts value can
+// lengthen it as well as shorten it. A wait edited or regenerated back to a fixed limit fails here,
+// and so does a caller that passes anything but d.Timeout(schema.Timeout*) or a forwarded timeout.
+func TestStatusWaitsUseOperationTimeout(t *testing.T) {
+	fset := token.NewFileSet()
+	paths, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files []*ast.File
+	for _, path := range paths {
+		if strings.HasSuffix(path, "_test.go") {
+			continue
+		}
+		f, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, f)
+	}
+
+	// Index of each function's `timeout` parameter.
+	timeoutParam := map[string]int{}
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			fd, ok := decl.(*ast.FuncDecl)
+			if !ok {
+				continue
+			}
+			i := 0
+			for _, field := range fd.Type.Params.List {
+				for _, name := range field.Names {
+					if name.Name == "timeout" {
+						timeoutParam[fd.Name.Name] = i
+					}
+					i++
+				}
+			}
+		}
+	}
+	if len(timeoutParam) < 40 {
+		t.Fatalf("found only %d functions with a timeout parameter; the check is broken", len(timeoutParam))
+	}
+
+	seenFixed := map[string]bool{}
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			fd, ok := decl.(*ast.FuncDecl)
+			if !ok || fd.Body == nil {
+				continue
+			}
+			ast.Inspect(fd.Body, func(n ast.Node) bool {
+				lit, ok := n.(*ast.CompositeLit)
+				if !ok {
+					return true
+				}
+				if sel, ok := lit.Type.(*ast.SelectorExpr); !ok || sel.Sel.Name != "StateChangeConf" {
+					return true
+				}
+				if fixedLimitWaits[fd.Name.Name] {
+					seenFixed[fd.Name.Name] = true
+					return true
+				}
+				if _, ok := timeoutParam[fd.Name.Name]; !ok {
+					t.Errorf("%s: %s polls with a StateChangeConf but takes no timeout parameter", fset.Position(lit.Pos()), fd.Name.Name)
+					return true
+				}
+				usesParam := false
+				for _, elt := range lit.Elts {
+					kv, ok := elt.(*ast.KeyValueExpr)
+					if !ok {
+						continue
+					}
+					if key, ok := kv.Key.(*ast.Ident); ok && key.Name == "Timeout" {
+						v, ok := kv.Value.(*ast.Ident)
+						usesParam = ok && v.Name == "timeout"
+					}
+				}
+				if !usesParam {
+					t.Errorf("%s: %s must set StateChangeConf.Timeout to its timeout parameter", fset.Position(lit.Pos()), fd.Name.Name)
+				}
+				return true
+			})
+		}
+	}
+	for name := range fixedLimitWaits {
+		if !seenFixed[name] {
+			t.Errorf("fixedLimitWaits lists %s, which no longer polls; remove it", name)
+		}
+	}
+
+	for _, f := range files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			fn, ok := call.Fun.(*ast.Ident)
+			if !ok {
+				return true
+			}
+			i, ok := timeoutParam[fn.Name]
+			if !ok || i >= len(call.Args) {
+				return true
+			}
+			if !isOperationTimeoutArg(call.Args[i]) {
+				t.Errorf("%s: %s must get d.Timeout(schema.Timeout*) or a forwarded timeout", fset.Position(call.Pos()), fn.Name)
+			}
+			return true
+		})
+	}
+}
+
+func isOperationTimeoutArg(arg ast.Expr) bool {
+	if id, ok := arg.(*ast.Ident); ok {
+		return id.Name == "timeout"
+	}
+	call, ok := arg.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	if fn, ok := call.Fun.(*ast.Ident); ok {
+		return fn.Name == "kafkaClusterCreateWaitTimeout"
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name != "Timeout" || len(call.Args) != 1 {
+		return false
+	}
+	op, ok := call.Args[0].(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := op.X.(*ast.Ident)
+	return ok && pkg.Name == "schema" && strings.HasPrefix(op.Sel.Name, "Timeout")
+}
+
+// Calling the CRUD function directly skips the SDK's context deadline, so only the wait's own
+// limit can stop it: this proves a timeouts.delete value reaches the wait.
+func TestKafkaTopicDeleteWaitUsesConfiguredTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		// The topic never goes away.
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"kind":"KafkaTopic","topic_name":"` + topicName + `"}`))
+	}))
+	defer server.Close()
+
+	r := kafkaTopicResource()
+	configured := 2 * time.Second
+	r.Timeouts.Delete = &configured
+	d := r.Data(nil)
+	d.SetId(createKafkaTopicId(clusterId, topicName))
+	_ = d.Set(paramTopicName, topicName)
+	_ = d.Set(paramRestEndpoint, server.URL)
+	_ = d.Set(paramKafkaCluster, []interface{}{map[string]interface{}{paramId: clusterId}})
+	_ = d.Set(paramCredentials, []interface{}{map[string]interface{}{paramKey: kafkaApiKey, paramSecret: kafkaApiSecret}})
+	zero := 0
+	meta := &Client{
+		isAcceptanceTestMode:   true,
+		kafkaRestClientFactory: &KafkaRestClientFactory{ctx: context.Background(), userAgent: "test", maxRetries: &zero},
+	}
+
+	done := make(chan diag.Diagnostics, 1)
+	go func() { done <- kafkaTopicDelete(context.Background(), d, meta) }()
+	select {
+	case diags := <-done:
+		if !diags.HasError() || !strings.Contains(diags[0].Summary, "timeout: 2s") {
+			t.Fatalf("got %v, want the delete wait to stop at the configured 2s", diags)
+		}
+	case <-time.After(30 * time.Second):
+		t.Fatal("the delete wait ignored timeouts.delete = 2s")
 	}
 }
