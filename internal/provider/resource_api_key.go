@@ -79,9 +79,6 @@ func apiKeyResource() *schema.Resource {
 		// Temporarily disabling this as a stopgap solution. For more details, see:
 		// https://github.com/confluentinc/terraform-provider-confluent/pull/538
 		// CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(apiKeyCreateTimeout),
-		},
 	}
 }
 

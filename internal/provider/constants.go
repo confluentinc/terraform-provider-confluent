@@ -22,7 +22,6 @@ const (
 	accessPointKey                            = "access_point_id"
 	allGoogleApisNormalized                   = "all-google-apis"
 	apiKeyLoggingKey                          = "api_key_id"
-	apiKeyCreateTimeout                       = 20 * time.Minute
 	avroFormat                                = "AVRO"
 	awsEgressPrivateLinkEndpoint              = "AwsEgressPrivateLinkEndpoint"
 	awsEgressPrivateLinkGatewaySpecKind       = "AwsEgressPrivateLinkGatewaySpec"
@@ -175,7 +174,7 @@ const (
 	kafkaClusterTypeStandard                             = "Standard"
 	kafkaMirrorTopicLoggingKey                           = "kafka_mirror_topic_id"
 	kafkaMirrorTopicDeleteTimeout                        = 1 * time.Hour
-	kafkaMirrorTopicUpdateTimeout                        = 20 * time.Minute
+	kafkaMirrorTopicUpdateTimeout                        = 5 * time.Minute
 	kafkaQuotasAPIWaitAfterCreate                        = 30 * time.Second
 	kafkaQuotasAPIWaitAfterUpdate                        = 15 * time.Second
 	kafkaRestAPIWaitAfterCreate                          = 10 * time.Second
@@ -734,7 +733,7 @@ const (
 	saslOAuthBearerTokenEndpointUrlConfigKey  = "sasl.oauthbearer.token.endpoint.url"
 	schemaEntityType                          = "sr_schema"
 	schemaExporterAPICreateTimeout            = 12 * time.Hour
-	schemaExporterAPIUpdateTimeout            = 12 * time.Hour
+	schemaExporterAPIUpdateTimeout            = 20 * time.Minute
 	schemaExporterLoggingKey                  = "schema_exporter_id"
 	schemaLoggingKey                          = "schema_id"
 	schemaNotCompatibleErrorMessage           = `Compatibility check on the schema has failed against one or more versions in the subject, depending on how the compatibility is set.
