@@ -77,9 +77,9 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
-- `update` - (Default `20m`) How long to wait for the mirror topic to be paused, resumed, failed over or promoted.
+- `update` - (Default `5m`) How long to wait for the mirror topic to be paused, resumed, failed over or promoted.
 - `delete` - (Default `1h`) How long to wait for the mirror topic to be deleted.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.

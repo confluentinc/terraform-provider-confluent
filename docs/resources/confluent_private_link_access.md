@@ -166,7 +166,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
 - `create` - (Default `2h`) How long to wait for the private link access to be provisioned.
 - `delete` - (Default `5h`) How long to wait for the private link access to be deleted.

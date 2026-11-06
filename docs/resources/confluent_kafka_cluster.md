@@ -310,13 +310,13 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
 - `create` - (Default `72h` for Dedicated clusters, `1h` for all other cluster types) How long to wait for the Kafka cluster to be provisioned.
 - `update` - (Default `72h`) How long to wait for a Dedicated Kafka cluster to finish resizing after a `cku` change.
 - `delete` - (Default `30m`) How long to wait for the Kafka cluster to be deleted.
 
--> **Note:** For a non-Dedicated cluster, a `create` value of exactly `72h` is treated as unset, so the cluster waits up to 1 hour. In environments with Stream Governance, a create also waits up to 10 minutes for the environment's Schema Registry cluster after the Kafka cluster is provisioned. That wait doesn't change with `create`.
+-> **Note:** For a non-Dedicated cluster, a `create` value equal to 72 hours (such as `72h` or `4320m`) is treated as unset, so the provisioning wait stops after 1 hour. In environments with Stream Governance, a create also waits up to 10 minutes for the environment's Schema Registry cluster after the Kafka cluster is provisioned. That wait doesn't change with `create`.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 

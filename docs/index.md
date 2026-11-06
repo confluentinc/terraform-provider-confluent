@@ -195,7 +195,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 ## Timeouts
 
-Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error.
+Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error. A few steps don't stop at the limit: the fixed waits noted on some resource pages, and file uploads, finish first, so an operation can run past a shorter limit before it fails.
 
 Unless a resource's documentation says otherwise, each operation is limited to 20 minutes, and so is each data source read. Resources whose operations wait for Confluent Cloud to finish work in the background, such as provisioning a Dedicated Kafka cluster or deleting a network, set their own defaults for those operations and accept a `timeouts` block for them. The **Timeouts** section of the resource's page lists the operations you can set and their defaults. A value in the `timeouts` block can be higher or lower than the default:
 
@@ -211,9 +211,11 @@ resource "confluent_kafka_cluster" "dedicated" {
 
 -> **Note:** A `timeouts` block accepts only the operations listed for that resource. Values use Go duration syntax, such as `90m` or `6h`.
 
--> **Note:** Terraform saves the `timeouts` values in state when it creates or updates a resource, and `terraform destroy` uses the saved values. A change to only the `timeouts` block doesn't update the resource, so a new `delete` value takes effect after the resource's next create or update. Until then, a resource that was imported, or that was last created or updated with a provider version that didn't support a `delete` timeout for it, is deleted with the 20-minute limit.
+-> **Note:** Terraform saves the `timeouts` values in state when it creates or updates a resource, and `terraform destroy` uses the saved values. An imported resource starts with the resource's default values. A change to only the `timeouts` block doesn't update the resource, so a new `delete` value takes effect after the resource's next create or update. Until then, a resource that was last created, updated or imported with a provider version that didn't support a `delete` timeout for it is deleted with the 20-minute limit.
 
--> **Note:** If a create runs out of time after Confluent Cloud has started creating the resource, Terraform usually saves the resource as tainted, and the next `terraform apply` destroys and re-creates it. If the resource finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` are exceptions: a create that runs out of time saves nothing to state, so delete the new API key, or import the schema exporter, before you apply again.
+-> **Note:** If a create runs out of time after Confluent Cloud has started creating the resource, Terraform usually saves the resource as tainted, and the next `terraform apply` destroys and re-creates it. If the resource finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` are exceptions: they're saved to state only after they're ready, so a create that runs out of time while waiting saves nothing. Run `terraform state list` to check. If the resource isn't there, delete the new API key, or import the schema exporter, before you apply again.
+
+-> **Note:** If you interrupt `terraform apply` once, for example with Ctrl-C, operations already in progress keep waiting until they finish or reach their limit. Interrupting again stops Terraform right away, which can leave resources that were being created out of state.
 
 ## Helpful Links/Information
 

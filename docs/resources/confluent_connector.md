@@ -361,7 +361,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
 - `create` - (Default `24h`) How long to wait for the connector to be provisioned.
 - `update` - (Default `1h`) How long to wait for the connector to be paused or resumed, or for its offsets to be updated.

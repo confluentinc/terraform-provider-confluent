@@ -225,14 +225,6 @@ resource "azurerm_key_vault_secret" "connect-xyz-consumer-secret" {
 }
 ```
 
-## Timeouts
-
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
-
-- `create` - (Default `20m`) How long to wait for the new Cloud, Kafka, Tableflow or Global API key to be ready to use. Schema Registry and Flink API keys wait a fixed 1 minute, and ksqlDB API keys a fixed 5 minutes. The provider doesn't wait when `disable_wait_for_ready` is `true`.
-
--> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
-
 ## Import
 
 -> **Note:** You must set the `API_KEY_SECRET` (`secret`) environment variable before importing an API Key. This applies whether the provider is authenticated with a Cloud API key/secret or [OAuth credentials](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials): the API Key Mgmt API does not return an API Key's secret after creation, so it cannot be read back on import.

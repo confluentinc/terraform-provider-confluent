@@ -74,7 +74,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
 - `create` - (Default `30m`) How long to wait for the switchover pair to be ready to fail over.
 

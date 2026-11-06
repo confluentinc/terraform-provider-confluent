@@ -57,9 +57,9 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Timeouts
 
-The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts)):
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
-- `create` - (Default `2h`) How long to wait for the private link attachment to be provisioned.
+- `create` - (Default `2h`) How long to wait for the private link attachment to be provisioned, or to be waiting for connections.
 - `delete` - (Default `5h`) How long to wait for the private link attachment to be deleted.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
