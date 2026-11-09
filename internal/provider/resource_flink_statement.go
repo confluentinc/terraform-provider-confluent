@@ -111,6 +111,8 @@ func flinkStatementResource() *schema.Resource {
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(statementsAPICreateTimeout),
+			Update: schema.DefaultTimeout(statementsAPIUpdateTimeout),
+			Delete: schema.DefaultTimeout(statementsAPIDeleteTimeout),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff, resourceCredentialBlockValidationWithOAuth),
 	}
@@ -179,7 +181,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	d.SetId(createFlinkStatementId(flinkRestClient.environmentId, createdFlinkStatement.Spec.GetComputePoolId(), createdFlinkStatement.GetName()))
 
-	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), mergedProperties, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), mergedProperties, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to provision: %s", createdFlinkStatement.GetName(), createDescriptiveError(err, resp))
 	}
 
@@ -322,7 +324,7 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return diag.Errorf("error stopping Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 		}
-		if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, true); err != nil {
+		if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, true, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err, resp))
 		}
 	}
@@ -388,7 +390,7 @@ func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error resuming Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 	}
-	if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, false); err != nil {
+	if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, false, d.Timeout(schema.TimeoutUpdate)); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err, resp))
 	}
 
@@ -521,7 +523,7 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error deleting Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 	}
 
-	if err := waitForFlinkStatementToBeDeleted(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkStatementToBeDeleted(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to be deleted: %s", statementName, createDescriptiveError(err, resp))
 	}
 

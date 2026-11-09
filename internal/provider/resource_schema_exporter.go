@@ -104,6 +104,7 @@ func schemaExporterResource() *schema.Resource {
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(schemaExporterAPICreateTimeout),
+			Update: schema.DefaultTimeout(schemaExporterAPIUpdateTimeout),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -258,7 +259,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err, resp))
 	}
 
-	if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, exporterId, name); err != nil {
+	if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, exporterId, name, d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for Schema Exporter %q to provision: %s", exporterId, createDescriptiveError(err, resp))
 	}
 
@@ -441,7 +442,7 @@ func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegist
 			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err, resp))
 		}
 
-		if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name); err != nil {
+		if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err, resp))
 		}
 		status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()

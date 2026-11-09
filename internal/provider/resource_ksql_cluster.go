@@ -153,7 +153,7 @@ func ksqlClusterCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	// Wait for async provisioning to complete
-	if err := waitForKsqlClusterToProvision(c.ksqlV2ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForKsqlClusterToProvision(c.ksqlV2ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for ksql cluster %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -278,7 +278,7 @@ func ksqlClusterDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForKsqlClusterToBeDeleted(c.ksqlV2ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForKsqlClusterToBeDeleted(c.ksqlV2ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for ksql cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -350,13 +350,13 @@ func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId st
 }
 
 // waitForKsqlClusterToProvision waits for the resource to reach a ready state
-func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId string, ksqlClusterId string) error {
+func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId string, ksqlClusterId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateProvisioned},
 		Refresh:      ksqlClusterProvisionStatus(ctx, c, environmentId, ksqlClusterId),
-		Timeout:      ksqlCreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -387,13 +387,13 @@ func ksqlClusterDeleteStatus(ctx context.Context, c *Client, environmentId strin
 }
 
 // waitForKsqlClusterToBeDeleted waits for the resource to be fully deleted
-func waitForKsqlClusterToBeDeleted(ctx context.Context, c *Client, environmentId string, ksqlClusterId string) error {
+func waitForKsqlClusterToBeDeleted(ctx context.Context, c *Client, environmentId string, ksqlClusterId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{"DELETING"},
 		Target:       []string{"DELETED"},
 		Refresh:      ksqlClusterDeleteStatus(ctx, c, environmentId, ksqlClusterId),
-		Timeout:      ksqlDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}

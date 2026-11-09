@@ -111,7 +111,7 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	// Wait for async provisioning to complete
-	if err := waitForNetworkLinkEndpointToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForNetworkLinkEndpointToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for network link endpoint %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -256,7 +256,7 @@ func networkLinkEndpointDelete(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForNetworkLinkEndpointToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForNetworkLinkEndpointToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for network link endpoint %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -363,13 +363,13 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 }
 
 // waitForNetworkLinkEndpointToProvision waits for the resource to reach a ready state
-func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId string, networkLinkEndpointId string) error {
+func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId string, networkLinkEndpointId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{statePendingAccept, stateReady, stateInactive},
 		Refresh:      networkLinkEndpointProvisionStatus(ctx, c, environmentId, networkLinkEndpointId),
-		Timeout:      networkingAPICreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -400,13 +400,13 @@ func networkLinkEndpointDeleteStatus(ctx context.Context, c *Client, environment
 }
 
 // waitForNetworkLinkEndpointToBeDeleted waits for the resource to be fully deleted
-func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, environmentId string, networkLinkEndpointId string) error {
+func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, environmentId string, networkLinkEndpointId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{"DELETING"},
 		Target:       []string{"DELETED"},
 		Refresh:      networkLinkEndpointDeleteStatus(ctx, c, environmentId, networkLinkEndpointId),
-		Timeout:      networkingAPIDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
