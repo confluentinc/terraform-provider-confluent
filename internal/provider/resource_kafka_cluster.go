@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -168,6 +169,8 @@ func kafkaResource() *schema.Resource {
 			Create: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
 			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
 			Update: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
+			// Kafka clusters can take up to 30 minutes to be fully deleted
+			Delete: schema.DefaultTimeout(kafkaClusterDeleteTimeout),
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -343,7 +346,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			return err
 		}
 
-		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
+		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), cku, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
 		}
 	}
@@ -376,6 +379,16 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func executeKafkaCreate(ctx context.Context, c *Client, cluster *cmkv2.CmkV2Cluster) (cmkv2.CmkV2Cluster, *http.Response, error) {
 	req := c.cmkV2Client.ClustersCmkV2Api.CreateCmkV2Cluster(c.cmkV2ApiContext(ctx)).CmkV2Cluster(*cluster)
 	return req.Execute()
+}
+
+// kafkaClusterCreateWaitTimeout returns how long to wait for a new cluster to provision: the
+// timeouts.create value if the user changed it, otherwise the default for the cluster type.
+func kafkaClusterCreateWaitTimeout(d *schema.ResourceData, clusterType string) time.Duration {
+	timeout := d.Timeout(schema.TimeoutCreate)
+	if timeout == getTimeoutFor(kafkaClusterTypeDedicated) {
+		return getTimeoutFor(clusterType)
+	}
+	return timeout
 }
 
 func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -467,7 +480,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 	d.SetId(createdKafkaCluster.GetId())
 
-	if err := waitForKafkaClusterToProvision(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), clusterType); err != nil {
+	if err := waitForKafkaClusterToProvision(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), clusterType, kafkaClusterCreateWaitTimeout(d, clusterType)); err != nil {
 		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -575,7 +588,7 @@ func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForKafkaClusterToBeDeleted(c.cmkV2ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForKafkaClusterToBeDeleted(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Kafka Cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 

@@ -142,7 +142,7 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	// Wait for async provisioning to complete
-	if err := waitForComputePoolToProvision(c.flinkV2ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForComputePoolToProvision(c.flinkV2ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for compute pool %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -297,7 +297,7 @@ func computePoolDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForComputePoolToBeDeleted(c.flinkV2ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForComputePoolToBeDeleted(c.flinkV2ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for compute pool %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -352,13 +352,13 @@ func computePoolDeleteStatus(ctx context.Context, c *Client, environmentId strin
 }
 
 // waitForComputePoolToBeDeleted waits for the resource to be fully deleted
-func waitForComputePoolToBeDeleted(ctx context.Context, c *Client, environmentId string, computePoolId string) error {
+func waitForComputePoolToBeDeleted(ctx context.Context, c *Client, environmentId string, computePoolId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{"DELETING"},
 		Target:       []string{"DELETED"},
 		Refresh:      computePoolDeleteStatus(ctx, c, environmentId, computePoolId),
-		Timeout:      fcpmAPIDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
