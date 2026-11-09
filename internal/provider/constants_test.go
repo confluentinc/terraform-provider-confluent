@@ -519,9 +519,10 @@ const (
 	networkLinkServiceResourceScenarioName                              = "confluent_network_link_service Resource Lifecycle"
 	networkLinkServiceUrlPath                                           = "/networking/v1/network-link-services"
 	numberOfClusterLinkDataSourceAttributes                             = "8"
-	numberOfClusterLinkResourceAttributes                               = "10"
-	numberOfKafkaMirrorTopicResourceAttributes                          = "6"
-	numberOfResourceAttributes                                          = "7"
+	numberOfClusterLinkResourceAttributes                               = "11"
+	numberOfKafkaMirrorTopicResourceAttributes                          = "7"
+	numberOfResourceAttributes                                          = "8"
+	numberOfKafkaTopicDataSourceAttributes                              = "7"
 	organizationDataSourceLabel                                         = "test_organization_data_source_label"
 	organizationDataSourceScenarioName                                  = "confluent_organization Data Source Lifecycle"
 	partitionCount                                                      = 4
