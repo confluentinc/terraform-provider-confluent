@@ -273,7 +273,7 @@ The following arguments are supported:
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
--> **Note:** Currently, provisioning of a Dedicated Kafka cluster takes around 25 minutes on average but might take up to 24 hours. If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website.
+-> **Note:** Most new Dedicated Kafka clusters are provisioned in less than 2 hours ([Confluent documentation](https://docs.confluent.io/cloud/current/clusters/cluster-faq.html)). If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website.
 
 -> **Note:** Refer to [eCKU/CKU comparison](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#ecku-cku-comparison) documentation for the minimum/maximum eCKU requirements for each cluster type. 
 
@@ -317,6 +317,8 @@ The `timeouts` block sets how long Terraform waits for these operations to finis
 - `delete` - (Default `30m`) How long to wait for the Kafka cluster to be deleted.
 
 -> **Note:** For a non-Dedicated cluster, a `create` value equal to 72 hours (such as `72h` or `4320m`) is treated as unset, so the provisioning wait stops after 1 hour. In environments with Stream Governance, a create also waits up to 10 minutes for the environment's Schema Registry cluster after the Kafka cluster is provisioned. That wait doesn't change with `create`.
+
+-> **Note:** Resizing a Dedicated cluster takes about 30 to 60 minutes per CKU ([Confluent documentation](https://docs.confluent.io/cloud/current/clusters/resize.html)), so a large `cku` change can take many hours. If it might take longer than 72 hours, set a higher `update` value.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 

@@ -733,7 +733,7 @@ const (
 	saslOAuthBearerTokenEndpointUrlConfigKey  = "sasl.oauthbearer.token.endpoint.url"
 	schemaEntityType                          = "sr_schema"
 	schemaExporterAPICreateTimeout            = 12 * time.Hour
-	schemaExporterAPIUpdateTimeout            = 20 * time.Minute
+	schemaExporterAPIUpdateTimeout            = 12 * time.Hour
 	schemaExporterLoggingKey                  = "schema_exporter_id"
 	schemaLoggingKey                          = "schema_id"
 	schemaNotCompatibleErrorMessage           = `Compatibility check on the schema has failed against one or more versions in the subject, depending on how the compatibility is set.

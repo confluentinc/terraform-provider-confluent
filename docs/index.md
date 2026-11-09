@@ -211,6 +211,8 @@ resource "confluent_kafka_cluster" "dedicated" {
 
 -> **Note:** A `timeouts` block accepts only the operations listed for that resource. Values use Go duration syntax, such as `90m` or `6h`.
 
+-> **Note:** The limits apply to each operation, not to a whole `terraform apply`, which has no time limit. Importing a resource also has no time limit; the read that Terraform runs after an import is limited to 20 minutes.
+
 -> **Note:** Terraform saves the `timeouts` values in state when it creates or updates a resource, and `terraform destroy` uses the saved values. An imported resource starts with the resource's default values. A change to only the `timeouts` block doesn't update the resource, so a new `delete` value takes effect after the resource's next create or update. Until then, a resource that was last created, updated or imported with a provider version that didn't support a `delete` timeout for it is deleted with the 20-minute limit.
 
 -> **Note:** If a create runs out of time after Confluent Cloud has started creating the resource, Terraform usually saves the resource as tainted, and the next `terraform apply` destroys and re-creates it. If the resource finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` are exceptions: they're saved to state only after they're ready, so a create that runs out of time while waiting saves nothing. Run `terraform state list` to check. If the resource isn't there, delete the new API key, or import the schema exporter, before you apply again.

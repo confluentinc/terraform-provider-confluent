@@ -60,7 +60,7 @@ var expectedResourceTimeouts = map[string]operationTimeouts{
 	"confluent_private_link_attachment":            {create: 2 * time.Hour, delete: 5 * time.Hour},
 	"confluent_private_link_attachment_connection": {create: 2 * time.Hour, delete: 5 * time.Hour},
 	"confluent_rtce_topic":                         {create: time.Hour, delete: time.Hour},
-	"confluent_schema_exporter":                    {create: 12 * time.Hour, update: 20 * time.Minute},
+	"confluent_schema_exporter":                    {create: 12 * time.Hour, update: 12 * time.Hour},
 	"confluent_switchover_pair":                    {create: 30 * time.Minute},
 	"confluent_switchover_endpoint":                {delete: 20 * time.Minute},
 	"confluent_tf_importer":                        {create: 8 * time.Hour},

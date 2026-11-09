@@ -82,6 +82,8 @@ The `timeouts` block sets how long Terraform waits for these operations to finis
 - `update` - (Default `20m`) How long to wait for the mirror topic to be paused, resumed, failed over or promoted.
 - `delete` - (Default `1h`) How long to wait for the mirror topic to be deleted.
 
+-> **Note:** A promote or failover waits until Confluent Cloud reports the mirror topic as stopped. If that takes longer than `update`, the apply fails but the change keeps going in Confluent Cloud. If you expect a promote or failover to take longer than 20 minutes, set a higher `update` value.
+
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 
 ## Import

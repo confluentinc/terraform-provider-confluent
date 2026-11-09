@@ -148,7 +148,7 @@ In addition to the preceding arguments, the following attributes are exported:
 The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
 - `create` - (Default `12h`) How long to wait for the schema exporter to be running or paused.
-- `update` - (Default `20m`) How long to wait for the schema exporter to be running or paused again after it's updated or resumed.
+- `update` - (Default `12h`) How long to wait for the schema exporter to be running or paused again after it's updated or resumed.
 
 -> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 
