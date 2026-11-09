@@ -179,7 +179,7 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 		}
 		for _, decl := range f.Decls {
 			fd, ok := decl.(*ast.FuncDecl)
-			if !ok {
+			if !ok || fd.Body == nil {
 				continue
 			}
 			want := ""
@@ -192,10 +192,15 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 				want = op
 				seenHelpers[fd.Name.Name] = true
 			}
-			if want == "" {
-				continue
-			}
 			ast.Inspect(fd.Body, func(n ast.Node) bool {
+				// A helper that reads one operation's timeout must only be called from that operation.
+				if call, ok := n.(*ast.CallExpr); ok {
+					if fn, ok := call.Fun.(*ast.Ident); ok {
+						if op, ok := crudHelperOps[fn.Name]; ok && op != want {
+							t.Errorf("%s: %s calls %s, which reads schema.%s; call it only from that operation", fset.Position(call.Pos()), fd.Name.Name, fn.Name, op)
+						}
+					}
+				}
 				sel, ok := n.(*ast.SelectorExpr)
 				if !ok {
 					return true
@@ -204,7 +209,9 @@ func TestCrudFunctionsUseOwnOperationTimeout(t *testing.T) {
 					for _, op := range ops {
 						if sel.Sel.Name == op {
 							checked++
-							if op != want {
+							if want == "" {
+								t.Errorf("%s: %s reads schema.%s but isn't a Create/Read/Update/Delete function; add it to crudHelperOps", fset.Position(sel.Pos()), fd.Name.Name, op)
+							} else if op != want {
 								t.Errorf("%s: %s uses schema.%s, want schema.%s", fset.Position(sel.Pos()), fd.Name.Name, op, want)
 							}
 						}
@@ -319,12 +326,32 @@ func TestStatusWaitsUseOperationTimeout(t *testing.T) {
 			if !ok || fd.Body == nil {
 				continue
 			}
+			_, isWait := timeoutParam[fd.Name.Name]
 			ast.Inspect(fd.Body, func(n ast.Node) bool {
-				if assign, ok := n.(*ast.AssignStmt); ok && fd.Name.Name != "kafkaClusterCreateWaitTimeout" {
-					for _, lhs := range assign.Lhs {
-						if id, ok := lhs.(*ast.Ident); ok && id.Name == "timeout" {
-							t.Errorf("%s: %s assigns timeout; pass the operation's timeout through unchanged", fset.Position(assign.Pos()), fd.Name.Name)
+				if fd.Name.Name != "kafkaClusterCreateWaitTimeout" {
+					if assign, ok := n.(*ast.AssignStmt); ok {
+						for _, lhs := range assign.Lhs {
+							if id, ok := lhs.(*ast.Ident); ok && id.Name == "timeout" {
+								t.Errorf("%s: %s assigns timeout; pass the operation's timeout through unchanged", fset.Position(assign.Pos()), fd.Name.Name)
+							}
+							// e.g. stateConf.Timeout = time.Hour after the StateChangeConf literal.
+							if sel, ok := lhs.(*ast.SelectorExpr); ok && isWait && sel.Sel.Name == "Timeout" {
+								t.Errorf("%s: %s sets %s.Timeout; set it in the StateChangeConf literal from the timeout parameter", fset.Position(assign.Pos()), fd.Name.Name, exprName(sel.X))
+							}
 						}
+					}
+					if spec, ok := n.(*ast.ValueSpec); ok {
+						for _, name := range spec.Names {
+							if name.Name == "timeout" {
+								t.Errorf("%s: %s declares timeout; pass the operation's timeout through unchanged", fset.Position(spec.Pos()), fd.Name.Name)
+							}
+						}
+					}
+				}
+				// A shorter context inside a wait would end it before its timeout.
+				if call, ok := n.(*ast.CallExpr); ok && isWait {
+					if sel, ok := call.Fun.(*ast.SelectorExpr); ok && exprName(sel.X) == "context" && (sel.Sel.Name == "WithTimeout" || sel.Sel.Name == "WithDeadline") {
+						t.Errorf("%s: %s calls context.%s; let the wait stop at its timeout parameter", fset.Position(call.Pos()), fd.Name.Name, sel.Sel.Name)
 					}
 				}
 				lit, ok := n.(*ast.CompositeLit)
@@ -386,6 +413,13 @@ func TestStatusWaitsUseOperationTimeout(t *testing.T) {
 			return true
 		})
 	}
+}
+
+func exprName(e ast.Expr) string {
+	if id, ok := e.(*ast.Ident); ok {
+		return id.Name
+	}
+	return ""
 }
 
 func isOperationTimeoutArg(arg ast.Expr) bool {

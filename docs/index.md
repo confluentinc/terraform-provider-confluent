@@ -195,7 +195,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 ## Timeouts
 
-Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error. A few steps don't stop at the limit: the fixed waits noted on some resource pages, and file uploads, finish first, so an operation can run past a shorter limit before it fails.
+Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error. A few steps don't stop at the limit and finish first, so an operation can run past a shorter limit before it fails: fixed pauses between some steps (up to 5 minutes, such as after creating some API keys), file uploads, and the API requests of `confluent_connect_artifact`.
 
 Unless a resource's documentation says otherwise, each operation is limited to 20 minutes, and so is each data source read. Resources whose operations wait for Confluent Cloud to finish work in the background, such as provisioning a Dedicated Kafka cluster or deleting a network, set their own defaults for those operations and accept a `timeouts` block for them. The **Timeouts** section of the resource's page lists the operations you can set and their defaults. A value in the `timeouts` block can be higher or lower than the default:
 

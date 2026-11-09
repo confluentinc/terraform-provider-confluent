@@ -51,9 +51,9 @@ In addition to the arguments listed above, the following computed attributes are
 
 The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
 
-- `create` - (Default `1h`) How long the create can take, including uploading the file and waiting for the Connect artifact to be ready. The upload has its own 20-minute limit and isn't interrupted by a shorter `create`.
+- `create` - (Default `1h`) How long to wait for the Connect artifact to be ready after its file is uploaded.
 
--> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+-> **Note:** For this resource, `create` limits only the wait for the artifact to be ready. The file upload, which has its own 20-minute limit, and the resource's API requests aren't stopped by it, so a create can take longer than `create` in total. The value can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 
 ## Import
 
