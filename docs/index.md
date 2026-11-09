@@ -195,9 +195,11 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 ## Timeouts
 
-Every create, read, update and delete operation has a time limit. The limit covers the whole operation: every API request it makes, the retries of those requests, and any wait for Confluent Cloud to finish the change. When the limit is reached, the operation fails, usually with a `context deadline exceeded` error. A few steps don't stop at the limit and finish first, so an operation can run past a shorter limit before it fails: fixed pauses between some steps (up to 5 minutes, such as after creating some API keys), file uploads, and the API requests of `confluent_connect_artifact`.
+Each create, read, update and delete operation has a time limit. The limit covers the operation's API requests, their retries, and any wait for Confluent Cloud to finish. When it's reached, the operation fails, usually with a `context deadline exceeded` error.
 
-Unless a resource's documentation says otherwise, each operation is limited to 20 minutes, and so is each data source read. Resources whose operations wait for Confluent Cloud to finish work in the background, such as provisioning a Dedicated Kafka cluster or deleting a network, set their own defaults for those operations and accept a `timeouts` block for them. The **Timeouts** section of the resource's page lists the operations you can set and their defaults. A value in the `timeouts` block can be higher or lower than the default:
+- **Default:** 20 minutes, including data source reads.
+- **Resource defaults:** resources that wait for Confluent Cloud, such as a Dedicated Kafka cluster or a network, set their own. The **Timeouts** section of the resource's page lists them.
+- **Your own value:** those resources accept a `timeouts` block for the operations their page lists. A value can be higher or lower than the default and uses Go duration syntax, such as `90m` or `6h`.
 
 ```terraform
 resource "confluent_kafka_cluster" "dedicated" {
@@ -209,15 +211,17 @@ resource "confluent_kafka_cluster" "dedicated" {
 }
 ```
 
--> **Note:** A `timeouts` block accepts only the operations listed for that resource. Values use Go duration syntax, such as `90m` or `6h`.
+The limit doesn't apply to:
 
--> **Note:** The limits apply to each operation, not to a whole `terraform apply`, which has no time limit. Importing a resource also has no time limit; the read that Terraform runs after an import is limited to 20 minutes.
+- A whole `terraform apply`. Only each operation is limited.
+- Imports. The read that Terraform runs after an import is limited to 20 minutes.
+- Fixed pauses between some steps (up to 5 minutes), file uploads, and the API requests of `confluent_connect_artifact`. These finish first, so an operation can run past a shorter limit.
 
--> **Note:** Terraform saves the `timeouts` values in state when it creates or updates a resource, and `terraform destroy` uses the saved values. An imported resource starts with the resource's default values. A change to only the `timeouts` block doesn't update the resource, so a new `delete` value takes effect after the resource's next create or update. Until then, a resource that was last created, updated or imported with a provider version that didn't support a `delete` timeout for it is deleted with the 20-minute limit.
+-> **Note:** `terraform destroy` uses the `timeouts` values saved in state when the resource was last created or updated, not the ones in your configuration. A new `delete` value, or a new default after a provider upgrade, takes effect after the resource's next create or update. An imported resource starts with the resource's defaults.
 
--> **Note:** If a create runs out of time after Confluent Cloud has started creating the resource, Terraform usually saves the resource as tainted, and the next `terraform apply` destroys and re-creates it. If the resource finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` are exceptions: they're saved to state only after they're ready, so a create that runs out of time while waiting saves nothing. Run `terraform state list` to check. If the resource isn't there, delete the new API key, or import the schema exporter, before you apply again.
+-> **Note:** If a create times out after Confluent Cloud has started creating the resource, Terraform usually marks it as tainted, and the next `terraform apply` replaces it. If it finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` aren't saved to state until they're ready, so after a timed-out create, delete the new API key or import the schema exporter before you apply again.
 
--> **Note:** If you interrupt `terraform apply` once, for example with Ctrl-C, operations already in progress keep waiting until they finish or reach their limit. Interrupting again stops Terraform right away, which can leave resources that were being created out of state.
+-> **Note:** If you press Ctrl-C once, operations in progress keep waiting until they finish or time out. Pressing it again stops Terraform right away, which can leave resources that were being created out of state.
 
 ## Helpful Links/Information
 
