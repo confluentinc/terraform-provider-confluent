@@ -73,11 +73,15 @@ func TestAccClientRequestPolicyLive(t *testing.T) {
 					testAccCheckClientRequestPolicyLiveExists(fullResourceLabel),
 					resource.TestCheckResourceAttr(fullResourceLabel, "name", policyName),
 					resource.TestCheckResourceAttr(fullResourceLabel, "policy_type", "VersionPolicy"),
-					resource.TestCheckResourceAttr(fullResourceLabel, "resource_name", resourceCrn),
+					resource.TestCheckResourceAttr(fullResourceLabel, "scope.#", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "scope.0.resource_name", resourceCrn),
 					resource.TestCheckResourceAttr(fullResourceLabel, "mode", "AUDIT"),
 					resource.TestCheckResourceAttr(fullResourceLabel, "action", "DENY"),
 					resource.TestCheckResourceAttr(fullResourceLabel, "rules.#", "1"),
-					resource.TestCheckResourceAttrSet(fullResourceLabel, "id"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "rules.0.mutate", ""),
+					resource.TestCheckResourceAttr(fullResourceLabel, "id", policyName),
+					resource.TestCheckResourceAttrSet(fullResourceLabel, "resource_name"),
+					resource.TestCheckResourceAttrSet(fullResourceLabel, "phase"),
 				),
 			},
 			{
@@ -109,7 +113,7 @@ func testAccCheckClientRequestPolicyLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPolicyName := rs.Primary.ID
-		_, response, err := c.configurationControlV1Client.PoliciesConfigurationcontrolV1Api.GetConfigurationcontrolV1Policy(c.configurationControlV1ApiContext(context.Background()), deletedPolicyName).Execute()
+		_, response, err := c.configurationcontrolV1Client.PoliciesConfigurationcontrolV1Api.GetConfigurationcontrolV1Policy(c.configurationcontrolV1ApiContext(context.Background()), deletedPolicyName).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil {
@@ -129,11 +133,13 @@ func testAccCheckClientRequestPolicyLiveConfig(endpoint, resourceLabel, policyNa
 	}
 
 	resource "confluent_client_request_policy" "%s" {
-		name          = "%s"
-		policy_type   = "VersionPolicy"
-		resource_name = "%s"
-		mode          = "%s"
-		action        = "DENY"
+		name        = "%s"
+		policy_type = "VersionPolicy"
+		scope {
+			resource_name = "%s"
+		}
+		mode   = "%s"
+		action = "DENY"
 		rules {
 			name  = "require-recent-java-client"
 			match = "%s"

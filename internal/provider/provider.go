@@ -105,6 +105,7 @@ type Client struct {
 	catalogRestEndpoint             string
 	cloudApiKey                     string
 	cloudApiSecret                  string
+	configurationcontrolV1Client    *configurationcontrolv1.APIClient
 	kafkaClusterId                  string
 	kafkaApiKey                     string
 	kafkaApiSecret                  string
@@ -135,7 +136,6 @@ type Client struct {
 	isOAuthEnabled                  bool
 	notificationsV1Client           *notificationsv1.APIClient
 	rtceV1Client                    *rtcev1.APIClient
-	configurationControlV1Client    *configurationcontrolv1.APIClient
 	switchoverV1Client              *switchoverv1.APIClient
 	// cli-tfgen:tf-client-fields
 }
@@ -609,6 +609,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectCustomPluginV1Cfg := connectcustompluginv1.NewConfiguration()
 	ccpmV1Cfg := ccpmv1.NewConfiguration()
 	cmkV2Cfg := cmkv2.NewConfiguration()
+	configurationcontrolV1Cfg := configurationcontrolv1.NewConfiguration()
 	connectV1Cfg := connectv1.NewConfiguration()
 	flinkArtifactV1Cfg := flinkartifactv1.NewConfiguration()
 	flinkV2Cfg := flinkv2.NewConfiguration()
@@ -634,7 +635,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
-	configurationControlV1Cfg := configurationcontrolv1.NewConfiguration()
 	switchoverV1Cfg := switchoverv1.NewConfiguration()
 	// cli-tfgen:tf-client-cfg
 
@@ -645,6 +645,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.Servers[0].URL = endpoint
 	camV1Cfg.Servers[0].URL = endpoint
 	cmkV2Cfg.Servers[0].URL = endpoint
+	configurationcontrolV1Cfg.Servers[0].URL = endpoint
 	connectV1Cfg.Servers[0].URL = endpoint
 	flinkArtifactV1Cfg.Servers[0].URL = endpoint
 	flinkV2Cfg.Servers[0].URL = endpoint
@@ -670,7 +671,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
-	configurationControlV1Cfg.Servers[0].URL = endpoint
 	switchoverV1Cfg.Servers[0].URL = endpoint
 	// cli-tfgen:tf-client-endpoint
 
@@ -682,6 +682,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.UserAgent = userAgent
 	camV1Cfg.UserAgent = userAgent
 	cmkV2Cfg.UserAgent = userAgent
+	configurationcontrolV1Cfg.UserAgent = userAgent
 	connectV1Cfg.UserAgent = userAgent
 	flinkArtifactV1Cfg.UserAgent = userAgent
 	flinkV2Cfg.UserAgent = userAgent
@@ -707,7 +708,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
-	configurationControlV1Cfg.UserAgent = userAgent
 	switchoverV1Cfg.UserAgent = userAgent
 	// cli-tfgen:tf-client-useragent
 
@@ -731,6 +731,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	configurationcontrolV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries)), WithRateLimitBackoff()).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -756,7 +757,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	configurationControlV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	switchoverV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	// cli-tfgen:tf-client-httpclient
 
@@ -828,6 +828,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		providerIntegrationV2Client:     providerintegrationv2.NewAPIClient(providerIntegrationV2Cfg),
 		srcmV3Client:                    srcmv3.NewAPIClient(srcmV3Cfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
+		configurationcontrolV1Client:    configurationcontrolv1.NewAPIClient(configurationcontrolV1Cfg),
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
@@ -838,7 +839,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
-		configurationControlV1Client:    configurationcontrolv1.NewAPIClient(configurationControlV1Cfg),
 		switchoverV1Client:              switchoverv1.NewAPIClient(switchoverV1Cfg),
 		// cli-tfgen:tf-client-literal
 		userAgent:                  userAgent,

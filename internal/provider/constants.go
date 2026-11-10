@@ -707,9 +707,8 @@ const (
 	paramRules                                           = "rules"
 	paramMatch                                           = "match"
 	paramMutate                                          = "mutate"
-	paramUid                                             = "uid"
-	paramResourceVersion                                 = "resource_version"
 	paramErrorMessage                                    = "error_message"
+	paramScope                                           = "scope"
 	// cli-tfgen:tf-constants
 	peeringLoggingKey                         = "peering_id"
 	pluginLoggingKey                          = "plugin_key_id"

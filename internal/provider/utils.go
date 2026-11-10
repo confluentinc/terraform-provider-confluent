@@ -244,25 +244,6 @@ func (c *Client) iamIpFilteringV2ApiContext(ctx context.Context) context.Context
 	return ctx
 }
 
-func (c *Client) configurationControlV1ApiContext(ctx context.Context) context.Context {
-	if c.oauthToken != nil && c.stsToken != nil {
-		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Configuration Control client: %v", err))
-		}
-		return context.WithValue(ctx, configurationcontrolv1.ContextAccessToken, c.stsToken.AccessToken)
-	}
-
-	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, configurationcontrolv1.ContextBasicAuth, configurationcontrolv1.BasicAuth{
-			UserName: c.cloudApiKey,
-			Password: c.cloudApiSecret,
-		})
-	}
-
-	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Configuration Control client")
-	return ctx
-}
-
 func (c *Client) certificateAuthorityV2ApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
@@ -1678,5 +1659,22 @@ func (c *Client) notificationsV1ApiContext(ctx context.Context) context.Context 
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for notificationsV1 client")
+	return ctx
+}
+
+func (c *Client) configurationcontrolV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, "Failed to get OAuth token for configurationcontrolV1 client", map[string]interface{}{"error": err.Error()})
+		}
+		return context.WithValue(ctx, configurationcontrolv1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, configurationcontrolv1.ContextBasicAuth, configurationcontrolv1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for configurationcontrolV1 client")
 	return ctx
 }
