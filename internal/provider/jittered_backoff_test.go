@@ -34,7 +34,7 @@ func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 		"500":                           responseWithRetryAfter(http.StatusInternalServerError, ""),
 		"502 with Retry-After: 20":      responseWithRetryAfter(http.StatusBadGateway, "20"),
 		"429 without Retry-After":       responseWithRetryAfter(http.StatusTooManyRequests, ""),
-		"429 with invalid Retry-After":  responseWithRetryAfter(http.StatusTooManyRequests, "soon"),
+		"503 without Retry-After":       responseWithRetryAfter(http.StatusServiceUnavailable, ""),
 	} {
 		t.Run(name, func(t *testing.T) {
 			for attemptNum := 0; attemptNum <= rateLimitedAPIMinMaxRetries; attemptNum++ {
@@ -44,28 +44,23 @@ func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 	}
 }
 
-func TestJitteredBackoffNeverRetriesBeforeRetryAfter(t *testing.T) {
+func TestJitteredBackoffWaitsExactlyRetryAfter(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
 		"429 with Retry-After: 1":                 responseWithRetryAfter(http.StatusTooManyRequests, "1"),
 		"503 with Retry-After: 5":                 responseWithRetryAfter(http.StatusServiceUnavailable, "5"),
 		"429 with Retry-After above RetryWaitMax": responseWithRetryAfter(http.StatusTooManyRequests, "120"),
+		"429 with Retry-After: 0":                 responseWithRetryAfter(http.StatusTooManyRequests, "0"),
+		"429 with Retry-After in the past":        responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
+		"429 with invalid Retry-After":            responseWithRetryAfter(http.StatusTooManyRequests, "soon"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
-				checkUpTo20PercentJitter(t, jitteredBackoff, attemptNum, resp)
-			}
-		})
-	}
-}
-
-func TestJitteredBackoffKeepsZeroWaits(t *testing.T) {
-	for name, resp := range map[string]*http.Response{
-		"Retry-After: 0":          responseWithRetryAfter(http.StatusTooManyRequests, "0"),
-		"Retry-After in the past": responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
-	} {
-		t.Run(name, func(t *testing.T) {
-			if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, 2, resp); got != 0 {
-				t.Errorf("got %v, want 0", got)
+				want := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
+				for i := 0; i < 100; i++ {
+					if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp); got != want {
+						t.Fatalf("attempt %d: got %v, want DefaultBackoff's %v", attemptNum, got, want)
+					}
+				}
 			}
 		})
 	}
@@ -76,12 +71,6 @@ func TestWithJitterReturnsUnusableWaitsUnchanged(t *testing.T) {
 		if got := withJitter(wait); got != wait {
 			t.Errorf("withJitter(%d) = %d, want it unchanged", wait, got)
 		}
-	}
-	// An overflowing Retry-After must not panic or shorten the wait DefaultBackoff computes.
-	resp := responseWithRetryAfter(http.StatusTooManyRequests, "9223372036854775807")
-	base := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, 0, resp)
-	if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, 0, resp); got < base {
-		t.Errorf("got %v, want at least DefaultBackoff's %v", got, base)
 	}
 }
 

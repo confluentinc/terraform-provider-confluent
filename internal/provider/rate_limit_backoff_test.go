@@ -151,8 +151,7 @@ func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T
 }
 
 func TestCreateRetryableClientHonorsRetryAfterWithoutOption(t *testing.T) {
-	// Without WithRateLimitBackoff, each "Retry-After: 1" waits 1-1.2s.
 	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 2*time.Second || elapsed >= 3*time.Second {
-		t.Fatalf("expected clients without WithRateLimitBackoff to wait Retry-After: 1 plus up to 20%% (2-2.4s), waited %v", elapsed)
+		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }

@@ -230,9 +230,9 @@ func WithRateLimitBackoff() RetryableClientFactoryOption {
 // and 5** (except 501) errors. Otherwise, the response is returned and left to the caller to interpret.
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
-	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
-	// Connect, IAM, API keys and RBAC clients retry at least 12 times. Every wait gets up to 20% jitter
-	// (jitteredBackoff); Connect's 429/503 waits use rateLimitBackoff's wider jitter instead.
+	// under the assumption is it's OK to spend retrying a single HTTP call around 15-18 seconds in total: 1 + 2 + 4 + 8,
+	// plus up to 20% jitter (jitteredBackoff). Connect, IAM, API keys and RBAC clients retry at least 12 times, and
+	// Connect's 429/503 waits use rateLimitBackoff's wider jitter instead.
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
@@ -269,9 +269,15 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// jitteredBackoff adds up to 20% to DefaultBackoff's wait, so a retry never comes before Retry-After.
+// jitteredBackoff adds up to 20% to DefaultBackoff's exponential wait. A 429/503 with Retry-After still waits exactly
+// that long: jittering it made heavily rate-limited plans run out of retries more often.
 func jitteredBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
-	return withJitter(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp))
+	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
+	if resp != nil && (resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable) &&
+		resp.Header.Get("Retry-After") != "" {
+		return wait
+	}
+	return withJitter(wait)
 }
 
 // withJitter adds a random 0-20% to wait. Zero, negative and near-overflow waits are returned unchanged.
