@@ -116,7 +116,7 @@ func TestAccTableflowTopicLive(t *testing.T) {
 				ResourceName:            fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"credentials"},
+				ImportStateVerifyIgnore: []string{"credentials", "suspended"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					ttId := resources[fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel)].Primary.ID
@@ -140,7 +140,7 @@ func TestAccTableflowTopicLive(t *testing.T) {
 				ResourceName:            fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"credentials"},
+				ImportStateVerifyIgnore: []string{"credentials", "suspended"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					ttId := resources[fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel)].Primary.ID
