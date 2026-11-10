@@ -1,3 +1,8 @@
+## 2.95.0 (Unreleased)
+
+**New features:**
+* Added a new `confluent_client_request_policy` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_client_request_policy) to support [Client Request Policies](https://docs.confluent.io/cloud/current/).
+
 ## 2.94.0 (November 6th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.93.0...v2.94.0)
