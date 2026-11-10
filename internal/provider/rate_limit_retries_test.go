@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"sync/atomic"
 	"testing"
 
@@ -75,34 +74,37 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 	c := meta.(*Client)
 	configured := d.Get("max_retries").(int)
 
-	retryClient := func(name string, httpClient *http.Client) *retryablehttp.Client {
-		logging, ok := httpClient.Transport.(*loggingTransport)
-		if !ok {
-			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
-		}
-		roundTripper, ok := logging.transport.(*retryablehttp.RoundTripper)
-		if !ok {
-			t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
-		}
-		return roundTripper.Client
-	}
 	for name, tc := range map[string]struct {
 		httpClient *http.Client
 		want       int
-		jitter     bool
+		backoff    retryablehttp.Backoff
 	}{
-		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), true},
-		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, false},
+		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
+		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), rateLimitBackoff},
+		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
+		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
+		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, jitteredBackoff},
 	} {
-		client := retryClient(name, tc.httpClient)
+		client := retryClientOf(t, name, tc.httpClient)
 		if client.RetryMax != tc.want {
 			t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
 		}
-		if jitter := reflect.ValueOf(client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
-			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
+		if !isBackoff(client.Backoff, tc.backoff) {
+			t.Errorf("%s client: unexpected Backoff", name)
 		}
 	}
+}
+
+// retryClientOf returns the retryablehttp.Client behind an http.Client built by CreateRetryableClient.
+func retryClientOf(t *testing.T, name string, httpClient *http.Client) *retryablehttp.Client {
+	t.Helper()
+	logging, ok := httpClient.Transport.(*loggingTransport)
+	if !ok {
+		t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
+	}
+	roundTripper, ok := logging.transport.(*retryablehttp.RoundTripper)
+	if !ok {
+		t.Fatalf("%s client: expected a *retryablehttp.RoundTripper, got %T", name, logging.transport)
+	}
+	return roundTripper.Client
 }

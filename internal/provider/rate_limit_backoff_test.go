@@ -8,8 +8,6 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -54,8 +52,8 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 		lower, upper time.Duration
 	}{
 		{"integer seconds above the exponential wait", "20", 20 * time.Second, 30 * time.Second},
-		{"longer than RetryWaitMax is honored as-is", "120", 120 * time.Second, 120 * time.Second},
-		{"exactly RetryWaitMax", "30", testRetryWaitMax, testRetryWaitMax},
+		{"longer than RetryWaitMax gets up to 20% extra", "120", 120 * time.Second, 144 * time.Second},
+		{"exactly RetryWaitMax gets up to 20% extra", "30", testRetryWaitMax, 36 * time.Second},
 		{"HTTP date", time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat), 8 * time.Second, 20 * time.Second},
 	}
 	for _, tc := range cases {
@@ -104,7 +102,7 @@ func checkJitteredSchedule(t *testing.T, resp *http.Response) {
 	}
 }
 
-func TestRateLimitBackoffKeepsDefaultBackoffForOtherResponses(t *testing.T) {
+func TestRateLimitBackoffJittersOtherResponsesLikeOtherClients(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
 		"500":                           responseWithRetryAfter(http.StatusInternalServerError, ""),
 		"502 with Retry-After: 20":      responseWithRetryAfter(http.StatusBadGateway, "20"),
@@ -112,10 +110,7 @@ func TestRateLimitBackoffKeepsDefaultBackoffForOtherResponses(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			for attemptNum := 0; attemptNum < 7; attemptNum++ {
-				want := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
-				if got := rateLimitBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp); got != want {
-					t.Errorf("attempt %d: got %v, want DefaultBackoff's %v", attemptNum, got, want)
-				}
+				checkUpTo20PercentJitter(t, rateLimitBackoff, attemptNum, resp)
 			}
 		})
 	}
@@ -155,8 +150,9 @@ func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T
 	}
 }
 
-func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
-	if elapsed := timeTwoRateLimitedRetries(t); elapsed >= 3*time.Second {
-		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
+func TestCreateRetryableClientHonorsRetryAfterWithoutOption(t *testing.T) {
+	// Without WithRateLimitBackoff, each "Retry-After: 1" waits 1-1.2s.
+	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 2*time.Second || elapsed >= 3*time.Second {
+		t.Fatalf("expected clients without WithRateLimitBackoff to wait Retry-After: 1 plus up to 20%% (2-2.4s), waited %v", elapsed)
 	}
 }
