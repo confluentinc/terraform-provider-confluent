@@ -62,6 +62,9 @@ func TestRateLimitBackoffTreatsRetryAfterAsFloor(t *testing.T) {
 			if lowest < tc.lower || highest > tc.upper {
 				t.Errorf("waits ranged %v-%v, want within %v-%v", lowest, highest, tc.lower, tc.upper)
 			}
+			if highest-lowest < (tc.upper-tc.lower)/2 {
+				t.Errorf("waits ranged only %v-%v, expected jitter across %v-%v", lowest, highest, tc.lower, tc.upper)
+			}
 		})
 	}
 }

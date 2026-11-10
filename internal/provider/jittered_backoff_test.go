@@ -46,12 +46,12 @@ func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 
 func TestJitteredBackoffWaitsExactlyRetryAfter(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
-		"429 with Retry-After: 1":                 responseWithRetryAfter(http.StatusTooManyRequests, "1"),
-		"503 with Retry-After: 5":                 responseWithRetryAfter(http.StatusServiceUnavailable, "5"),
-		"429 with Retry-After above RetryWaitMax": responseWithRetryAfter(http.StatusTooManyRequests, "120"),
-		"429 with Retry-After: 0":                 responseWithRetryAfter(http.StatusTooManyRequests, "0"),
-		"429 with Retry-After in the past":        responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
-		"429 with invalid Retry-After":            responseWithRetryAfter(http.StatusTooManyRequests, "soon"),
+		"429 with Retry-After: 1":                                            responseWithRetryAfter(http.StatusTooManyRequests, "1"),
+		"503 with Retry-After: 5":                                            responseWithRetryAfter(http.StatusServiceUnavailable, "5"),
+		"429 with Retry-After above RetryWaitMax":                            responseWithRetryAfter(http.StatusTooManyRequests, "120"),
+		"429 with Retry-After: 0":                                            responseWithRetryAfter(http.StatusTooManyRequests, "0"),
+		"429 with Retry-After in the past":                                   responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
+		"429 with invalid Retry-After keeps the unjittered exponential wait": responseWithRetryAfter(http.StatusTooManyRequests, "soon"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
