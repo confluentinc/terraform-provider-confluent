@@ -1,3 +1,10 @@
+## 2.95.0 (November 11th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.94.0...v2.95.0)
+
+**New features:**
+* Added a public `xpprovider` Go package that exports the provider constructor, since `internal` packages can't be imported by other Go modules.
+
 ## 2.94.0 (November 6th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.93.0...v2.94.0)
