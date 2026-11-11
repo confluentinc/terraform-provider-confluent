@@ -1,0 +1,26 @@
+{
+  "name": "test_connector",
+  "type": "unknown",
+  "config": {
+    "cloud.environment": "stag",
+    "cloud.provider": "aws",
+    "connector.class": "DatagenSourceInternal",
+    "kafka.auth.mode": "KAFKA_API_KEY",
+    "kafka.api.key": "test-kafka-api-key",
+    "kafka.api.secret": "test-kafka-api-secret",
+    "kafka.endpoint": "SASL_SSL://pkc-abc456.us-east-1.aws.confluent.cloud:9092",
+    "kafka.max.partition.validation.disable": "false",
+    "kafka.region": "us-east-1",
+    "kafka.topic": "test_topic",
+    "name": "test_connector",
+    "output.data.format": "JSON",
+    "quickstart": "ORDERS",
+    "tasks.max": "1"
+  },
+  "tasks": [
+    {
+      "connector": "test_connector",
+      "task": 0
+    }
+  ]
+}
