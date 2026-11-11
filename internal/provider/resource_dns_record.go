@@ -143,7 +143,7 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	// Wait for async provisioning to complete
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if err := waitForDnsRecordToProvision(c.networkingAccessPointV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForDnsRecordToProvision(c.networkingAccessPointV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for DNS record %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -227,7 +227,7 @@ func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForDnsRecordToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForDnsRecordToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for DNS record %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 

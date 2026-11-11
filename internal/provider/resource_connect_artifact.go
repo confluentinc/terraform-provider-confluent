@@ -92,6 +92,9 @@ func connectArtifactResource() *schema.Resource {
 				Description: "Specifies the current processing state of a CloudConnectArtifact.",
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(camV1APICreateTimeout),
+		},
 	}
 }
 
@@ -146,7 +149,7 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	createCloudId := d.Get(paramCloud).(string)
 
 	// Wait for async provisioning to complete
-	if err := waitForConnectArtifactToProvision(c.camV1ApiContext(ctx), c, createEnvironmentId, createCloudId, d.Id()); err != nil {
+	if err := waitForConnectArtifactToProvision(c.camV1ApiContext(ctx), c, createEnvironmentId, createCloudId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for Connect artifact %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -356,13 +359,13 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 }
 
 // waitForConnectArtifactToProvision waits for the resource to reach a ready state
-func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId string, cloudId string, connectArtifactId string) error {
+func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId string, cloudId string, connectArtifactId string, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning, stateWaitingForProcessing, stateProcessing},
 		Target:       []string{stateProvisioned, stateReady},
 		Refresh:      connectArtifactProvisionStatus(ctx, c, environmentId, cloudId, connectArtifactId),
-		Timeout:      camV1APICreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
