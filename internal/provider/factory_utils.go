@@ -232,8 +232,8 @@ func WithRateLimitBackoff() RetryableClientFactoryOption {
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 15-18 seconds in total: 1 + 2 + 4 + 8,
-	// plus up to 20% jitter (jitteredBackoff). Connect, IAM, API keys and RBAC clients retry at least 12 times, and
-	// Connect's 429/503 waits use rateLimitBackoff's wider jitter instead.
+	// plus up to 20% jitter (jitteredBackoff); Retry-After waits get up to 100%. Connect, IAM, API keys and RBAC clients
+	// retry at least 12 times, and Connect's 429/503 waits use rateLimitBackoff instead.
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
@@ -270,12 +270,13 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// jitteredBackoff adds up to 20% to DefaultBackoff's exponential wait. A 429/503 with a valid Retry-After still waits
-// exactly that long: jittering it made heavily rate-limited plans run out of retries more often.
+// jitteredBackoff adds up to 20% to DefaultBackoff's exponential wait. A 429/503 with a valid Retry-After waits that
+// long plus up to 100% more (at most maxWait more), so throttled retries spread over the next limit window instead of
+// all arriving at its start.
 func jitteredBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
 	if hasValidRetryAfter(resp) {
-		return wait
+		return addRandom(wait, min(wait, maxWait))
 	}
 	return withJitter(wait)
 }
@@ -294,9 +295,14 @@ func hasValidRetryAfter(resp *http.Response) bool {
 	return err == nil
 }
 
-// withJitter adds a random 0-20% to wait. Zero, negative and near-overflow waits are returned unchanged.
+// withJitter adds a random 0-20% to wait.
 func withJitter(wait time.Duration) time.Duration {
-	spread := wait / retryWaitJitterDivisor
+	return addRandom(wait, wait/retryWaitJitterDivisor)
+}
+
+// addRandom adds a random duration between 0 and spread to wait. Zero, negative and near-overflow waits are returned
+// unchanged.
+func addRandom(wait, spread time.Duration) time.Duration {
 	if spread <= 0 || wait > math.MaxInt64-spread {
 		return wait
 	}
