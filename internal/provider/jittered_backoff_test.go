@@ -49,12 +49,33 @@ func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			for attemptNum := 0; attemptNum <= rateLimitedAPIMinMaxRetries; attemptNum++ {
 				checkUpTo20PercentJitter(t, jitteredBackoff, attemptNum, resp)
+				checkUpTo20PercentJitter(t, retryAfterJitteredBackoff, attemptNum, resp)
 			}
 		})
 	}
 }
 
-func TestJitteredBackoffAddsUpTo100PercentToRetryAfter(t *testing.T) {
+func TestJitteredBackoffWaitsExactlyRetryAfter(t *testing.T) {
+	for name, resp := range map[string]*http.Response{
+		"429 with Retry-After: 1":                 responseWithRetryAfter(http.StatusTooManyRequests, "1"),
+		"503 with Retry-After: 5":                 responseWithRetryAfter(http.StatusServiceUnavailable, "5"),
+		"429 with Retry-After above RetryWaitMax": responseWithRetryAfter(http.StatusTooManyRequests, "120"),
+		"429 with Retry-After: 0":                 responseWithRetryAfter(http.StatusTooManyRequests, "0"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
+				want := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
+				for i := 0; i < 100; i++ {
+					if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp); got != want {
+						t.Fatalf("attempt %d: got %v, want DefaultBackoff's %v", attemptNum, got, want)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestRetryAfterJitteredBackoffAddsUpTo100PercentToRetryAfter(t *testing.T) {
 	for name, tc := range map[string]struct {
 		resp     *http.Response
 		maxExtra time.Duration
@@ -65,19 +86,19 @@ func TestJitteredBackoffAddsUpTo100PercentToRetryAfter(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
-				checkAddedJitter(t, jitteredBackoff, attemptNum, tc.resp, func(time.Duration) time.Duration { return tc.maxExtra })
+				checkAddedJitter(t, retryAfterJitteredBackoff, attemptNum, tc.resp, func(time.Duration) time.Duration { return tc.maxExtra })
 			}
 		})
 	}
 }
 
-func TestJitteredBackoffKeepsZeroRetryAfter(t *testing.T) {
+func TestRetryAfterJitteredBackoffKeepsZeroRetryAfter(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
 		"429 with Retry-After: 0":          responseWithRetryAfter(http.StatusTooManyRequests, "0"),
 		"429 with Retry-After in the past": responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
 	} {
 		t.Run(name, func(t *testing.T) {
-			if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, 3, resp); got != 0 {
+			if got := retryAfterJitteredBackoff(testRetryWaitMin, testRetryWaitMax, 3, resp); got != 0 {
 				t.Errorf("got %v, want 0", got)
 			}
 		})
@@ -139,9 +160,11 @@ func TestCreateRetryableClientJittersByDefault(t *testing.T) {
 		opts []RetryableClientFactoryOption
 		want retryablehttp.Backoff
 	}{
-		"default":              {nil, jitteredBackoff},
-		"with max retries":     {[]RetryableClientFactoryOption{WithMaxRetries(20)}, jitteredBackoff},
-		"WithRateLimitBackoff": {[]RetryableClientFactoryOption{WithRateLimitBackoff()}, rateLimitBackoff},
+		"default (4 retries)":  {nil, jitteredBackoff},
+		"11 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(11)}, jitteredBackoff},
+		"12 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(12)}, retryAfterJitteredBackoff},
+		"20 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(20)}, retryAfterJitteredBackoff},
+		"WithRateLimitBackoff": {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRateLimitBackoff()}, rateLimitBackoff},
 	} {
 		client := retryClientOf(t, name, NewRetryableClientFactory(context.Background(), tc.opts...).CreateRetryableClient())
 		if !isBackoff(client.Backoff, tc.want) {

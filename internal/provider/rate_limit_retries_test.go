@@ -79,10 +79,10 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 		want       int
 		backoff    retryablehttp.Backoff
 	}{
-		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
+		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
 		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), rateLimitBackoff},
-		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
-		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), jitteredBackoff},
+		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
+		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
 		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, jitteredBackoff},
 	} {
 		client := retryClientOf(t, name, tc.httpClient)
