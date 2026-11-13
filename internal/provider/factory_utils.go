@@ -220,7 +220,7 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 	return c
 }
 
-// WithRateLimitBackoff makes 429/503 retries use rateLimitBackoff's exponential floor and wider jitter.
+// WithRateLimitBackoff makes 429/503 retries back off exponentially (rateLimitBackoff), using Retry-After only as a floor.
 func WithRateLimitBackoff() RetryableClientFactoryOption {
 	return func(c *RetryableClientFactory) {
 		c.useRateLimitBackoff = true
