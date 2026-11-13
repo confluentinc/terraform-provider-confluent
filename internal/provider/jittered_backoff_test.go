@@ -11,12 +11,12 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-// checkAddedJitter checks that backoff's waits fall within DefaultBackoff's wait plus 0 to maxExtra(that wait), and
-// are spread across at least 90% of that range.
-func checkAddedJitter(t *testing.T, backoff retryablehttp.Backoff, attemptNum int, resp *http.Response, maxExtra func(time.Duration) time.Duration) {
+// checkUpTo20PercentJitter checks that backoff's waits fall within DefaultBackoff's wait plus 0-20%, and are spread
+// across at least 90% of that range.
+func checkUpTo20PercentJitter(t *testing.T, backoff retryablehttp.Backoff, attemptNum int, resp *http.Response) {
 	t.Helper()
 	base := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
-	extra := maxExtra(base)
+	extra := base / 5
 	lowest, highest := time.Duration(math.MaxInt64), time.Duration(0)
 	for i := 0; i < backoffSamples; i++ {
 		wait := backoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
@@ -30,112 +30,17 @@ func checkAddedJitter(t *testing.T, backoff retryablehttp.Backoff, attemptNum in
 	}
 }
 
-// checkUpTo20PercentJitter checks that backoff's waits fall within DefaultBackoff's wait plus 0-20%, and are spread out.
-func checkUpTo20PercentJitter(t *testing.T, backoff retryablehttp.Backoff, attemptNum int, resp *http.Response) {
-	t.Helper()
-	checkAddedJitter(t, backoff, attemptNum, resp, func(base time.Duration) time.Duration { return base / 5 })
-}
-
 func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
 		"no response (transport error)": nil,
 		"500":                           responseWithRetryAfter(http.StatusInternalServerError, ""),
 		"502 with Retry-After: 20":      responseWithRetryAfter(http.StatusBadGateway, "20"),
-		"429 without Retry-After":       responseWithRetryAfter(http.StatusTooManyRequests, ""),
-		"503 without Retry-After":       responseWithRetryAfter(http.StatusServiceUnavailable, ""),
-		"429 with invalid Retry-After":  responseWithRetryAfter(http.StatusTooManyRequests, "soon"),
-		"503 with negative Retry-After": responseWithRetryAfter(http.StatusServiceUnavailable, "-5"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			for attemptNum := 0; attemptNum <= rateLimitedAPIMinMaxRetries; attemptNum++ {
 				checkUpTo20PercentJitter(t, jitteredBackoff, attemptNum, resp)
-				checkUpTo20PercentJitter(t, retryAfterJitteredBackoff, attemptNum, resp)
 			}
 		})
-	}
-}
-
-func TestJitteredBackoffWaitsExactlyRetryAfter(t *testing.T) {
-	for name, resp := range map[string]*http.Response{
-		"429 with Retry-After: 1":                 responseWithRetryAfter(http.StatusTooManyRequests, "1"),
-		"503 with Retry-After: 5":                 responseWithRetryAfter(http.StatusServiceUnavailable, "5"),
-		"429 with Retry-After above RetryWaitMax": responseWithRetryAfter(http.StatusTooManyRequests, "120"),
-		"429 with Retry-After: 0":                 responseWithRetryAfter(http.StatusTooManyRequests, "0"),
-	} {
-		t.Run(name, func(t *testing.T) {
-			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
-				want := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
-				for i := 0; i < 100; i++ {
-					if got := jitteredBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp); got != want {
-						t.Fatalf("attempt %d: got %v, want DefaultBackoff's %v", attemptNum, got, want)
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestRetryAfterJitteredBackoffAddsUpTo100PercentToRetryAfter(t *testing.T) {
-	for name, tc := range map[string]struct {
-		resp     *http.Response
-		maxExtra time.Duration
-	}{
-		"429 with Retry-After: 1":                                   {responseWithRetryAfter(http.StatusTooManyRequests, "1"), time.Second},
-		"503 with Retry-After: 5":                                   {responseWithRetryAfter(http.StatusServiceUnavailable, "5"), 5 * time.Second},
-		"429 with Retry-After above RetryWaitMax gets at most +30s": {responseWithRetryAfter(http.StatusTooManyRequests, "120"), testRetryWaitMax},
-	} {
-		t.Run(name, func(t *testing.T) {
-			for _, attemptNum := range []int{0, 3, rateLimitedAPIMinMaxRetries} {
-				checkAddedJitter(t, retryAfterJitteredBackoff, attemptNum, tc.resp, func(time.Duration) time.Duration { return tc.maxExtra })
-			}
-		})
-	}
-}
-
-func TestRetryAfterJitteredBackoffKeepsZeroRetryAfter(t *testing.T) {
-	for name, resp := range map[string]*http.Response{
-		"429 with Retry-After: 0":          responseWithRetryAfter(http.StatusTooManyRequests, "0"),
-		"429 with Retry-After in the past": responseWithRetryAfter(http.StatusTooManyRequests, time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
-	} {
-		t.Run(name, func(t *testing.T) {
-			if got := retryAfterJitteredBackoff(testRetryWaitMin, testRetryWaitMax, 3, resp); got != 0 {
-				t.Errorf("got %v, want 0", got)
-			}
-		})
-	}
-}
-
-func TestHasValidRetryAfterMatchesDefaultBackoff(t *testing.T) {
-	for header, want := range map[string]bool{
-		"":                     false,
-		"0":                    true,
-		"7":                    true,
-		"120":                  true,
-		"-5":                   false,
-		"1.5":                  false,
-		"soon":                 false,
-		"99999999999999999999": false,
-		time.Now().Add(7 * time.Second).UTC().Format(http.TimeFormat): true,
-		time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat):      true,
-		time.Now().Add(7 * time.Second).UTC().Format(time.RFC850):     false,
-	} {
-		for _, status := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable} {
-			resp := responseWithRetryAfter(status, header)
-			if got := hasValidRetryAfter(resp); got != want {
-				t.Errorf("status %d, Retry-After %q: got %t, want %t", status, header, got, want)
-			}
-			// DefaultBackoff's attempt-3 wait is 8s; it returns something else only when it honors the header.
-			honored := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, 3, resp) != 8*time.Second
-			if honored != want {
-				t.Errorf("status %d, Retry-After %q: DefaultBackoff honored it = %t, want %t", status, header, honored, want)
-			}
-		}
-		if hasValidRetryAfter(responseWithRetryAfter(http.StatusBadGateway, header)) {
-			t.Errorf("502, Retry-After %q: got true, want false for statuses DefaultBackoff ignores it on", header)
-		}
-	}
-	if hasValidRetryAfter(nil) {
-		t.Error("nil response: got true, want false")
 	}
 }
 
@@ -145,29 +50,20 @@ func TestWithJitterReturnsUnusableWaitsUnchanged(t *testing.T) {
 			t.Errorf("withJitter(%d) = %d, want it unchanged", wait, got)
 		}
 	}
-	// A near-overflow Retry-After wait must not wrap around when up to 100% is added.
-	if got := addRandom(math.MaxInt64-time.Second, testRetryWaitMax); got != math.MaxInt64-time.Second {
-		t.Errorf("addRandom near MaxInt64 = %d, want it unchanged", got)
-	}
 }
 
 func isBackoff(got, want retryablehttp.Backoff) bool {
 	return reflect.ValueOf(got).Pointer() == reflect.ValueOf(want).Pointer()
 }
 
-func TestCreateRetryableClientJittersByDefault(t *testing.T) {
-	for name, tc := range map[string]struct {
-		opts []RetryableClientFactoryOption
-		want retryablehttp.Backoff
-	}{
-		"default":                             {nil, jitteredBackoff},
-		"more retries alone keep exact waits": {[]RetryableClientFactoryOption{WithMaxRetries(20)}, jitteredBackoff},
-		"WithRetryAfterJitter":                {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRetryAfterJitter()}, retryAfterJitteredBackoff},
-		"WithRateLimitBackoff":                {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRateLimitBackoff()}, rateLimitBackoff},
+func TestCreateRetryableClientUsesRateLimitBackoff(t *testing.T) {
+	for name, opts := range map[string][]RetryableClientFactoryOption{
+		"default":      nil,
+		"more retries": {WithMaxRetries(20)},
 	} {
-		client := retryClientOf(t, name, NewRetryableClientFactory(context.Background(), tc.opts...).CreateRetryableClient())
-		if !isBackoff(client.Backoff, tc.want) {
-			t.Errorf("%s: unexpected Backoff", name)
+		client := retryClientOf(t, name, NewRetryableClientFactory(context.Background(), opts...).CreateRetryableClient())
+		if !isBackoff(client.Backoff, rateLimitBackoff) {
+			t.Errorf("%s: expected rateLimitBackoff", name)
 		}
 	}
 }
@@ -188,8 +84,8 @@ func TestDataPlaneClientsJitter(t *testing.T) {
 		"Tableflow": TableflowRestClientFactory{ctx: ctx, maxRetries: &maxRetries, endpoint: endpoint}.
 			CreateTableflowRestClient("key", "secret", false, nil, nil).apiClient.GetConfig().HTTPClient,
 	} {
-		if client := retryClientOf(t, name, httpClient); !isBackoff(client.Backoff, jitteredBackoff) {
-			t.Errorf("%s client: expected jitteredBackoff", name)
+		if client := retryClientOf(t, name, httpClient); !isBackoff(client.Backoff, rateLimitBackoff) {
+			t.Errorf("%s client: expected rateLimitBackoff", name)
 		}
 	}
 }

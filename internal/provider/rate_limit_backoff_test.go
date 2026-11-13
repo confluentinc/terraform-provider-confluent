@@ -105,7 +105,7 @@ func checkJitteredSchedule(t *testing.T, resp *http.Response) {
 	}
 }
 
-func TestRateLimitBackoffJittersOtherResponsesLikeOtherClients(t *testing.T) {
+func TestRateLimitBackoffJittersOtherResponses(t *testing.T) {
 	for name, resp := range map[string]*http.Response{
 		"500":                           responseWithRetryAfter(http.StatusInternalServerError, ""),
 		"502 with Retry-After: 20":      responseWithRetryAfter(http.StatusBadGateway, "20"),
@@ -120,7 +120,7 @@ func TestRateLimitBackoffJittersOtherResponsesLikeOtherClients(t *testing.T) {
 }
 
 // timeTwoRateLimitedRetries returns how long a client takes to get through two "429, Retry-After: 1" responses.
-func timeTwoRateLimitedRetries(t *testing.T, opts ...RetryableClientFactoryOption) time.Duration {
+func timeTwoRateLimitedRetries(t *testing.T) time.Duration {
 	var requests int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if atomic.AddInt32(&requests, 1) <= 2 {
@@ -132,7 +132,7 @@ func timeTwoRateLimitedRetries(t *testing.T, opts ...RetryableClientFactoryOptio
 	}))
 	defer server.Close()
 
-	client := NewRetryableClientFactory(context.Background(), opts...).CreateRetryableClient()
+	client := NewRetryableClientFactory(context.Background()).CreateRetryableClient()
 	start := time.Now()
 	resp, err := client.Get(server.URL)
 	elapsed := time.Since(start)
@@ -146,15 +146,9 @@ func timeTwoRateLimitedRetries(t *testing.T, opts ...RetryableClientFactoryOptio
 	return elapsed
 }
 
-func TestWithRateLimitBackoffBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
+func TestCreateRetryableClientBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
 	// Honoring "Retry-After: 1" verbatim would wait 1s + 1s; the exponential floor waits at least 1s + 2s.
-	if elapsed := timeTwoRateLimitedRetries(t, WithRateLimitBackoff()); elapsed < 3*time.Second {
+	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 3*time.Second {
 		t.Fatalf("expected at least 3s of backoff across two 429s, waited %v", elapsed)
-	}
-}
-
-func TestCreateRetryableClientHonorsRetryAfterByDefault(t *testing.T) {
-	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 2*time.Second || elapsed >= 3*time.Second {
-		t.Fatalf("expected clients without WithRateLimitBackoff or WithRetryAfterJitter to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }

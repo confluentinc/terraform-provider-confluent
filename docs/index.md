@@ -191,9 +191,9 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** `max_retries` must be at least `4`.
 
--> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. Before each retry, a rate-limited request waits at least as long as the API asks in its `Retry-After` response header, which is 1 second for the per-second limits of the control-plane APIs at `api.confluent.cloud`. Other failures, and rate-limited requests without that header, wait about 1, 2, 4, 8, 16 and then 30 seconds, so a higher `max_retries` also makes the provider take longer to report an API that is unavailable.
+-> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. A higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
--> **Note:** So that requests that failed at the same time don't all retry at the same moment, the provider adds a random extra time (jitter) of up to 20% to those waits, for example 30–36 seconds instead of 30. A `429` or `503` response with a valid `Retry-After` header is retried after exactly that time, with two exceptions. IAM, API keys and RBAC requests, which retry at least 12 times, add a random extra of up to 100% of it, at most 30 seconds, for example 1–2 seconds for `Retry-After: 1`. Connect requests instead wait a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than `Retry-After`; a Connect `Retry-After` of 30 seconds or more gets up to 20% extra.
+-> **Note:** Before each retry the provider waits a random time (jitter), so that requests that failed at the same time don't all retry at the same moment. A request that gets `429 Too Many Requests` or `503 Service Unavailable` waits a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than the `Retry-After` response header asks; a `Retry-After` of 30 seconds or more gets up to 20% extra. Other server and network errors wait about 1, 2, 4, 8, 16 and then 30 seconds, plus up to 20%.
 
 ## Helpful Links/Information
 

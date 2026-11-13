@@ -30,8 +30,7 @@ import (
 	"github.com/confluentinc/terraform-provider-confluent/internal/provider/telemetry"
 )
 
-// retryTestServer answers each request with statuses[i] in turn, then 200 OK. A
-// Retry-After of 0 makes every retry immediate.
+// retryTestServer answers each request with statuses[i] in turn, then 200 OK.
 func retryTestServer(t *testing.T, statuses ...int) (*httptest.Server, *int32) {
 	t.Helper()
 	var requests int32
@@ -48,10 +47,19 @@ func retryTestServer(t *testing.T, statuses ...int) (*httptest.Server, *int32) {
 	return server, &requests
 }
 
+// newFastRetryClient builds a retry client with millisecond waits: these tests check what is recorded, not the wait.
+func newFastRetryClient(t *testing.T, maxRetries int) *http.Client {
+	t.Helper()
+	client := NewRetryableClientFactory(context.Background(), WithMaxRetries(maxRetries)).CreateRetryableClient()
+	retryClient := retryClientOf(t, "test", client)
+	retryClient.RetryWaitMin, retryClient.RetryWaitMax = time.Millisecond, 30*time.Millisecond
+	return client
+}
+
 // sendWithRetries makes one GET to server's path with the recorder in ctx.
 func sendWithRetries(t *testing.T, ctx context.Context, maxRetries int, server *httptest.Server, path string) {
 	t.Helper()
-	client := NewRetryableClientFactory(context.Background(), WithMaxRetries(maxRetries)).CreateRetryableClient()
+	client := newFastRetryClient(t, maxRetries)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+path, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -167,7 +175,7 @@ func TestRetryTelemetryAggregatesRequestsAndReportsTheExhaustedOne(t *testing.T)
 func TestRetryTelemetryIgnoresRequestsOutsideAnOperation(t *testing.T) {
 	server, _ := retryTestServer(t, 429)
 	var seen bool
-	client := NewRetryableClientFactory(context.Background(), WithMaxRetries(2)).CreateRetryableClient()
+	client := newFastRetryClient(t, 2)
 	inner := client.Transport
 	client.Transport = roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		_, seen = r.Context().Value(requestAttemptsKey{}).(*requestAttempts)
@@ -238,7 +246,7 @@ func TestRetryEndpoint(t *testing.T) {
 
 func TestWrapperReportsRetryTelemetry(t *testing.T) {
 	server, _ := retryTestServer(t, 429, 429, 429)
-	client := NewRetryableClientFactory(context.Background(), WithMaxRetries(2)).CreateRetryableClient()
+	client := newFastRetryClient(t, 2)
 
 	rec := &recordingReporter{}
 	r := newTestResource()

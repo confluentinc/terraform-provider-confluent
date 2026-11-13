@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -44,6 +45,9 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 			defer server.Close()
 
 			client := NewRetryableClientFactory(context.Background(), WithMaxRetries(tc.maxRetries)).CreateRetryableClient()
+			// Millisecond waits keep the test fast; it checks the retry count, not the wait.
+			retryClient := retryClientOf(t, name, client)
+			retryClient.RetryWaitMin, retryClient.RetryWaitMax = time.Millisecond, 30*time.Millisecond
 			resp, err := client.Get(server.URL)
 			if resp != nil {
 				defer resp.Body.Close()
@@ -63,7 +67,6 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "1")
 	t.Setenv("TF_PROVIDER_CONFLUENT_MAX_RETRIES", "")
-	// A raised max_retries changes retry counts only; Retry-After jitter stays limited to IAM, API keys and RBAC.
 	for _, maxRetries := range []int{0, 20} {
 		raw := map[string]interface{}{
 			"cloud_api_key":    "test-key",
@@ -84,20 +87,19 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 		for name, tc := range map[string]struct {
 			httpClient *http.Client
 			want       int
-			backoff    retryablehttp.Backoff
 		}{
-			"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-			"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), rateLimitBackoff},
-			"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-			"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-			"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, jitteredBackoff},
+			"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
+			"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
+			"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
+			"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured)},
+			"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured},
 		} {
 			client := retryClientOf(t, name, tc.httpClient)
 			if client.RetryMax != tc.want {
 				t.Errorf("max_retries %d, %s client: RetryMax = %d, want %d", configured, name, client.RetryMax, tc.want)
 			}
-			if !isBackoff(client.Backoff, tc.backoff) {
-				t.Errorf("max_retries %d, %s client: unexpected Backoff", configured, name)
+			if !isBackoff(client.Backoff, rateLimitBackoff) {
+				t.Errorf("max_retries %d, %s client: expected rateLimitBackoff", configured, name)
 			}
 		}
 	}
