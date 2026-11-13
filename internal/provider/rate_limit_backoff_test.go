@@ -99,7 +99,7 @@ func checkJitteredSchedule(t *testing.T, resp *http.Response) {
 		if lowest < want.lower || highest > want.upper {
 			t.Errorf("attempt %d: waits ranged %v-%v, want within %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
 		}
-		if highest-lowest < (want.upper-want.lower)/2 {
+		if highest-lowest < (want.upper-want.lower)*9/10 {
 			t.Errorf("attempt %d: waits ranged only %v-%v, expected jitter across %v-%v", attemptNum, lowest, highest, want.lower, want.upper)
 		}
 	}

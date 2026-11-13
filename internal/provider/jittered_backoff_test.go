@@ -23,7 +23,7 @@ func checkUpTo20PercentJitter(t *testing.T, backoff retryablehttp.Backoff, attem
 	if lowest < base || highest > base+base/5 {
 		t.Errorf("attempt %d: waits ranged %v-%v, want within %v-%v", attemptNum, lowest, highest, base, base+base/5)
 	}
-	if highest-lowest < base/10 {
+	if highest-lowest < base/5*9/10 {
 		t.Errorf("attempt %d: waits ranged only %v-%v, expected jitter across %v-%v", attemptNum, lowest, highest, base, base+base/5)
 	}
 }
