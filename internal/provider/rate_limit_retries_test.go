@@ -62,35 +62,43 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 	// Opt out so configuring on the default endpoint doesn't start a real telemetry transport.
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "1")
-	p := New("test", "")()
-	d := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
-		"cloud_api_key":    "test-key",
-		"cloud_api_secret": "test-secret",
-	})
-	meta, diags := providerConfigure(context.Background(), d, p, "test", "")
-	if diags.HasError() {
-		t.Fatalf("providerConfigure failed: %v", diags)
-	}
-	c := meta.(*Client)
-	configured := d.Get("max_retries").(int)
-
-	for name, tc := range map[string]struct {
-		httpClient *http.Client
-		want       int
-		backoff    retryablehttp.Backoff
-	}{
-		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), rateLimitBackoff},
-		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
-		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, jitteredBackoff},
-	} {
-		client := retryClientOf(t, name, tc.httpClient)
-		if client.RetryMax != tc.want {
-			t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
+	t.Setenv("TF_PROVIDER_CONFLUENT_MAX_RETRIES", "")
+	// A raised max_retries changes retry counts only; Retry-After jitter stays limited to IAM, API keys and RBAC.
+	for _, maxRetries := range []int{0, 20} {
+		raw := map[string]interface{}{
+			"cloud_api_key":    "test-key",
+			"cloud_api_secret": "test-secret",
 		}
-		if !isBackoff(client.Backoff, tc.backoff) {
-			t.Errorf("%s client: unexpected Backoff", name)
+		if maxRetries != 0 {
+			raw["max_retries"] = maxRetries
+		}
+		p := New("test", "")()
+		d := schema.TestResourceDataRaw(t, p.Schema, raw)
+		meta, diags := providerConfigure(context.Background(), d, p, "test", "")
+		if diags.HasError() {
+			t.Fatalf("providerConfigure failed: %v", diags)
+		}
+		c := meta.(*Client)
+		configured := d.Get("max_retries").(int)
+
+		for name, tc := range map[string]struct {
+			httpClient *http.Client
+			want       int
+			backoff    retryablehttp.Backoff
+		}{
+			"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
+			"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), rateLimitBackoff},
+			"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
+			"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), retryAfterJitteredBackoff},
+			"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, jitteredBackoff},
+		} {
+			client := retryClientOf(t, name, tc.httpClient)
+			if client.RetryMax != tc.want {
+				t.Errorf("max_retries %d, %s client: RetryMax = %d, want %d", configured, name, client.RetryMax, tc.want)
+			}
+			if !isBackoff(client.Backoff, tc.backoff) {
+				t.Errorf("max_retries %d, %s client: unexpected Backoff", configured, name)
+			}
 		}
 	}
 }

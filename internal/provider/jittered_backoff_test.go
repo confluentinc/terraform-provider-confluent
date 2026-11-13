@@ -160,11 +160,10 @@ func TestCreateRetryableClientJittersByDefault(t *testing.T) {
 		opts []RetryableClientFactoryOption
 		want retryablehttp.Backoff
 	}{
-		"default (4 retries)":  {nil, jitteredBackoff},
-		"11 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(11)}, jitteredBackoff},
-		"12 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(12)}, retryAfterJitteredBackoff},
-		"20 retries":           {[]RetryableClientFactoryOption{WithMaxRetries(20)}, retryAfterJitteredBackoff},
-		"WithRateLimitBackoff": {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRateLimitBackoff()}, rateLimitBackoff},
+		"default":                             {nil, jitteredBackoff},
+		"more retries alone keep exact waits": {[]RetryableClientFactoryOption{WithMaxRetries(20)}, jitteredBackoff},
+		"WithRetryAfterJitter":                {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRetryAfterJitter()}, retryAfterJitteredBackoff},
+		"WithRateLimitBackoff":                {[]RetryableClientFactoryOption{WithMaxRetries(12), WithRateLimitBackoff()}, rateLimitBackoff},
 	} {
 		client := retryClientOf(t, name, NewRetryableClientFactory(context.Background(), tc.opts...).CreateRetryableClient())
 		if !isBackoff(client.Backoff, tc.want) {

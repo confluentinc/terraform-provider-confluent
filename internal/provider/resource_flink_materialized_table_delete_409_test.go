@@ -18,7 +18,7 @@ import (
 const scenarioStateMaterializedTableDeleteConflicted = "The materialized table delete returned 409"
 
 // TestAccFlinkMaterializedTableDeleteRetriesOn409 checks that a DELETE answered with 409 (pending operation) is retried
-// after a 5-6s jittered wait and that the delete then succeeds.
+// after a 5-6s wait and that the delete then succeeds. The jitter itself is covered by the withJitter unit tests.
 func TestAccFlinkMaterializedTableDeleteRetriesOn409(t *testing.T) {
 	ctx := context.Background()
 
