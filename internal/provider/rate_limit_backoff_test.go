@@ -228,3 +228,32 @@ func TestRetryBackoffHonorsRetryAfter(t *testing.T) {
 		}
 	})
 }
+
+func TestCreateRetryableClientBacksOffByFactorWithoutRetryAfter(t *testing.T) {
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&requests, 1) <= 3 {
+			// No Retry-After header, so retryBackoff takes the exponential branch.
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewRetryableClientFactory(context.Background()).CreateRetryableClient()
+	start := time.Now()
+	resp, err := client.Get(server.URL)
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || requests != 4 {
+		t.Fatalf("expected success on the 4th request, got status %d after %d requests", resp.StatusCode, requests)
+	}
+	// 1s + 1.6s + 2.56s = 5.16s with the 1.6x factor; DefaultBackoff's 2x would take 1s + 2s + 4s = 7s.
+	if elapsed < 5100*time.Millisecond || elapsed >= 6500*time.Millisecond {
+		t.Errorf("expected about 5.16s of backoff across three 429s without Retry-After, waited %v", elapsed)
+	}
+}

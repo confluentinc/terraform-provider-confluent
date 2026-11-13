@@ -59,7 +59,7 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 	}
 }
 
-func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *testing.T) {
+func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBackoff(t *testing.T) {
 	// Opt out so configuring on the default endpoint doesn't start a real telemetry transport.
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "1")
@@ -101,8 +101,12 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *test
 		if client.RetryMax != tc.want {
 			t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
 		}
+		// Only Connect API uses jittered rateLimitBackoff
 		if jitter := reflect.ValueOf(client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
 			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
+		}
+		if !tc.jitter && reflect.ValueOf(client.Backoff).Pointer() != reflect.ValueOf(retryBackoff).Pointer() {
+			t.Errorf("%s client: backoff is not retryBackoff", name)
 		}
 	}
 }
