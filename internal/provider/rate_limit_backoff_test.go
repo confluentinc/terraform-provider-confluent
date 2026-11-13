@@ -193,30 +193,21 @@ func TestRetryBackoffGrowsByFactorWithoutRetryAfter(t *testing.T) {
 }
 
 func TestRetryBackoffHonorsRetryAfter(t *testing.T) {
-	// Waits are Retry-After plus 0-20% of max(Retry-After, RetryWaitMin), never less than Retry-After.
 	cases := []struct {
-		name         string
-		resp         *http.Response
-		attemptNum   int
-		lower, upper time.Duration
+		name       string
+		resp       *http.Response
+		attemptNum int
+		want       time.Duration
 	}{
-		{"429 with Retry-After: 1", responseWithRetryAfter(http.StatusTooManyRequests, "1"), 5, 1 * time.Second, 1200 * time.Millisecond},
-		{"429 with Retry-After: 0", responseWithRetryAfter(http.StatusTooManyRequests, "0"), 5, 0, 200 * time.Millisecond},
-		{"503 with Retry-After: 1", responseWithRetryAfter(http.StatusServiceUnavailable, "1"), 5, 1 * time.Second, 1200 * time.Millisecond},
-		{"longer than RetryWaitMax is honored as-is with jitter", responseWithRetryAfter(http.StatusTooManyRequests, "120"), 0, 120 * time.Second, 144 * time.Second},
+		{"429 with Retry-After: 1", responseWithRetryAfter(http.StatusTooManyRequests, "1"), 5, 1 * time.Second},
+		{"429 with Retry-After: 0", responseWithRetryAfter(http.StatusTooManyRequests, "0"), 5, 0},
+		{"503 with Retry-After: 1", responseWithRetryAfter(http.StatusServiceUnavailable, "1"), 5, 1 * time.Second},
+		{"longer than RetryWaitMax is honored as-is", responseWithRetryAfter(http.StatusTooManyRequests, "120"), 0, 120 * time.Second},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			lowest, highest := time.Duration(math.MaxInt64), time.Duration(0)
-			for i := 0; i < backoffSamples; i++ {
-				wait := retryBackoff(testRetryWaitMin, testRetryWaitMax, tc.attemptNum, tc.resp)
-				lowest, highest = min(lowest, wait), max(highest, wait)
-			}
-			if lowest < tc.lower || highest > tc.upper {
-				t.Errorf("waits ranged %v-%v, want within %v-%v", lowest, highest, tc.lower, tc.upper)
-			}
-			if highest-lowest < (tc.upper-tc.lower)/2 {
-				t.Errorf("waits ranged only %v-%v, expected jitter across %v-%v", lowest, highest, tc.lower, tc.upper)
+			if got := retryBackoff(testRetryWaitMin, testRetryWaitMax, tc.attemptNum, tc.resp); got != tc.want {
+				t.Errorf("got %v, want %v", got, tc.want)
 			}
 		})
 	}

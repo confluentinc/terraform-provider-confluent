@@ -721,7 +721,6 @@ const (
 	regionKind                                = "Region"
 	remoteLinkConnectionMode                  = "remote.link.connection.mode"
 	resumeFlinkStatementErrorFormat           = "error resuming Flink Statement: %s"
-	retryAfterJitterFactor                    = 0.2
 	retryExponentialBackoffFactor             = 1.6
 	roleBindingLoggingKey                     = "role_binding_id"
 	saslJaasConfigConfigKey                   = "sasl.jaas.config"

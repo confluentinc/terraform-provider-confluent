@@ -268,13 +268,12 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// retryBackoff honors the Retry-After header of a 429 or 503 response, adding 0-20% jitter on top (retryAfterJitterFactor).
+// retryBackoff honors the Retry-After header of a 429 or 503 response.
 // If the response has no Retry-After header, it backs off exponentially:
 // minWait * retryExponentialBackoffFactor^attemptNum, capped at maxWait.
 func retryBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	if retryAfter, ok := parseRetryAfter(resp); ok {
-		// The jitter is based on at least minWait, so Retry-After: 0 is still spread out.
-		return retryAfter + time.Duration(rand.Float64()*retryAfterJitterFactor*float64(max(retryAfter, minWait)))
+		return retryAfter
 	}
 	wait := float64(minWait) * math.Pow(retryExponentialBackoffFactor, float64(attemptNum))
 	if wait >= float64(maxWait) {
