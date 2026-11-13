@@ -3,8 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -195,6 +197,7 @@ type RetryableClientFactory struct {
 	ctx                 context.Context
 	maxRetries          *int
 	useRateLimitBackoff bool
+	jitterRetryAfter    bool
 }
 
 func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
@@ -218,10 +221,18 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 	return c
 }
 
-// WithRateLimitBackoff makes 429/503 retries wait with jitter (rateLimitBackoff) instead of exactly Retry-After.
+// WithRateLimitBackoff makes 429/503 retries back off exponentially (rateLimitBackoff), using Retry-After only as a floor.
 func WithRateLimitBackoff() RetryableClientFactoryOption {
 	return func(c *RetryableClientFactory) {
 		c.useRateLimitBackoff = true
+	}
+}
+
+// WithRetryAfterJitter makes 429/503 retries wait Retry-After plus up to 100% (retryAfterJitteredBackoff). Use it only on
+// clients that retry at least 12 times: with fewer retries the jitter made throttled plans fail more often.
+func WithRetryAfterJitter() RetryableClientFactoryOption {
+	return func(c *RetryableClientFactory) {
+		c.jitterRetryAfter = true
 	}
 }
 
@@ -229,8 +240,9 @@ func WithRateLimitBackoff() RetryableClientFactoryOption {
 // and 5** (except 501) errors. Otherwise, the response is returned and left to the caller to interpret.
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
-	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
-	// Connect, IAM, API keys and RBAC clients retry at least 12 times; Connect's 429/503 waits are also jittered.
+	// under the assumption is it's OK to spend retrying a single HTTP call around 15-18 seconds in total: 1 + 2 + 4 + 8,
+	// plus up to 20% jitter (jitteredBackoff). Connect, IAM, API keys and RBAC clients retry at least 12 times; IAM, API
+	// keys and RBAC also jitter Retry-After waits (WithRetryAfterJitter), and Connect's 429/503 waits use rateLimitBackoff.
 	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
 	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
@@ -247,6 +259,10 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	retryClient.ErrorHandler = customErrorHandler
 	// Note each attempt's outcome for client analytics; the decision is still DefaultRetryPolicy's.
 	retryClient.CheckRetry = recordingRetryPolicy(retryablehttp.DefaultRetryPolicy)
+	retryClient.Backoff = jitteredBackoff
+	if f.jitterRetryAfter {
+		retryClient.Backoff = retryAfterJitteredBackoff
+	}
 	if f.useRateLimitBackoff {
 		retryClient.Backoff = rateLimitBackoff
 	}
@@ -266,11 +282,61 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return standardClient
 }
 
-// rateLimitBackoff waits a random time between the exponential wait (capped at maxWait/2) and twice that on 429/503,
-// using Retry-After only as a floor. Other responses keep DefaultBackoff.
+// jitteredBackoff adds up to 20% to DefaultBackoff's exponential wait. A 429/503 with a valid Retry-After waits exactly
+// that long: with only a few retries, jittering it made throttled plans run out of retries more often.
+func jitteredBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
+	if hasValidRetryAfter(resp) {
+		return wait
+	}
+	return withJitter(wait)
+}
+
+// retryAfterJitteredBackoff is jitteredBackoff for clients that retry at least 12 times: a 429/503 with a valid Retry-After
+// waits that long plus up to 100% more (at most maxWait more), so throttled retries spread over the next limit window
+// instead of all arriving at its start.
+func retryAfterJitteredBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
+	if hasValidRetryAfter(resp) {
+		return addRandom(wait, min(wait, maxWait))
+	}
+	return withJitter(wait)
+}
+
+// hasValidRetryAfter reports whether resp is a 429/503 whose Retry-After DefaultBackoff honors: non-negative seconds
+// or an HTTP date, parsed the same way go-retryablehttp does.
+func hasValidRetryAfter(resp *http.Response) bool {
+	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
+		return false
+	}
+	header := resp.Header.Get("Retry-After")
+	if seconds, err := strconv.ParseInt(header, 10, 64); err == nil {
+		return seconds >= 0
+	}
+	_, err := time.Parse(time.RFC1123, header)
+	return err == nil
+}
+
+// withJitter adds a random 0-20% to wait.
+func withJitter(wait time.Duration) time.Duration {
+	return addRandom(wait, wait/retryWaitJitterDivisor)
+}
+
+// addRandom adds a random duration between 0 and spread to wait. Zero, negative and near-overflow waits are returned
+// unchanged.
+func addRandom(wait, spread time.Duration) time.Duration {
+	if spread <= 0 || wait > math.MaxInt64-spread {
+		return wait
+	}
+	return wait + rand.N(spread+1)
+}
+
+// rateLimitBackoff waits a random time between the exponential wait (capped at maxWait/2) and twice that (at most
+// maxWait) on 429/503, using Retry-After only as a floor; a floor at or above maxWait gets up to 20% extra instead.
+// Other responses use jitteredBackoff.
 func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
-		return retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, resp)
+		return jitteredBackoff(minWait, maxWait, attemptNum, resp)
 	}
 	// DefaultBackoff returns the exponential wait without a response, and a valid Retry-After as-is with one. The header
 	// is read with attempt 0, so an invalid Retry-After falls back to minWait instead of an unjittered exponential wait.
@@ -279,7 +345,7 @@ func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http
 		lower = max(lower, retryablehttp.DefaultBackoff(minWait, maxWait, 0, resp))
 	}
 	if lower >= maxWait {
-		return lower
+		return withJitter(lower)
 	}
 	upper := min(2*lower, maxWait)
 	return lower + rand.N(upper-lower+1)
