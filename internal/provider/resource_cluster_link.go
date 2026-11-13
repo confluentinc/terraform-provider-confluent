@@ -104,6 +104,9 @@ func clusterLinkResource() *schema.Resource {
 				ValidateDiagFunc: clusterLinkSettingsKeysValidate,
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(clusterLinkDeleteTimeout),
+		},
 	}
 }
 
@@ -444,7 +447,7 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error deleting Cluster Link %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForClusterLinkToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForClusterLinkToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Cluster Link %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 

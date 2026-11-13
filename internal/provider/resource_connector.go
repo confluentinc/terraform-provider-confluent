@@ -88,6 +88,7 @@ func connectorResource() *schema.Resource {
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(connectAPICreateTimeout),
+			Update: schema.DefaultTimeout(connectAPIUpdateTimeout),
 		},
 	}
 }
@@ -168,7 +169,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	d.SetId(createdConnectorWithId.Id.GetId())
 
-	if err := waitForConnectorToProvision(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId); err != nil {
+	if err := waitForConnectorToProvision(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for Connector %q to provision: %s", displayName, createDescriptiveError(err, resp))
 	}
 
@@ -345,7 +346,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForConnectorToChangeStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, stateRunning, statePaused); err != nil {
+			if err := waitForConnectorToChangeStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, stateRunning, statePaused, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldResumeConnector {
@@ -356,7 +357,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
-			if err := waitForConnectorToChangeStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, statePaused, stateRunning); err != nil {
+			if err := waitForConnectorToChangeStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId, statePaused, stateRunning, d.Timeout(schema.TimeoutUpdate)); err != nil {
 				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else {
@@ -414,7 +415,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		if err != nil {
 			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err, resp))
 		}
-		if err := waitForConnectorOffsetsUpdateToComplete(c.connectV1ApiContext(ctx), c, environmentId, clusterId, displayName); err != nil {
+		if err := waitForConnectorOffsetsUpdateToComplete(c.connectV1ApiContext(ctx), c, environmentId, clusterId, displayName, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 
