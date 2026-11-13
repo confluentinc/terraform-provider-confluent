@@ -38,6 +38,10 @@ func TestRateLimitBackoffJittersAboveExponentialSchedule(t *testing.T) {
 		"429 with Retry-After: 1": responseWithRetryAfter(http.StatusTooManyRequests, "1"),
 		"429 without Retry-After": responseWithRetryAfter(http.StatusTooManyRequests, ""),
 		"503 with Retry-After: 1": responseWithRetryAfter(http.StatusServiceUnavailable, "1"),
+		"503 without Retry-After": responseWithRetryAfter(http.StatusServiceUnavailable, ""),
+		"429 with Retry-After: 0": responseWithRetryAfter(http.StatusTooManyRequests, "0"),
+		"429 with Retry-After in the past": responseWithRetryAfter(http.StatusTooManyRequests,
+			time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)),
 	} {
 		t.Run(name, func(t *testing.T) {
 			checkJitteredSchedule(t, resp)
