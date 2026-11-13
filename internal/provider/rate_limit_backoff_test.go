@@ -160,3 +160,100 @@ func TestCreateRetryableClientKeepsDefaultBackoffWithoutOption(t *testing.T) {
 		t.Fatalf("expected clients without WithRateLimitBackoff to keep honoring Retry-After: 1 (about 2s), waited %v", elapsed)
 	}
 }
+
+func TestRetryBackoffGrowsByFactorWithoutRetryAfter(t *testing.T) {
+	// 1s × 1.6^attempt, capped at 30s.
+	want := []time.Duration{
+		1 * time.Second,
+		1600 * time.Millisecond,
+		2560 * time.Millisecond,
+		4096 * time.Millisecond,
+		6553600 * time.Microsecond,
+		10485760 * time.Microsecond,
+		16777216 * time.Microsecond,
+		26843545600 * time.Nanosecond,
+		30 * time.Second,
+		30 * time.Second,
+		30 * time.Second,
+		30 * time.Second,
+	}
+	for name, resp := range map[string]*http.Response{
+		"500":                           responseWithRetryAfter(http.StatusInternalServerError, ""),
+		"429 without Retry-After":       responseWithRetryAfter(http.StatusTooManyRequests, ""),
+		"no response (transport error)": nil,
+	} {
+		t.Run(name, func(t *testing.T) {
+			for attemptNum, w := range want {
+				if got := retryBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp); got != w {
+					t.Errorf("attempt %d: got %v, want %v", attemptNum, got, w)
+				}
+			}
+		})
+	}
+}
+
+func TestRetryBackoffHonorsRetryAfter(t *testing.T) {
+	// Waits are Retry-After plus 0-20% of max(Retry-After, RetryWaitMin), never less than Retry-After.
+	cases := []struct {
+		name         string
+		resp         *http.Response
+		attemptNum   int
+		lower, upper time.Duration
+	}{
+		{"429 with Retry-After: 1", responseWithRetryAfter(http.StatusTooManyRequests, "1"), 5, 1 * time.Second, 1200 * time.Millisecond},
+		{"429 with Retry-After: 0", responseWithRetryAfter(http.StatusTooManyRequests, "0"), 5, 0, 200 * time.Millisecond},
+		{"503 with Retry-After: 1", responseWithRetryAfter(http.StatusServiceUnavailable, "1"), 5, 1 * time.Second, 1200 * time.Millisecond},
+		{"longer than RetryWaitMax is honored as-is with jitter", responseWithRetryAfter(http.StatusTooManyRequests, "120"), 0, 120 * time.Second, 144 * time.Second},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			lowest, highest := time.Duration(math.MaxInt64), time.Duration(0)
+			for i := 0; i < backoffSamples; i++ {
+				wait := retryBackoff(testRetryWaitMin, testRetryWaitMax, tc.attemptNum, tc.resp)
+				lowest, highest = min(lowest, wait), max(highest, wait)
+			}
+			if lowest < tc.lower || highest > tc.upper {
+				t.Errorf("waits ranged %v-%v, want within %v-%v", lowest, highest, tc.lower, tc.upper)
+			}
+			if highest-lowest < (tc.upper-tc.lower)/2 {
+				t.Errorf("waits ranged only %v-%v, expected jitter across %v-%v", lowest, highest, tc.lower, tc.upper)
+			}
+		})
+	}
+
+	t.Run("invalid Retry-After falls back to the exponential wait", func(t *testing.T) {
+		resp := responseWithRetryAfter(http.StatusTooManyRequests, "soon")
+		if got := retryBackoff(testRetryWaitMin, testRetryWaitMax, 3, resp); got != 4096*time.Millisecond {
+			t.Errorf("got %v, want %v", got, 4096*time.Millisecond)
+		}
+	})
+}
+
+func TestCreateRetryableClientBacksOffByFactorWithoutRetryAfter(t *testing.T) {
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&requests, 1) <= 3 {
+			// No Retry-After header, so retryBackoff takes the exponential branch.
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewRetryableClientFactory(context.Background()).CreateRetryableClient()
+	start := time.Now()
+	resp, err := client.Get(server.URL)
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || requests != 4 {
+		t.Fatalf("expected success on the 4th request, got status %d after %d requests", resp.StatusCode, requests)
+	}
+	// 1s + 1.6s + 2.56s = 5.16s with the 1.6x factor; DefaultBackoff's 2x would take 1s + 2s + 4s = 7s.
+	if elapsed < 5100*time.Millisecond || elapsed >= 6500*time.Millisecond {
+		t.Errorf("expected about 5.16s of backoff across three 429s without Retry-After, waited %v", elapsed)
+	}
+}
