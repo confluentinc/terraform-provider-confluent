@@ -193,7 +193,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. Before each retry, a rate-limited request waits at least as long as the API asks in its `Retry-After` response header, which is 1 second for the per-second limits of the control-plane APIs at `api.confluent.cloud`. Other failures, and rate-limited requests without that header, wait about 1, 2, 4, 8, 16 and then 30 seconds, so a higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
--> **Note:** So that requests that failed at the same time don't all retry at the same moment, the provider adds a random extra time (jitter) of up to 20% to those waits, for example 30–36 seconds instead of 30. Except for Connect requests, a `429` or `503` response with a `Retry-After` header is retried after exactly that time. Connect requests that get a `429` or `503` wait a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than `Retry-After`.
+-> **Note:** So that requests that failed at the same time don't all retry at the same moment, the provider adds a random extra time (jitter) of up to 20% to those waits, for example 30–36 seconds instead of 30. Except for Connect requests, a `429` or `503` response with a `Retry-After` header is retried after exactly that time. Connect requests that get a `429` or `503` wait a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than `Retry-After`. A `Retry-After` of 30 seconds or more gets up to 20% extra.
 
 ## Helpful Links/Information
 
