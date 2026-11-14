@@ -101,17 +101,35 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readRunningConnectorStub1)
 
-	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
-		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
+	// Refreshing an existing connector reads it by name instead of listing the cluster. The GET returns the Kafka auth configs unmasked.
+	createdSingleConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_created_connector.json")
+	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorIsRunning1).
 		WillSetStateTo(scenarioStateManagedConnectorHasBeenCreated).
 		WillReturn(
-			string(createdConnectorResponse),
+			string(createdSingleConnectorResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
 	_ = wiremockClient.StubFor(readCreatedConnectorStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
+		WillReturn(
+			string(createdSingleConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
+		WillReturn(
+			string(runningConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
 
 	readCreatedConnectorStub2 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
@@ -166,6 +184,24 @@ func TestAccManagedConnector(t *testing.T) {
 			http.StatusOK,
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
+
+	updatedSingleConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connector.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillReturn(
+			string(updatedSingleConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillReturn(
+			string(runningConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
 
 	deleteConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
