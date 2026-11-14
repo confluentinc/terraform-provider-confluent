@@ -28,4 +28,6 @@ var (
 
 func main() {
 	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.New(version, userAgent)})
+	// Terraform has stopped the provider; give unsent analytics events a bounded wait.
+	provider.FlushTelemetry()
 }
