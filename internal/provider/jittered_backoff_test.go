@@ -11,11 +11,11 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-// checkUpTo20PercentJitter checks that backoff's waits fall within DefaultBackoff's wait plus 0-20%, and are spread
+// checkUpTo20PercentJitter checks that backoff's waits fall within retryBackoff's 1.6x exponential wait plus 0-20%, and are spread
 // across at least 90% of that range.
 func checkUpTo20PercentJitter(t *testing.T, backoff retryablehttp.Backoff, attemptNum int, resp *http.Response) {
 	t.Helper()
-	base := retryablehttp.DefaultBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
+	base := retryBackoff(testRetryWaitMin, testRetryWaitMax, attemptNum, resp)
 	extra := base / 5
 	lowest, highest := time.Duration(math.MaxInt64), time.Duration(0)
 	for i := 0; i < backoffSamples; i++ {

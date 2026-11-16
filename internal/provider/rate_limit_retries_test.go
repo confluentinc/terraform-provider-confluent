@@ -62,7 +62,7 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 	}
 }
 
-func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudget(t *testing.T) {
+func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBackoff(t *testing.T) {
 	// Opt out so configuring on the default endpoint doesn't start a real telemetry transport.
 	restorePublishedTelemetry(t)
 	t.Setenv(disableProviderAnalyticsEnvVar, "1")

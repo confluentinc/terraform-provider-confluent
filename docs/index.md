@@ -23,7 +23,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.94.0"
+      version = "2.95.0"
     }
   }
 }
@@ -193,7 +193,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`, for example to `20`. A higher `max_retries` also makes the provider take longer to report an API that is unavailable.
 
--> **Note:** Before each retry the provider waits a random time (jitter), so that requests that failed at the same time don't all retry at the same moment. A request that gets `429 Too Many Requests` or `503 Service Unavailable` waits a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than the `Retry-After` response header asks; a `Retry-After` of 30 seconds or more gets up to 20% extra. Other server and network errors wait about 1, 2, 4, 8, 16 and then 30 seconds, plus up to 20%.
+-> **Note:** Before each retry the provider waits a random time (jitter), so that requests that failed at the same time don't all retry at the same moment. A request that gets `429 Too Many Requests` or `503 Service Unavailable` waits a random 1–2, 2–4, 4–8 and 8–16 seconds, then 15–30 seconds, and never less than the `Retry-After` response header asks; a `Retry-After` of 30 seconds or more gets up to 20% extra. Other server and network errors back off exponentially, each wait 1.6 times the previous one, up to 30 seconds (about 1, 1.6, 2.6, 4.1, 6.6, 10.5, 16.8, 26.8 and then 30 seconds), plus up to 20%.
 
 ## Helpful Links/Information
 

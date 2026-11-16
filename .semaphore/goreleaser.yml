@@ -59,6 +59,7 @@ blocks:
             - . vault-setup
             # GitHub token is required for running GoReleaser
             - . vault-get-secret apif/signing-key
+            - . vault-get-secret goreleaser/pro-license --vault-role=default --secret-key=goreleaser_key --export-as=GORELEASER_KEY
             # Import GPG private key
             - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
             - echo "foo" > temp.txt
@@ -77,4 +78,4 @@ blocks:
             - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
             - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
-            - DISTRIBUTION=pro VERSION=v1.25.1-pro ./scripts/run-goreleaser.sh release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
+            - DISTRIBUTION=pro VERSION=v1.25.1-pro ./scripts/run-goreleaser.sh release --config .goreleaser.yml
