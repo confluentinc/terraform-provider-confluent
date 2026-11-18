@@ -76,6 +76,7 @@ const (
 	configOAuthBearer                         = "OAUTHBEARER"
 	configOperationDelete                     = "DELETE"
 	rateLimitedAPIMinMaxRetries               = 12
+	retryWaitJitterDivisor                    = 5 // retry waits get up to 1/5 (20%) extra
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"
