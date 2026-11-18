@@ -75,7 +75,9 @@ const (
 	computePoolConfigLoggingKey               = "compute_pool_config_id"
 	configOAuthBearer                         = "OAUTHBEARER"
 	configOperationDelete                     = "DELETE"
-	rateLimitedAPIMinMaxRetries               = 12
+	apiKeysMaxRetriesFloor                    = 20
+	connectMaxRetriesFloor                    = 12
+	iamAndRBACMaxRetriesFloor                 = 15
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"

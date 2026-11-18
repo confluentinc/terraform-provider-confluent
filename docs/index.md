@@ -181,13 +181,15 @@ provider "confluent" {
 }
 ```
 
-Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations are most often rate-limited, always retry at least 12 times. These requests are made by the `confluent_connector`, `confluent_service_account`, `confluent_api_key`, `confluent_role_binding`, `confluent_invitation` and `confluent_tf_importer` resources, and by the `confluent_service_account`, `confluent_user`, `confluent_users`, `confluent_role_binding` and `confluent_invitation` data sources.
+Requests to the API keys, IAM, RBAC and Connect APIs, where large configurations are most often rate-limited, always retry at least a minimum number of times, even when `max_retries` is lower:
 
-| `max_retries`         | Connect, IAM, API keys and RBAC requests | All other requests    |
-|-----------------------|------------------------------------------|-----------------------|
-| Not set (default `4`) | 12 retries                               | 4 retries             |
-| `4` to `12`           | 12 retries                               | `max_retries` retries |
-| Above `12`            | `max_retries` retries                    | `max_retries` retries |
+| Requests to | Made by | Retries |
+|---|---|---|
+| API keys | the `confluent_api_key` and `confluent_tf_importer` resources | `max_retries`, at least 20 |
+| IAM | the `confluent_service_account`, `confluent_invitation` and `confluent_tf_importer` resources, and the `confluent_service_account`, `confluent_user`, `confluent_users` and `confluent_invitation` data sources | `max_retries`, at least 15 |
+| RBAC | the `confluent_role_binding` and `confluent_tf_importer` resources, and the `confluent_role_binding` data source | `max_retries`, at least 15 |
+| Connect | the `confluent_connector` and `confluent_tf_importer` resources | `max_retries`, at least 12 |
+| All other APIs | | `max_retries` (default `6`) |
 
 -> **Note:** `max_retries` must be at least `4`.
 
