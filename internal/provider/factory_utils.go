@@ -229,14 +229,13 @@ func WithRateLimitBackoff() RetryableClientFactoryOption {
 // CreateRetryableClient creates retryable HTTP client that performs automatic retries with exponential backoff for 429
 // and 5** (except 501) errors. Otherwise, the response is returned and left to the caller to interpret.
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
-	// Implicitly using default retry configuration
-	// under the assumption is it's OK to spend retrying a single HTTP call around 9 seconds in total: 1 + 1.6 + 2.56 + 4.096
+	// max_retries defaults to 6, so by default a single HTTP call spends about 26 seconds retrying a 5xx or a connection
+	// error in total: 1 + 1.6 + 2.56 + 4.096 + 6.55 + 10.49
 	// Connect, IAM, API keys and RBAC clients retry at least 12 times; Connect's 429/503 waits are also jittered.
 	// An exponential backoff equation (retryBackoff):
 	// retryWaitMax = math.Pow(retryExponentialBackoffFactor, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
 	// defaultRetryWaitMax = 30 * time.Second
-	// defaultRetryMax     = 4
 
 	retryClient := retryablehttp.NewClient()
 	logger := retryClientLogger{f.ctx}

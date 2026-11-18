@@ -185,7 +185,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 | `max_retries`         | Connect, IAM, API keys and RBAC requests | All other requests    |
 |-----------------------|------------------------------------------|-----------------------|
-| Not set (default `4`) | 12 retries                               | 4 retries             |
+| Not set (default `6`) | 12 retries                               | 6 retries             |
 | `4` to `12`           | 12 retries                               | `max_retries` retries |
 | Above `12`            | `max_retries` retries                    | `max_retries` retries |
 
