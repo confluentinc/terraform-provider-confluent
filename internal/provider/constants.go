@@ -77,7 +77,7 @@ const (
 	configOperationDelete                     = "DELETE"
 	apiKeysMaxRetriesFloor                    = 20
 	connectMaxRetriesFloor                    = 12
-	iamAndRBACMaxRetriesFloor                 = 15
+	iamAndRBACMaxRetriesFloor                 = 14
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"

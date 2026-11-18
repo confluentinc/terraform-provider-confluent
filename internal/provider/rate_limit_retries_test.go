@@ -16,8 +16,8 @@ func TestMaxRetriesWithFloor(t *testing.T) {
 		{4, connectMaxRetriesFloor, 12},
 		{12, connectMaxRetriesFloor, 12},
 		{20, connectMaxRetriesFloor, 20},
-		{6, iamAndRBACMaxRetriesFloor, 15},
-		{16, iamAndRBACMaxRetriesFloor, 16},
+		{6, iamAndRBACMaxRetriesFloor, 14},
+		{15, iamAndRBACMaxRetriesFloor, 15},
 		{6, apiKeysMaxRetriesFloor, 20},
 		{25, apiKeysMaxRetriesFloor, 25},
 	} {
@@ -83,8 +83,8 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBacko
 		name, maxRetriesEnv                  string
 		apiKeys, iamAndRBAC, connect, others int
 	}{
-		{"max_retries not set (6)", "", 20, 15, 12, 6},
-		{"max_retries = 4, below the floors", "4", 20, 15, 12, 4},
+		{"max_retries not set (6)", "", 20, 14, 12, 6},
+		{"max_retries = 4, below the floors", "4", 20, 14, 12, 4},
 		{"max_retries = 25, above the floors", "25", 25, 25, 25, 25},
 	} {
 		t.Run(want.name, func(t *testing.T) {

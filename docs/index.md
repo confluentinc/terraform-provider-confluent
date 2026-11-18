@@ -186,8 +186,8 @@ Requests to the API keys, IAM, RBAC and Connect APIs, where large configurations
 | Requests to | Made by | Retries |
 |---|---|---|
 | API keys | the `confluent_api_key` and `confluent_tf_importer` resources | `max_retries`, at least 20 |
-| IAM | the `confluent_service_account`, `confluent_invitation` and `confluent_tf_importer` resources, and the `confluent_service_account`, `confluent_user`, `confluent_users` and `confluent_invitation` data sources | `max_retries`, at least 15 |
-| RBAC | the `confluent_role_binding` and `confluent_tf_importer` resources, and the `confluent_role_binding` data source | `max_retries`, at least 15 |
+| IAM | the `confluent_service_account`, `confluent_invitation` and `confluent_tf_importer` resources, and the `confluent_service_account`, `confluent_user`, `confluent_users` and `confluent_invitation` data sources | `max_retries`, at least 14 |
+| RBAC | the `confluent_role_binding` and `confluent_tf_importer` resources, and the `confluent_role_binding` data source | `max_retries`, at least 14 |
 | Connect | the `confluent_connector` and `confluent_tf_importer` resources | `max_retries`, at least 12 |
 | All other APIs | | `max_retries` (default `6`) |
 
