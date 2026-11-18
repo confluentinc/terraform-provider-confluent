@@ -224,7 +224,7 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// Implicitly using default retry configuration
 	// under the assumption is it's OK to spend retrying a single HTTP call around 9-11 seconds in total for 5xx and
 	// network errors: 1 + 1.6 + 2.56 + 4.096, plus up to 20% jitter. 429/503 waits are random and grow (rateLimitBackoff),
-	// with Retry-After as a floor: 15-30 seconds in total with 4 retries, 2.25-4.5 minutes with 12.
+	// with Retry-After as a floor: 9-18.5 seconds in total with 4 retries, about 2-4 minutes with 12.
 	// Connect, IAM, API keys and RBAC clients retry at least 12 times.
 	// An exponential backoff equation for 5xx and network errors (retryBackoff):
 	// retryWaitMax = math.Pow(retryExponentialBackoffFactor, float64(attemptNum)) * float64(retryWaitMin)
@@ -309,11 +309,10 @@ func rateLimitBackoff(minWait, maxWait time.Duration, attemptNum int, resp *http
 	if resp == nil || (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) {
 		return jitteredBackoff(minWait, maxWait, attemptNum, resp)
 	}
-	// DefaultBackoff returns the exponential wait without a response, and a valid Retry-After as-is with one. The header
-	// is read with attempt 0, so an invalid Retry-After falls back to minWait instead of an unjittered exponential wait.
-	lower := min(retryablehttp.DefaultBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
-	if resp.Header.Get("Retry-After") != "" {
-		lower = max(lower, retryablehttp.DefaultBackoff(minWait, maxWait, 0, resp))
+	// The floor grows like retryBackoff, capped at maxWait/2; a valid Retry-After raises it.
+	lower := min(retryBackoff(minWait, maxWait, attemptNum, nil), maxWait/2)
+	if retryAfter, ok := parseRetryAfter(resp); ok {
+		lower = max(lower, retryAfter)
 	}
 	if lower >= maxWait {
 		return withJitter(lower)

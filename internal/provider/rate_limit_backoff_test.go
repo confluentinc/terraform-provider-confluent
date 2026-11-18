@@ -81,16 +81,17 @@ func TestRateLimitBackoffIgnoresInvalidRetryAfter(t *testing.T) {
 	}
 }
 
-// checkJitteredSchedule checks every attempt's waits: within 1-2s, 2-4s, 4-8s, 8-16s, then 15-30s, and spread out.
+// checkJitteredSchedule checks every attempt's waits: within 1-2s, 1.6-3.2s, 2.56-5.12s, 4.1-8.2s, 6.6-13.1s,
+// 10.5-21s, then 15-30s, and spread out.
 func checkJitteredSchedule(t *testing.T, resp *http.Response) {
 	t.Helper()
 	expected := []struct{ lower, upper time.Duration }{
 		{1 * time.Second, 2 * time.Second},
-		{2 * time.Second, 4 * time.Second},
-		{4 * time.Second, 8 * time.Second},
-		{8 * time.Second, 16 * time.Second},
-		{15 * time.Second, 30 * time.Second},
-		{15 * time.Second, 30 * time.Second},
+		{1600 * time.Millisecond, 3200 * time.Millisecond},
+		{2560 * time.Millisecond, 5120 * time.Millisecond},
+		{4096 * time.Millisecond, 8192 * time.Millisecond},
+		{6553600 * time.Microsecond, 13107200 * time.Microsecond},
+		{10485760 * time.Microsecond, 20971520 * time.Microsecond},
 		{15 * time.Second, 30 * time.Second},
 		{15 * time.Second, 30 * time.Second},
 		{15 * time.Second, 30 * time.Second},
@@ -151,9 +152,9 @@ func timeTwoRateLimitedRetries(t *testing.T) time.Duration {
 }
 
 func TestCreateRetryableClientBacksOffExponentiallyDespiteRetryAfter(t *testing.T) {
-	// Honoring "Retry-After: 1" verbatim would wait 1s + 1s; the exponential floor waits at least 1s + 2s.
-	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 3*time.Second {
-		t.Fatalf("expected at least 3s of backoff across two 429s, waited %v", elapsed)
+	// Honoring "Retry-After: 1" verbatim would wait 1s + 1s; the exponential floor waits at least 1s + 1.6s.
+	if elapsed := timeTwoRateLimitedRetries(t); elapsed < 2600*time.Millisecond {
+		t.Fatalf("expected at least 2.6s of backoff across two 429s, waited %v", elapsed)
 	}
 }
 
