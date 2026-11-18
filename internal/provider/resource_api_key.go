@@ -144,7 +144,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if !skipSync {
 		// Wait until the API Key is synced and is ready to use
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for API Key %q to sync", createdApiKey.GetId()), map[string]interface{}{apiKeyLoggingKey: createdApiKey.GetId()})
-		if err := waitForApiKeyToSync(ctx, c, createdApiKey, isResourceSpecificApiKey, environmentId); err != nil {
+		if err := waitForApiKeyToSync(ctx, c, createdApiKey, isResourceSpecificApiKey, environmentId, d.Timeout(schema.TimeoutCreate)); err != nil {
 			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 	}
@@ -493,7 +493,7 @@ func isGlobalApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == globalKind && apiKey.Spec.Resource.GetId() == globalKindInLowercase
 }
 
-func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
+func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string, timeout time.Duration) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
 	// For Tableflow API Key use Tableflow REST API's List Regions request and wait for http.StatusOK
@@ -507,7 +507,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2
 				return fmt.Errorf("error fetching Kafka Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
 			}
 			kafkaRestClient := c.kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, false, c.oauthToken)
-			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient, c.isAcceptanceTestMode); err != nil {
+			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient, c.isAcceptanceTestMode, timeout); err != nil {
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isSchemaRegistryApiKey(createdApiKey) || isFlinkApiKey(createdApiKey) {
@@ -519,11 +519,11 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode, c.isLiveProductionTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
 			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken, c.stsToken)
-			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
+			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode, timeout); err != nil {
 				return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isGlobalApiKey(createdApiKey) {
-			if err := waitForCreatedGlobalApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
+			if err := waitForCreatedGlobalApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), timeout); err != nil {
 				return fmt.Errorf("error waiting for Global API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else {
@@ -535,7 +535,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2
 		}
 	} else {
 		// Cloud API Key
-		if err := waitForCreatedCloudApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
+		if err := waitForCreatedCloudApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), timeout); err != nil {
 			return fmt.Errorf("error waiting for Cloud API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 		}
 	}

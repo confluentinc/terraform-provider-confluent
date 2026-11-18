@@ -41,6 +41,14 @@ These are the exportable resources:
 
 -> **Note:** [File an issue](https://github.com/confluentinc/terraform-provider-confluent/issues) to request a support for other resources.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
+
+- `create` - (Default `8h`) How long to wait for the import of all resources to finish.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Getting Started
 The following end-to-end examples might help to get started with the `confluent_tf_importer` resource:
   * [`cloud-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cloud-importer): Export _Cloud_ resources (for example, Service Accounts, Environments)
