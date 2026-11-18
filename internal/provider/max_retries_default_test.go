@@ -61,8 +61,8 @@ func TestProviderMaxRetriesDefaultsToSix(t *testing.T) {
 		t.Errorf("Kafka REST client factory: maxRetries = %d, want 6", got)
 	}
 	// The rate-limited APIs keep their higher floor.
-	if got := retryMaxOf(t, "IAM", c.iamV2Client.GetConfig().HTTPClient); got != rateLimitedAPIMinMaxRetries {
-		t.Errorf("IAM client: RetryMax = %d, want %d", got, rateLimitedAPIMinMaxRetries)
+	if got := retryMaxOf(t, "IAM", c.iamV2Client.GetConfig().HTTPClient); got != iamAndRBACMaxRetriesFloor {
+		t.Errorf("IAM client: RetryMax = %d, want %d", got, iamAndRBACMaxRetriesFloor)
 	}
 }
 

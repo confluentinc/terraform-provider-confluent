@@ -9,27 +9,34 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func TestRateLimitedAPIMaxRetries(t *testing.T) {
-	for configured, want := range map[int]int{4: 12, 8: 12, 12: 12, 20: 20} {
-		if got := rateLimitedAPIMaxRetries(configured); got != want {
-			t.Errorf("rateLimitedAPIMaxRetries(%d) = %d, want %d", configured, got, want)
+func TestMaxRetriesWithFloor(t *testing.T) {
+	for _, tc := range []struct{ configured, floor, want int }{
+		{4, connectMaxRetriesFloor, 12},
+		{12, connectMaxRetriesFloor, 12},
+		{20, connectMaxRetriesFloor, 20},
+		{6, iamAndRBACMaxRetriesFloor, 15},
+		{16, iamAndRBACMaxRetriesFloor, 16},
+		{6, apiKeysMaxRetriesFloor, 20},
+		{25, apiKeysMaxRetriesFloor, 25},
+	} {
+		if got := maxRetriesWithFloor(tc.configured, tc.floor); got != tc.want {
+			t.Errorf("maxRetriesWithFloor(%d, %d) = %d, want %d", tc.configured, tc.floor, got, tc.want)
 		}
 	}
 }
 
 func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
-	// More 429s in a row than the default 4 retries outlast, but fewer than the floor.
+	// More 429s in a row than the default 6 retries outlast, but fewer than the lowest floor (Connect's 12).
 	const rejections = 10
 	tests := map[string]struct {
 		maxRetries   int
 		wantSuccess  bool
 		wantRequests int32
 	}{
-		"default budget runs out":           {maxRetries: 4, wantSuccess: false, wantRequests: 5},
-		"rate-limited API budget is enough": {maxRetries: rateLimitedAPIMaxRetries(4), wantSuccess: true, wantRequests: rejections + 1},
+		"default budget runs out":           {maxRetries: 6, wantSuccess: false, wantRequests: 7},
+		"rate-limited API budget is enough": {maxRetries: maxRetriesWithFloor(6, connectMaxRetriesFloor), wantSuccess: true, wantRequests: rejections + 1},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -60,22 +67,7 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 }
 
 func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBackoff(t *testing.T) {
-	// Opt out so configuring on the default endpoint doesn't start a real telemetry transport.
-	restorePublishedTelemetry(t)
-	t.Setenv(disableProviderAnalyticsEnvVar, "1")
-	p := New("test", "")()
-	d := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
-		"cloud_api_key":    "test-key",
-		"cloud_api_secret": "test-secret",
-	})
-	meta, diags := providerConfigure(context.Background(), d, p, "test", "")
-	if diags.HasError() {
-		t.Fatalf("providerConfigure failed: %v", diags)
-	}
-	c := meta.(*Client)
-	configured := d.Get("max_retries").(int)
-
-	retryClient := func(name string, httpClient *http.Client) *retryablehttp.Client {
+	retryClient := func(t *testing.T, name string, httpClient *http.Client) *retryablehttp.Client {
 		logging, ok := httpClient.Transport.(*loggingTransport)
 		if !ok {
 			t.Fatalf("%s client: expected a *loggingTransport, got %T", name, httpClient.Transport)
@@ -86,27 +78,40 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBacko
 		}
 		return roundTripper.Client
 	}
-	for name, tc := range map[string]struct {
-		httpClient *http.Client
-		want       int
-		jitter     bool
+	// Retries per client for each max_retries: a lower max_retries doesn't lower the floors, a higher one raises all.
+	for _, want := range []struct {
+		name, maxRetriesEnv                  string
+		apiKeys, iamAndRBAC, connect, others int
 	}{
-		"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), true},
-		"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, rateLimitedAPIMaxRetries(configured), false},
-		"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, configured, false},
+		{"max_retries not set (6)", "", 20, 15, 12, 6},
+		{"max_retries = 4, below the floors", "4", 20, 15, 12, 4},
+		{"max_retries = 25, above the floors", "25", 25, 25, 25, 25},
 	} {
-		client := retryClient(name, tc.httpClient)
-		if client.RetryMax != tc.want {
-			t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
-		}
-		// Only Connect API uses jittered rateLimitBackoff
-		if jitter := reflect.ValueOf(client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
-			t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
-		}
-		if !tc.jitter && reflect.ValueOf(client.Backoff).Pointer() != reflect.ValueOf(retryBackoff).Pointer() {
-			t.Errorf("%s client: backoff is not retryBackoff", name)
-		}
+		t.Run(want.name, func(t *testing.T) {
+			_, c := configureWithMaxRetriesEnv(t, want.maxRetriesEnv)
+			for name, tc := range map[string]struct {
+				httpClient *http.Client
+				want       int
+				jitter     bool
+			}{
+				"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, want.apiKeys, false},
+				"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, want.connect, true},
+				"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, want.iamAndRBAC, false},
+				"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, want.iamAndRBAC, false},
+				"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, want.others, false},
+			} {
+				client := retryClient(t, name, tc.httpClient)
+				if client.RetryMax != tc.want {
+					t.Errorf("%s client: RetryMax = %d, want %d", name, client.RetryMax, tc.want)
+				}
+				// Only Connect API uses jittered rateLimitBackoff
+				if jitter := reflect.ValueOf(client.Backoff).Pointer() == reflect.ValueOf(rateLimitBackoff).Pointer(); jitter != tc.jitter {
+					t.Errorf("%s client: jittered backoff = %t, want %t", name, jitter, tc.jitter)
+				}
+				if !tc.jitter && reflect.ValueOf(client.Backoff).Pointer() != reflect.ValueOf(retryBackoff).Pointer() {
+					t.Errorf("%s client: backoff is not retryBackoff", name)
+				}
+			}
+		})
 	}
 }

@@ -305,7 +305,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:     true,
 					DefaultFunc:  schema.EnvDefaultFunc("TF_PROVIDER_CONFLUENT_MAX_RETRIES", 6),
 					ValidateFunc: validation.IntAtLeast(4),
-					Description:  "Maximum number of retries of HTTP client. Defaults to 6. Connect, IAM, API keys and RBAC API requests retry at least 12 times.",
+					Description:  "Maximum number of retries of HTTP client. Defaults to 6. API keys API requests retry at least 20 times, IAM and RBAC at least 15, and Connect at least 12.",
 				},
 				"user_agent_suffix": {
 					Type:        schema.TypeString,
@@ -717,7 +717,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	tableflowRestClientFactory = &TableflowRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries, endpoint: endpoint}
 
-	apiKeysV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
+	apiKeysV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, apiKeysMaxRetriesFloor))).CreateRetryableClient()
 	byokV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	certificateAuthorityV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	dataCatalogV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -725,14 +725,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries)), WithRateLimitBackoff()).CreateRetryableClient()
+	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, connectMaxRetriesFloor)), WithRateLimitBackoff()).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
+	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, iamAndRBACMaxRetriesFloor))).CreateRetryableClient()
 	iamIpFilteringV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	mdsV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
+	mdsV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, iamAndRBACMaxRetriesFloor))).CreateRetryableClient()
 	networkingV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	networkingGatewayV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	networkingIpV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
