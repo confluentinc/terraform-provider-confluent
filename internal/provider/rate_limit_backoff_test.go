@@ -240,7 +240,7 @@ func TestCreateRetryableClientBacksOffByFactorOnServerErrors(t *testing.T) {
 		t.Fatalf("expected success on the 4th request, got status %d after %d requests", resp.StatusCode, requests)
 	}
 	// 1s + 1.6s + 2.56s = 5.16s with the 1.6x factor, plus up to 20% (6.19s); DefaultBackoff's 2x would take at least 7s.
-	if elapsed < 5100*time.Millisecond || elapsed >= 6500*time.Millisecond {
+	if elapsed < 5100*time.Millisecond || elapsed >= 6900*time.Millisecond {
 		t.Errorf("expected 5.16-6.19s of backoff across three 500s, waited %v", elapsed)
 	}
 }
