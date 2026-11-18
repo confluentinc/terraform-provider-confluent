@@ -823,13 +823,14 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 			break
 		}
 		if resp != nil && resp.StatusCode == http.StatusConflict && time.Now().Before(deadline) {
-			tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q delete returned 409, retrying in %s: %s", d.Id(), deleteInterval, err))
+			wait := withJitter(deleteInterval)
+			tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q delete returned 409, retrying in %s: %s", d.Id(), wait, err))
 			// Drain the body so the underlying TCP connection can be reused
 			// across retry attempts instead of leaking up to one fd per try.
 			if resp.Body != nil {
 				_ = resp.Body.Close()
 			}
-			time.Sleep(deleteInterval)
+			time.Sleep(wait)
 			continue
 		}
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
