@@ -217,11 +217,9 @@ The limit doesn't apply to:
 - Imports. The read that Terraform runs after an import is limited to 20 minutes.
 - Fixed pauses between some steps (up to 5 minutes), file uploads, and the API requests of `confluent_connect_artifact`. These finish first, so an operation can run past a shorter limit.
 
--> **Note:** `terraform destroy` uses the `timeouts` values saved in state when the resource was last created or updated, not the ones in your configuration. A new `delete` value, or a new default after a provider upgrade, takes effect after the resource's next create or update. An imported resource starts with the resource's defaults.
+-> **Note:** `terraform destroy` uses the `timeouts` values saved in state when the resource was last created or updated, not the ones in your configuration. A new `delete` value, or a new default after a provider upgrade, takes effect after the resource's next create or update. Changing only the `timeouts` block doesn't count as an update. An imported resource starts with the resource's defaults.
 
--> **Note:** If a create times out after Confluent Cloud has started creating the resource, Terraform usually marks it as tainted, and the next `terraform apply` replaces it. If it finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` aren't saved to state until they're ready, so after a timed-out create, delete the new API key or import the schema exporter before you apply again.
-
--> **Note:** If you press Ctrl-C once, operations in progress keep waiting until they finish or time out. Pressing it again stops Terraform right away, which can leave resources that were being created out of state.
+-> **Note:** If a create times out after Confluent Cloud has started creating the resource, Terraform usually marks it as tainted, and the next `terraform apply` replaces it. If it finishes provisioning later, run `terraform untaint` to keep it. `confluent_api_key` and `confluent_schema_exporter` are saved to state only once they're ready. If one isn't in state after a timed-out create, delete the new API key or import the schema exporter before you apply again.
 
 ## Helpful Links/Information
 
