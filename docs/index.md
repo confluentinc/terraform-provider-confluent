@@ -193,7 +193,7 @@ Requests to the Connect, IAM, API keys and RBAC APIs, where large configurations
 
 -> **Note:** If a large `terraform plan` or `terraform apply` still fails with `429 Too Many Requests`, lower Terraform's `-parallelism` (the default is 10) or raise `max_retries`. Each extra retry can wait about 30 seconds, so with `max_retries = 20` the provider can take about 8 minutes to report an API that stays rate-limited.
 
--> **Note:** Before each retry the provider waits a random time (jitter), so that requests that failed at the same time don't all retry at the same moment. A request that gets `429 Too Many Requests` or `503 Service Unavailable` waits a random 1–2, 1.6–3.2, 2.6–5.1, 4.1–8.2, 6.6–13.1 and 10.5–21 seconds, then 15–30 seconds, and never less than the `Retry-After` response header asks; a `Retry-After` of 30 seconds or more gets up to 20% extra. Other server and network errors back off exponentially, each wait 1.6 times the previous one, up to 30 seconds (about 1, 1.6, 2.6, 4.1, 6.6, 10.5, 16.8, 26.8 and then 30 seconds), plus up to 20%.
+-> **Note:** Before each retry the provider waits a random time (jitter), so that requests that failed at the same time don't all retry at the same moment. A request that gets `429 Too Many Requests` or `503 Service Unavailable` waits a random 1–2 seconds before the first retry. Each later wait is about 1.6 times longer, up to 15–30 seconds, and never shorter than the `Retry-After` response header asks. A `Retry-After` of 30 seconds or more gets up to 20% extra. Other server and network errors wait about 1 second before the first retry, then each wait is 1.6 times longer, up to 30 seconds, plus up to 20%.
 
 ## Helpful Links/Information
 
