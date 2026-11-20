@@ -191,6 +191,8 @@ const (
 	linkModeSource                                       = "SOURCE"
 	listCertificatePoolsPageSize                         = 99
 	listComputePoolsPageSize                             = 99
+	listConnectorsPageSize                               = 100
+	listConnectorsNextPageTokenHeader                    = "X-Next-Page-Token"
 	listEndpointsPageSize                                = 100
 	listEnvironmentsPageSize                             = 99
 	listFlinkArtifactsPageSize                           = 99
