@@ -419,7 +419,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	d.SetId(createdAccessPoint.GetId())
 
-	if err := waitForAccessPointToProvision(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForAccessPointToProvision(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -492,7 +492,7 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForAccessPointToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
+	if err := waitForAccessPointToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Access Point %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 

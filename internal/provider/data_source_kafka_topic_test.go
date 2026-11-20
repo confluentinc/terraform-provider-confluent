@@ -79,7 +79,7 @@ func TestAccDataSourceTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
-					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "%", numberOfResourceAttributes),
+					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "%", numberOfKafkaTopicDataSourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "rest_endpoint", mockTopicTestServerUrl),

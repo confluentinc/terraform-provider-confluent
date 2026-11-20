@@ -129,6 +129,9 @@ func kafkaTopicResource() *schema.Resource {
 			}),
 			customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 		),
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(kafkaTopicDeleteTimeout),
+		},
 	}
 }
 
@@ -271,7 +274,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
