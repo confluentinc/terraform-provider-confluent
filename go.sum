@@ -71,6 +71,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg8=
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.30.0 h1:XE4GXhNzRUiWCXdH1BSTihosSdiGWBfGeftzMbUwfyo=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.30.0/go.mod h1:SOBg3q7PzldAyLTc887S2irRyxiSh6zI9TZ7KIo2dNs=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0 h1:8fWyLwMuy8ec0MVF5Avd54UvbIxhDFhZzanHBVwgxdw=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.9 h1:TFz/gJ0tPnTsEE56xJwLtU5ykTpfPv0vZwI1jS1QUMg=
@@ -143,8 +145,6 @@ github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUf
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
 github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1 h1:dkwRPO/UTsBPvHTZVGkcke3Z7EGffBPYhyX/iREUAlE=
 github.com/confluentinc/ccloud-sdk-go-v2/switchover v0.1.1/go.mod h1:sZ2nAt/EbWwYmnjIckI+dpi02MuE4AGX8K2f/0bfD5s=
-github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0 h1:b5s9pHopcsLeBSfvkj3j4SdAsiPwigY0x6jdkXnzAbo=
-github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.8.0/go.mod h1:NqM6aLdXeXhf+JMc0Y39fZjU9pWSHfhosfYRp/DKHxk=
 github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.2.0 h1:KD/cZGgNwhLTNzjFy5iONQHGW0af1dcWWNsDwm4u9LQ=
 github.com/confluentinc/ccloud-sdk-go-v2/terraform-usage v0.2.0/go.mod h1:gVeE6mfGUaM0iYQHYxeXa4dgn2FgkTZIR+VU+a5C4ig=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=

@@ -200,6 +200,61 @@ func TestAccDataSourceTableflowTopicAzure(t *testing.T) {
 
 }
 
+func TestAccDataSourceTableflowTopicIcebergV3(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_updated_iceberg_v3_tt.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
+		InScenario(TableflowTopicDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readTableflowTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceTableflowTopic(mockServerUrl, "topic_1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "id", "topic_1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.#", "2"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.0.iceberg.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.0.iceberg.0.enabled", "true"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.0.iceberg.0.format_version", "3"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.0.delta.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_format_properties.0.delta.0.enabled", "true"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "features.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "features.0.feature", "VARIANT"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "features.0.enabled", "true"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "features.0.shredding.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "features.0.shredding.0.enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckDataSourceTableflowTopic(mockServerUrl, resourceName string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
