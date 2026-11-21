@@ -319,8 +319,7 @@ func tableFormatPropertiesSchema() *schema.Schema {
 	}
 }
 
-// featuresSchema is a list, not a set. A set with a hash on the feature name hides a change of enabled or shredding, and a
-// hash on all fields makes the computed shredding value cause a diff on each plan. When the API adds a second feature,
+// featuresSchema is a list, not a set. When the API adds a second feature,
 // the read must keep the configured order.
 func featuresSchema() *schema.Schema {
 	return &schema.Schema{
