@@ -85,6 +85,17 @@ In addition to the preceding arguments, the following attributes are exported:
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
 - `data_retention_ms` - (Optional String) The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum allowed value is `2592000000` milliseconds (equivalent to 30 days).
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic.
+- `table_format_properties` (Computed Configuration Block) The settings of each table format of the Tableflow-enabled topic. A table format that this version of the provider does not know is not listed. It supports the following:
+    - `iceberg` (Computed Configuration Block) The settings of the Iceberg table format. It supports the following:
+        - `enabled` - (Computed Boolean) Indicates whether the Iceberg table format is enabled.
+        - `format_version` - (Computed Integer) The Iceberg format version of the table. `0` means that Iceberg never had a format version.
+    - `delta` (Computed Configuration Block) The settings of the Delta Lake table format. It supports the following:
+        - `enabled` - (Computed Boolean) Indicates whether the Delta Lake table format is enabled.
+- `features` (Computed List of Blocks) The table features of the Tableflow-enabled topic. A feature that this version of the provider does not know is not listed. Each `features` block supports the following:
+    - `feature` - (Computed String) The name of the table feature, for example, `VARIANT`.
+    - `enabled` - (Computed Boolean) Indicates whether the table feature is enabled.
+    - `shredding` (Computed Configuration Block) The shredding settings of the `VARIANT` feature. It supports the following:
+        - `enabled` - (Computed Boolean) Indicates whether `VARIANT` shredding is enabled.
 - `table_path` - (Optional String) The current storage path where the data and metadata is stored for this table.
 - `record_failure_strategy` - (Optional String, **Deprecated**) The strategy to handle record failures in the Tableflow enabled topic during materialization. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
 - `metadata_column_naming_scheme` - (Optional String) The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table. For `DEFAULT`, the metadata columns keep their `$$`-prefixed names. For `PORTABLE`, the metadata columns use `cflt_metadata_`-prefixed names that are queryable by engines such as Google BigQuery.
