@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -92,6 +91,9 @@ func tableflowTopicDataSource() *schema.Resource {
 			paramAzureStorage:   azureStorageDataSourceSchema(),
 			paramGcsStorage:     gcsStorageDataSourceSchema(),
 			paramErrorHandling:  errorHandlingDataSourceSchema(),
+
+			paramTableFormatProperties: tableFormatPropertiesDataSourceSchema(),
+			paramFeatures:              featuresDataSourceSchema(),
 		},
 	}
 }
@@ -120,11 +122,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.Errorf("error reading Tableflow Topic %q: %s", tableflowTopicId, createDescriptiveError(err, resp))
 	}
-	tableflowTopicJson, err := json.Marshal(tableflowTopic)
-	if err != nil {
-		return diag.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", tableflowTopicId, tableflowTopicJson), map[string]interface{}{tableflowTopicKey: tableflowTopicId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", tableflowTopicId, tableflowTopicJsonForLog(tableflowTopic)), map[string]interface{}{tableflowTopicKey: tableflowTopicId})
 
 	if _, err := setTableflowTopicAttributes(d, tableflowRestClient, tableflowTopic); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -252,5 +250,86 @@ func errorHandlingDataSourceSchema() *schema.Schema {
 			},
 		},
 		Computed: true,
+	}
+}
+
+func tableFormatPropertiesDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Computed:    true,
+		Description: "The settings of each table format of the Tableflow-enabled topic.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramIceberg: {
+					Type:        schema.TypeList,
+					Computed:    true,
+					Description: "The settings of the Iceberg table format.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Computed:    true,
+								Description: "Indicates whether the Iceberg table format is enabled.",
+							},
+							paramFormatVersion: {
+								Type:        schema.TypeInt,
+								Computed:    true,
+								Description: "The Iceberg format version of the table.",
+							},
+						},
+					},
+				},
+				paramDelta: {
+					Type:        schema.TypeList,
+					Computed:    true,
+					Description: "The settings of the Delta Lake table format.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Computed:    true,
+								Description: "Indicates whether the Delta Lake table format is enabled.",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func featuresDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Computed:    true,
+		Description: "The table features of the Tableflow-enabled topic.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramFeature: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The name of the table feature.",
+				},
+				paramEnabled: {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Indicates whether the table feature is enabled.",
+				},
+				paramShredding: {
+					Type:        schema.TypeList,
+					Computed:    true,
+					Description: "The shredding settings of the VARIANT feature.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Computed:    true,
+								Description: "Indicates whether VARIANT shredding is enabled.",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
