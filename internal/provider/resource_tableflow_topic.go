@@ -319,11 +319,9 @@ func tableFormatPropertiesSchema() *schema.Schema {
 	}
 }
 
-// featuresSchema is a list, not a set. The SDK compares only the hash codes of the old and new elements of a set. With a
-// hash on the feature name, a change of enabled or shredding makes no diff. With a hash on all fields, the computed
-// shredding value causes a diff on each plan. A list compares each field of each element, so both problems do not occur.
-// The provider sends only VARIANT entries, because the SDK has no type for other features. When the API adds a second
-// feature, the read must keep the order of the configuration, else the order of the API entries can cause a diff.
+// featuresSchema is a list, not a set. A set with a hash on the feature name hides a change of enabled or shredding, and a
+// hash on all fields makes the computed shredding value cause a diff on each plan. When the API adds a second feature,
+// the read must keep the configured order.
 func featuresSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,
