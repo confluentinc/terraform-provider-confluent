@@ -361,6 +361,7 @@ const (
 	paramDefaultPoolEnabled                              = "default_compute_pool_enabled"
 	paramDefaultValue                                    = "default_value"
 	paramDeletionProtection                              = "deletion_protection"
+	paramDelta                                           = "delta"
 	paramDescription                                     = "description"
 	paramDestinationKafkaCluster                         = "destination_kafka_cluster"
 	paramDestinationKafkaCredentials                     = "destination_kafka_cluster.0.credentials"
@@ -392,6 +393,7 @@ const (
 	paramEnableCompaction                                = "enable_compaction"
 	paramEnableHighAvailability                          = "enable_high_availability"
 	paramEnablePartitioning                              = "enable_partitioning"
+	paramEnabled                                         = "enabled"
 	paramEncryptedKeyMaterial                            = "encrypted_key_material"
 	paramEncryptionKey                                   = "encryption_key"
 	paramEndpoint                                        = "endpoint"
@@ -423,6 +425,8 @@ const (
 	paramExpr                                            = "expr"
 	paramExternalId                                      = "external_id"
 	paramExternalIdentifier                              = "external_identifier"
+	paramFeature                                         = "feature"
+	paramFeatures                                        = "features"
 	paramFilename                                        = "filename"
 	paramFilter                                          = "filter"
 	paramFilterName                                      = "filter_name"
@@ -430,6 +434,7 @@ const (
 	paramForce                                           = "force"
 	paramForceDefaultValue                               = false
 	paramFormat                                          = "format"
+	paramFormatVersion                                   = "format_version"
 	paramForwardViaGcp                                   = "forward_via_gcp_dns_zones"
 	paramForwardViaIp                                    = "forward_via_ip"
 	paramFreightCluster                                  = "freight"
@@ -455,6 +460,7 @@ const (
 	paramHttpEndpoint                                    = "http_endpoint"
 	paramIAMPrincipal                                    = "iam_principal"
 	paramIamRoleUrn                                      = "iam_role_arn"
+	paramIceberg                                         = "iceberg"
 	paramId                                              = "id"
 	paramIdentityClaim                                   = "identity_claim"
 	paramIdentityProvider                                = "identity_provider"
@@ -631,6 +637,7 @@ const (
 	paramSeverity                                        = "severity"
 	paramShared                                          = "shared"
 	paramSharedDefaultValue                              = false
+	paramShredding                                       = "shredding"
 	paramSkipValidationDuringPlan                        = "skip_validation_during_plan"
 	paramSkipValidationDuringPlanDefaultValue            = false
 	paramSlackTarget                                     = "slack_target"
@@ -661,6 +668,7 @@ const (
 	paramSubscription                                    = "subscription"
 	paramSubscriptionPriority                            = "subscription_priority"
 	paramSuspended                                       = "suspended"
+	paramTableFormatProperties                           = "table_format_properties"
 	paramTableFormats                                    = "table_formats"
 	paramTableOptions                                    = "table_options"
 	paramTablePath                                       = "table_path"
@@ -799,6 +807,8 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	tableflowKind                            = "Tableflow"
 	tableflowKindInLowercase                 = "tableflow"
 	tableflowTopicKey                        = "tableflow_topic_id"
+	tableFormatDelta                         = "DELTA"
+	tableFormatIceberg                       = "ICEBERG"
 	globalApiVersion                         = "global/v1"
 	globalKind                               = "Global"
 	globalKindInLowercase                    = "global"
@@ -815,6 +825,7 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	unitySpecKind                            = "Unity"
 	userKind                                 = "User"
 	userLoggingKey                           = "user_id"
+	variantFeature                           = "VARIANT"
 )
 
 const (

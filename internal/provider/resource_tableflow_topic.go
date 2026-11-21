@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -79,11 +80,12 @@ func tableflowTopicResource() *schema.Resource {
 				Description: "The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum allowed value is 2592000000 milliseconds (equivalent to 30 days).",
 			},
 			paramTableFormats: {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "The supported table formats for the Tableflow-enabled topic.",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Computed:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{paramTableFormatProperties},
+				Description:   "The supported table formats for the Tableflow-enabled topic.",
 			},
 			paramTablePath: {
 				Type:        schema.TypeString,
@@ -109,17 +111,45 @@ func tableflowTopicResource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates the write mode of the tableflow topic.",
 			},
-			paramErrorHandling:  errorHandlingSchema(),
-			paramKafkaCluster:   requiredKafkaClusterBlockSchema(),
-			paramEnvironment:    environmentSchema(),
-			paramCredentials:    credentialsSchema(),
-			paramByobAws:        byobAwsSchema(),
-			paramManagedStorage: managedStorageSchema(),
-			paramAzureStorage:   azureStorageSchema(),
-			paramGcsStorage:     gcsStorageSchema(),
+			paramErrorHandling:         errorHandlingSchema(),
+			paramKafkaCluster:          requiredKafkaClusterBlockSchema(),
+			paramEnvironment:           environmentSchema(),
+			paramCredentials:           credentialsSchema(),
+			paramByobAws:               byobAwsSchema(),
+			paramManagedStorage:        managedStorageSchema(),
+			paramAzureStorage:          azureStorageSchema(),
+			paramGcsStorage:            gcsStorageSchema(),
+			paramTableFormatProperties: tableFormatPropertiesSchema(),
+			paramFeatures:              featuresSchema(),
 		},
-		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth, tableflowTopicTableFormatPropertiesCustomizeDiff, tableflowTopicFeaturesCustomizeDiff, tableflowTopicTableFormatsCustomizeDiff),
 	}
+}
+
+// ctyAttr returns the attribute name of obj. It returns a null value when obj is null or unknown, or does not have the
+// attribute.
+func ctyAttr(obj cty.Value, name string) cty.Value {
+	if obj.IsNull() || !obj.IsKnown() || !obj.Type().IsObjectType() || !obj.Type().HasAttribute(name) {
+		return cty.NullVal(cty.DynamicPseudoType)
+	}
+	return obj.GetAttr(name)
+}
+
+// ctyFirstBlock returns the first block of a list of blocks. It returns a null value when the list is null, unknown or
+// empty.
+func ctyFirstBlock(blocks cty.Value) cty.Value {
+	if blocks.IsNull() || !blocks.IsKnown() || !blocks.Type().IsListType() || blocks.LengthInt() == 0 {
+		return cty.NullVal(cty.DynamicPseudoType)
+	}
+	return blocks.Index(cty.NumberIntVal(0))
+}
+
+// ctyBool returns the value of a known bool, and false for ok when v is null, unknown or not a bool.
+func ctyBool(v cty.Value) (value, ok bool) {
+	if v.IsNull() || !v.IsKnown() || !v.Type().Equals(cty.Bool) {
+		return false, false
+	}
+	return v.True(), true
 }
 
 func byobAwsSchema() *schema.Schema {
@@ -262,6 +292,104 @@ func errorHandlingSchema() *schema.Schema {
 	}
 }
 
+func tableFormatPropertiesSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:          schema.TypeList,
+		Optional:      true,
+		Computed:      true,
+		MaxItems:      1,
+		ConflictsWith: []string{paramTableFormats},
+		Description:   "The settings of each table format of the Tableflow-enabled topic.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramIceberg: {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					MaxItems:    1,
+					Description: "The settings of the Iceberg table format.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Required:    true,
+								Description: "Indicates whether the Iceberg table format is enabled.",
+							},
+							paramFormatVersion: {
+								Type:        schema.TypeInt,
+								Optional:    true,
+								Computed:    true,
+								Description: "The Iceberg format version of the table. The version can't be lowered.",
+							},
+						},
+					},
+				},
+				paramDelta: {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					MaxItems:    1,
+					Description: "The settings of the Delta Lake table format.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Required:    true,
+								Description: "Indicates whether the Delta Lake table format is enabled.",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// featuresSchema is a list, not a set. The SDK compares only the hash codes of the old and new elements of a set. With a
+// hash on the feature name, a change of enabled or shredding makes no diff. With a hash on all fields, the computed
+// shredding value causes a diff on each plan. A list compares each field of each element, so both problems do not occur.
+// The provider sends only VARIANT entries, because the SDK has no type for other features. When the API adds a second
+// feature, the read must keep the order of the configuration, else the order of the API entries can cause a diff.
+func featuresSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Computed:    true,
+		Description: "The table features of the Tableflow-enabled topic.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramFeature: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: fmt.Sprintf("The name of the table feature. The accepted value is %q.", variantFeature),
+				},
+				paramEnabled: {
+					Type:        schema.TypeBool,
+					Required:    true,
+					Description: "Indicates whether the table feature is enabled. A feature can't be disabled after it is enabled.",
+				},
+				paramShredding: {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					MaxItems:    1,
+					Description: "The shredding settings of the VARIANT feature.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							paramEnabled: {
+								Type:        schema.TypeBool,
+								Optional:    true,
+								Computed:    true,
+								Description: "Indicates whether VARIANT shredding is enabled. Shredding can't be disabled after it is enabled.",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
@@ -287,6 +415,11 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if tableFormats := convertToStringSlice(d.Get(paramTableFormats).(*schema.Set).List()); len(tableFormats) > 0 {
 		tableflowTopicSpec.SetTableFormats(tableFormats)
 	}
+	// Send only the configured V3 fields. The API rejects an empty list, so a nil result sends nothing.
+	rawConfig := d.GetRawConfig()
+	if tableFormatProperties := expandTableFormatPropertiesForCreate(rawConfig); tableFormatProperties != nil {
+		tableflowTopicSpec.SetTableFormatProperties(tableFormatProperties)
+	}
 
 	tableflowTopicSpec.Config = &tableflowv1.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitly sets RecordFailureStrategy to "SUSPEND"
 	if retentionMs := d.Get(paramRetentionMs).(string); retentionMs != "" {
@@ -300,6 +433,9 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if metadataColumnNamingScheme := d.Get(paramMetadataColumnNamingScheme).(string); metadataColumnNamingScheme != "" {
 		tableflowTopicSpec.Config.SetMetadataColumnNamingScheme(metadataColumnNamingScheme)
+	}
+	if features := expandFeatures(rawConfig); features != nil {
+		tableflowTopicSpec.Config.SetFeatures(features)
 	}
 
 	if len(d.Get(paramErrorHandling).([]interface{})) > 0 {
@@ -379,17 +515,24 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.SetId(displayName)
 
-	createdTableflowTopicJson, err := json.Marshal(createdTableflowTopic)
-	if err != nil {
-		return diag.Errorf("error creating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), createdTableflowTopic, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tableflow Topic %q: %s", d.Id(), createdTableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tableflow Topic %q: %s", d.Id(), tableflowTopicJsonForLog(createdTableflowTopic)), map[string]interface{}{tableflowTopicKey: d.Id()})
 
 	return tableflowTopicRead(ctx, d, meta)
 }
 
 func executeTableflowTopicRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, displayName string) (tableflowv1.TableflowV1TableflowTopic, *http.Response, error) {
 	return c.apiClient.TableflowTopicsTableflowV1Api.GetTableflowV1TableflowTopic(c.apiContext(ctx), displayName).Environment(environmentId).SpecKafkaCluster(clusterId).Execute()
+}
+
+// tableflowTopicJsonForLog returns the JSON of topic for a debug log. The SDK can't marshal a Tableflow Topic that has a
+// table format or a feature that the SDK does not know. Then this returns the marshal error, and the operation
+// continues. The flatten functions skip the entries that the SDK does not know.
+func tableflowTopicJsonForLog(topic tableflowv1.TableflowV1TableflowTopic) string {
+	topicJson, err := json.Marshal(topic)
+	if err != nil {
+		return fmt.Sprintf("<can't marshal to JSON: %s>", err)
+	}
+	return string(topicJson)
 }
 
 func tableflowTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -427,11 +570,7 @@ func readTableflowTopicAndSetAttributes(ctx context.Context, d *schema.ResourceD
 
 		return nil, err
 	}
-	tableflowTopicJson, err := json.Marshal(tableflowTopic)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", d.Id(), tableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", d.Id(), tableflowTopicJsonForLog(tableflowTopic)), map[string]interface{}{tableflowTopicKey: d.Id()})
 
 	if _, err := setTableflowTopicAttributes(d, c, tableflowTopic); err != nil {
 		return nil, createDescriptiveError(err)
@@ -470,6 +609,13 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		return nil, err
 	}
 	if err := d.Set(paramTableFormats, tableflowTopic.Spec.GetTableFormats()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramTableFormatProperties, flattenTableFormatProperties(tableflowTopic.Spec.GetTableFormatProperties())); err != nil {
+		return nil, err
+	}
+	// Keep only the features that are already in state, or all features when state has none.
+	if err := d.Set(paramFeatures, flattenFeatures(tableflowTopic.GetSpec().Config.GetFeatures(), featureNamesInState(d))); err != nil {
 		return nil, err
 	}
 
@@ -617,8 +763,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials)
+	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramTableFormatProperties, paramFeatures, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramTableFormatProperties, paramFeatures, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramCredentials)
 	}
 
 	// `credentials` is only used to authenticate to the Tableflow REST API and isn't part of the
@@ -650,6 +796,19 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if d.HasChange(paramTableFormats) {
 		updateTableflowTopicSpec.SetTableFormats(convertToStringSlice(d.Get(paramTableFormats).(*schema.Set).List()))
+	}
+	// Send only the configured V3 fields, and only when they changed. The API rejects an empty list, so a nil result
+	// sends nothing.
+	rawConfig := d.GetRawConfig()
+	if d.HasChange(paramTableFormatProperties) {
+		if tableFormatProperties := expandTableFormatPropertiesForUpdate(rawConfig); tableFormatProperties != nil {
+			updateTableflowTopicSpec.SetTableFormatProperties(tableFormatProperties)
+		}
+	}
+	if d.HasChange(paramFeatures) {
+		if features := expandFeatures(rawConfig); features != nil {
+			updateTableflowTopicSpec.Config.SetFeatures(features)
+		}
 	}
 	if d.HasChange(paramRecordFailureStrategy) {
 		updateTableflowTopicSpec.Config.SetRecordFailureStrategy(d.Get(paramRecordFailureStrategy).(string))
@@ -698,11 +857,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating Tableflow Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	UpdatedTableflowTopicJson, err := json.Marshal(updatedTableflowTopic)
-	if err != nil {
-		return diag.Errorf("error updating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), updatedTableflowTopic, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tableflow Topic %q: %s", d.Id(), UpdatedTableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tableflow Topic %q: %s", d.Id(), tableflowTopicJsonForLog(updatedTableflowTopic)), map[string]interface{}{tableflowTopicKey: d.Id()})
 	return tableflowTopicRead(ctx, d, meta)
 }
 
