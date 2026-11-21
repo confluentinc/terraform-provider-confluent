@@ -155,14 +155,9 @@ func configuredTableFormatBlock(raw cty.Value, name string) cty.Value {
 	return ctyFirstBlock(ctyAttr(ctyFirstBlock(ctyAttr(raw, paramTableFormatProperties)), name))
 }
 
-// tableflowTopicTableFormatsCustomizeDiff marks table_formats as known after apply when an enabled value of
-// table_format_properties changes and the configuration does not set table_formats. The API then changes
-// table_formats. After apply, the SDK keeps the planned value of a set attribute that is wholly known, so without this
-// the state keeps the old table_formats until the next refresh.
-// In the opposite direction, it marks table_format_properties as known after apply when table_formats changes and the
-// configuration does not set table_format_properties. The API then changes the enabled values, so without this the
-// plan shows the old enabled values. The update request does not send table_format_properties then, because
-// expandTableFormatPropertiesForUpdate returns nil for a configuration without the block.
+// tableflowTopicTableFormatsCustomizeDiff marks the attribute that the configuration does not set as known after apply,
+// because the API changes it: table_formats when an enabled value changes, and table_format_properties when
+// table_formats changes. Without this, the plan and the state show the old values until the next refresh.
 func tableflowTopicTableFormatsCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	// On create, an attribute that the configuration does not set is already known after apply.
 	if diff.Id() == "" {

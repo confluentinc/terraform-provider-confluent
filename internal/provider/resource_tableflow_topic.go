@@ -126,32 +126,6 @@ func tableflowTopicResource() *schema.Resource {
 	}
 }
 
-// ctyAttr returns the attribute name of obj. It returns a null value when obj is null or unknown, or does not have the
-// attribute.
-func ctyAttr(obj cty.Value, name string) cty.Value {
-	if obj.IsNull() || !obj.IsKnown() || !obj.Type().IsObjectType() || !obj.Type().HasAttribute(name) {
-		return cty.NullVal(cty.DynamicPseudoType)
-	}
-	return obj.GetAttr(name)
-}
-
-// ctyFirstBlock returns the first block of a list of blocks. It returns a null value when the list is null, unknown or
-// empty.
-func ctyFirstBlock(blocks cty.Value) cty.Value {
-	if blocks.IsNull() || !blocks.IsKnown() || !blocks.Type().IsListType() || blocks.LengthInt() == 0 {
-		return cty.NullVal(cty.DynamicPseudoType)
-	}
-	return blocks.Index(cty.NumberIntVal(0))
-}
-
-// ctyBool returns the value of a known bool, and false for ok when v is null, unknown or not a bool.
-func ctyBool(v cty.Value) (value, ok bool) {
-	if v.IsNull() || !v.IsKnown() || !v.Type().Equals(cty.Bool) {
-		return false, false
-	}
-	return v.True(), true
-}
-
 func byobAwsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,
@@ -522,17 +496,6 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 func executeTableflowTopicRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, displayName string) (tableflowv1.TableflowV1TableflowTopic, *http.Response, error) {
 	return c.apiClient.TableflowTopicsTableflowV1Api.GetTableflowV1TableflowTopic(c.apiContext(ctx), displayName).Environment(environmentId).SpecKafkaCluster(clusterId).Execute()
-}
-
-// tableflowTopicJsonForLog returns the JSON of topic for a debug log. The SDK can't marshal a Tableflow Topic that has a
-// table format or a feature that the SDK does not know. Then this returns the marshal error, and the operation
-// continues. The flatten functions skip the entries that the SDK does not know.
-func tableflowTopicJsonForLog(topic tableflowv1.TableflowV1TableflowTopic) string {
-	topicJson, err := json.Marshal(topic)
-	if err != nil {
-		return fmt.Sprintf("<can't marshal to JSON: %s>", err)
-	}
-	return string(topicJson)
 }
 
 func tableflowTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -914,4 +877,39 @@ func extractTableflowApiKeyAndApiSecret(ctx context.Context, client *Client, d *
 		return tableflowApiKey, tableflowApiSecret, nil
 	}
 	return "", "", fmt.Errorf("one of (provider.tableflow_api_key, provider.tableflow_api_secret), (TABLEFLOW_API_KEY, TABLEFLOW_API_SECRET environment variables) or (resource.credentials.key, resource.credentials.secret) must be set")
+}
+
+// ctyAttr returns the attribute name of obj. It returns a null value when obj is null or unknown, or does not have the
+// attribute.
+func ctyAttr(obj cty.Value, name string) cty.Value {
+	if obj.IsNull() || !obj.IsKnown() || !obj.Type().IsObjectType() || !obj.Type().HasAttribute(name) {
+		return cty.NullVal(cty.DynamicPseudoType)
+	}
+	return obj.GetAttr(name)
+}
+
+// ctyFirstBlock returns the first block of a list of blocks. It returns a null value when the list is null, unknown or
+// empty.
+func ctyFirstBlock(blocks cty.Value) cty.Value {
+	if blocks.IsNull() || !blocks.IsKnown() || !blocks.Type().IsListType() || blocks.LengthInt() == 0 {
+		return cty.NullVal(cty.DynamicPseudoType)
+	}
+	return blocks.Index(cty.NumberIntVal(0))
+}
+
+// ctyBool returns the value of a known bool, and false for ok when v is null, unknown or not a bool.
+func ctyBool(v cty.Value) (value, ok bool) {
+	if v.IsNull() || !v.IsKnown() || !v.Type().Equals(cty.Bool) {
+		return false, false
+	}
+	return v.True(), true
+}
+
+// tableflowTopicJsonForLog returns the JSON of topic for a debug log.
+func tableflowTopicJsonForLog(topic tableflowv1.TableflowV1TableflowTopic) string {
+	topicJson, err := json.Marshal(topic)
+	if err != nil {
+		return fmt.Sprintf("<can't marshal to JSON: %s>", err)
+	}
+	return string(topicJson)
 }
