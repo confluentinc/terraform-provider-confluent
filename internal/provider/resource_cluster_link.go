@@ -520,6 +520,17 @@ func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interfa
 		remoteClusterApiSecret: remoteClusterApiSecret,
 	}
 
+	// Fail early with a clear message instead of "unsupported protocol scheme" later on.
+	importRestEndpointEnvVar, importRestEndpoint := importSourceKafkaRestEndpointEnvVar, sourceRestEndpoint
+	if linkMode == linkModeBidirectional {
+		importRestEndpointEnvVar, importRestEndpoint = importLocalKafkaRestEndpointEnvVar, localRestEndpoint
+	} else if linkMode == linkModeDestination {
+		importRestEndpointEnvVar, importRestEndpoint = importDestinationKafkaRestEndpointEnvVar, destinationRestEndpoint
+	}
+	if importRestEndpoint == "" {
+		return nil, fmt.Errorf("error importing Cluster Link %q: the %s environment variable must be set to the Kafka REST endpoint of the cluster (for example, https://pkc-xxxxx.us-west-2.aws.confluent.cloud:443)", d.Id(), importRestEndpointEnvVar)
+	}
+
 	var kafkaRestClient *KafkaRestClient
 	if linkMode == linkModeBidirectional {
 		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(localRestEndpoint, localClusterId, localClusterApiKey, localClusterApiSecret, false, false, meta.(*Client).oauthToken)
