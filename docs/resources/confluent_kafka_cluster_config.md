@@ -72,7 +72,7 @@ The following arguments are supported:
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Kafka API key, create a new Kafka API key, update the `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_kafka_cluster_config.orders"`, and remove the old Kafka API key. Alternatively, in case the old Kafka API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_kafka_cluster_config.orders" -out=rotate-kafka-api-key` and `terraform apply rotate-kafka-api-key` instead.
 
-- `config` - (Optional Map) The custom cluster settings to set:
+- `config` - (Required Map) The custom cluster settings to set:
     - `name` - (Required String) The setting name, for example, `auto.create.topics.enable`.
     - `value` - (Required String) The setting value, for example, `true`.
 

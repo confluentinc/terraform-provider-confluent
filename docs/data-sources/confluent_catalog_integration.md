@@ -36,8 +36,8 @@ data "confluent_catalog_integration" "example" {
   }
 }
 
-output "retention-ms" {
-  value = data.confluent_catalog_integration.example.retention_ms
+output "display-name" {
+  value = data.confluent_catalog_integration.example.display_name
 }
 ```
 
@@ -55,8 +55,8 @@ data "confluent_catalog_integration" "example" {
   id = "tci-abc123"
 }
 
-output "retention-ms" {
-  value = data.confluent_catalog_integration.example.retention_ms
+output "display-name" {
+  value = data.confluent_catalog_integration.example.display_name
 }
 ```
 
