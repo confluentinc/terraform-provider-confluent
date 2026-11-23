@@ -121,7 +121,9 @@ resource "confluent_network" "aws-transit-gateway-attachment" {
 
 The following arguments are supported:
 
-- `display_name` - (Required String) The name of the Network.
+-> **Note:** Arguments marked `Editable` can be updated in place. Changing any other argument forces Terraform to destroy and recreate the resource.
+
+- `display_name` - (Required Editable String) The name of the Network.
 - `cloud` - (Required String) The cloud service provider in which the network exists. Accepted values are: `AWS`, `AZURE`, and `GCP`.
 - `region` - (Required String) The cloud provider region where the network exists.
 - `cidr` - (Optional String) The IPv4 CIDR block to be used for the network. Must be `/16`. Required for VPC peering and AWS TransitGateway.
