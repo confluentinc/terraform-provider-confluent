@@ -8,25 +8,61 @@ description: |-
 
 # confluent_client_request_policy Resource
 
-[![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+
+!> **Warning:** Client Request Policies are in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). Early Access features are available to a limited set of customers to gather feedback, may change based on that feedback, are intended for evaluation and non-production use only, and are not covered by Confluent SLAs.
 
 `confluent_client_request_policy` provides a Client Request Policy resource that enables creating, editing, and deleting Client Request Policies on Confluent Cloud.
 
-Client Request Policies let operators define server-side rules that Confluent Cloud enforces on Kafka client requests. Each policy references a policy type (for example, `VersionPolicy`), is bound to a resource via its Confluent Resource Name (CRN), and evaluates a set of [CEL](https://github.com/google/cel-spec) rules to audit, deny, or override non-compliant client behavior.
+Client Request Policies let operators define server-side rules that Confluent Cloud evaluates on requests to a bound resource. Each policy references a policy type registered by Confluent (for example, `CompressionPolicy`), is bound to a resource through its Confluent Resource Name (CRN) in the `scope` block, and evaluates a list of [CEL](https://github.com/google/cel-spec) rules to audit, deny, or override non-compliant configuration.
+
+Creating a policy waits until its `phase` is `READY`, and fails if it becomes `FAILED`; `error_message` then explains why.
+
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental client request policy deletion. This setting rejects plans that would destroy or recreate the client request policy, such as attempting to change `name`, `policy_type`, or `scope`. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
 
+### Deny non-compliant requests
+
+A `DENY` policy rejects the operation when a rule's `match` returns false. `mutate` must be omitted on `DENY` policies.
+
 ```terraform
-resource "confluent_client_request_policy" "example" {
-  name          = "restrict-client-versions"
-  policy_type   = "VersionPolicy"
-  resource_name = "crn://confluent.cloud/organization=abc/environment=env-123/cloud-cluster=lkc-abc123"
-  mode          = "AUDIT"
-  action        = "DENY"
+resource "confluent_client_request_policy" "deny" {
+  name        = "payments-cluster-compression"
+  policy_type = "CompressionPolicy"
+  mode        = "AUDIT"
+  action      = "DENY"
+
+  scope {
+    resource_name = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123/kafka=lkc-abc123"
+  }
 
   rules {
-    name  = "require-recent-java-client"
-    match = "request.client.version >= '3.5.0'"
+    name  = "require-zstd-or-lz4"
+    match = "resource.config[\"compression.type\"] in [\"zstd\", \"lz4\"]"
+  }
+}
+```
+
+### Override non-compliant requests
+
+An `OVERRIDE` policy applies the failing rule's `mutate` expression instead of rejecting the operation. `mutate` is required on `OVERRIDE` policies.
+
+```terraform
+resource "confluent_client_request_policy" "override" {
+  name        = "payments-cluster-compression-override"
+  policy_type = "CompressionPolicy"
+  mode        = "ACTIVE"
+  action      = "OVERRIDE"
+
+  scope {
+    resource_name = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123/kafka=lkc-abc123"
+  }
+
+  rules {
+    name   = "default-to-zstd"
+    match  = "resource.config[\"compression.type\"] in [\"zstd\", \"lz4\"]"
+    mutate = "resource.config.merge({\"compression.type\": \"zstd\"})"
   }
 }
 ```
@@ -36,26 +72,51 @@ resource "confluent_client_request_policy" "example" {
 
 The following arguments are supported:
 
-- `name` - (Required String) Client-supplied stable identifier for the policy. Used as the URL identifier and must be unique within the caller's organization. Immutable.
-- `policy_type` - (Required String) The policy type that supplies the variable bindings, allowed scope kinds, and allowed enforcement actions for this policy (for example, `VersionPolicy`). The set of available types is registered by Confluent. Immutable.
-- `resource_name` - (Required String) The Confluent Resource Name (CRN) of the bound resource the policy applies to. Immutable.
-- `mode` - (Optional String) Lifecycle position of the policy: `DRAFT` (stored, never evaluated), `AUDIT` (evaluated and surfaced in logs/metrics but not enforced), or `ACTIVE` (evaluated and enforced according to `action`). Defaults to `DRAFT`.
-- `action` - (Required String) Action taken when any of the policy's rules return false on an `ACTIVE` policy: `DENY` (reject the operation) or `OVERRIDE` (apply the failing rule's mutation to the resource).
-- `rules` - (Required List of Configuration Blocks) supports the following:
-  - `name` - (Required String) Human-readable label for the rule. Surfaced in errors, audit logs, and metrics so operators can identify which rule fired.
-  - `match` - (Required String) CEL expression returning a boolean that describes the required configuration. The rule passes when `match` returns true.
-  - `mutate` - (Optional String) CEL expression returning the mutation payload to apply when `match` returns false under an `OVERRIDE` policy. Required on `OVERRIDE` policies; must be omitted on `DENY` policies.
+- `name` - (Required String) Client-supplied stable identifier for the policy. Used as the URL identifier and must be unique within the caller's organization. Must start with a letter, digit, or underscore, followed by letters, digits, or `-`, `_`, `.`, `$`. Changing it recreates the policy.
+- `policy_type` - (Required String) The policy type that supplies the variable bindings, allowed scope kinds, and allowed enforcement actions for this policy, for example, `CompressionPolicy`. The set of available types is registered by Confluent. Changing it recreates the policy.
+- `scope` - (Required Configuration Block) Where the policy applies. Changing it recreates the policy. It supports the following:
+    - `resource_name` - (Required String) The CRN of the bound resource, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123/kafka=lkc-abc123`. The kind of bound resource is inferred from the last segment of the CRN and must be one the policy type allows.
+- `action` - (Required String) Action taken when any of the policy's rules return false on an `ACTIVE` policy. Must be one the policy type allows. Accepted values are:
+    - `DENY` — reject the operation.
+    - `OVERRIDE` — apply the failing rule's `mutate` expression to the resource.
+- `mode` - (Optional String) Lifecycle position of the policy. If not set, the server defaults it to `DRAFT`. Accepted values are:
+    - `DRAFT` — stored, never evaluated.
+    - `AUDIT` — evaluated and surfaced in logs and metrics; not enforced.
+    - `ACTIVE` — evaluated and enforced according to `action`.
+- `rules` - (Required Configuration Block) One or more CEL rules evaluated for the policy. All rules must evaluate to true for the policy to pass. Each block supports the following:
+    - `name` - (Required String) Human-readable label for the rule. Surfaced in errors, audit logs, and metrics so operators can identify which rule fired.
+    - `match` - (Required String) CEL expression returning a boolean that describes the required configuration. The rule passes when `match` returns true. When it returns false, a `DENY` policy rejects the operation and an `OVERRIDE` policy applies `mutate`.
+    - `mutate` - (Optional String) CEL expression returning the mutation payload to apply when `match` returns false under an `OVERRIDE` policy. Its output type must match a mutable variable binding declared by the policy type. Required on `OVERRIDE` policies; must be omitted on `DENY` policies.
+
+`mode`, `action`, and `rules` can be updated in place.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `api_version` - (Required String) APIVersion defines the schema version of this representation of a resource.
-- `kind` - (Required String) Kind defines the object this REST resource represents.
-- `uid` - (Required String) System-generated unique identifier for this policy.
-- `resource_version` - (Required String) Opaque value identifying the current version of the policy.
-- `phase` - (Required String) The lifecycle phase of the policy as reported by the server.
-- `error_message` - (Required String) A human-readable message describing why the policy is in an errored state, if any.
+- `id` - (Required String) The name of the Client Request Policy, for example, `payments-cluster-compression`.
+- `resource_name` - (Required String) The Confluent Resource Name of the Client Request Policy itself, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/configuration-policy=payments-cluster-compression`.
+- `api_version` - (Required String) API Version defines the schema version of this representation of a Client Request Policy, for example, `configurationcontrol/v1`.
+- `kind` - (Required String) Kind defines the object this REST resource represents, for example, `Policy`.
+- `phase` - (Required String) Current lifecycle phase of the policy. Possible values are:
+    - `READY` — the policy has been accepted and is evaluated according to `mode`.
+    - `FAILED` — the policy is in an unrecoverable error state and is not evaluated. See `error_message` for details.
+- `error_message` - (Optional String) Displayable error message if the policy is in a `FAILED` state.
+
+## Timeouts
+
+The `create` and `delete` operations wait for the policy to reach its target state, up to `1h` by default. Use a [`timeouts`](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts) block to change this:
+
+```terraform
+resource "confluent_client_request_policy" "deny" {
+  # ...
+
+  timeouts {
+    create = "30m"
+    delete = "30m"
+  }
+}
+```
 
 ## Import
 
@@ -66,7 +127,7 @@ You can import a Client Request Policy by using its name, in the format `<Client
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_client_request_policy.example restrict-client-versions
+$ terraform import confluent_client_request_policy.example payments-cluster-compression
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

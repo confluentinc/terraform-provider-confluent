@@ -1,7 +1,7 @@
 ## 2.97.0 (Unreleased)
 
 **New features:**
-* Added a new `confluent_client_request_policy` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_client_request_policy) to support [Client Request Policies](https://docs.confluent.io/cloud/current/).
+* Added a new `confluent_client_request_policy` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_client_request_policy) to support Client Request Policies in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 ## 2.96.0 (November 19th, 2026)
 
