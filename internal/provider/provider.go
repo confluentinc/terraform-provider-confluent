@@ -32,6 +32,7 @@ import (
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	configurationcontrolv1 "github.com/confluentinc/ccloud-sdk-go-v2/configurationcontrol/v1"
 	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
@@ -104,6 +105,7 @@ type Client struct {
 	catalogRestEndpoint             string
 	cloudApiKey                     string
 	cloudApiSecret                  string
+	configurationcontrolV1Client    *configurationcontrolv1.APIClient
 	kafkaClusterId                  string
 	kafkaApiKey                     string
 	kafkaApiSecret                  string
@@ -462,6 +464,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_notifications_resource_preference":   resourcePreferenceResource(),
 				"confluent_notifications_resource_subscription": resourceSubscriptionResource(),
 				"confluent_notifications_subscription":          subscriptionResource(),
+				"confluent_client_request_policy":               clientRequestPolicyResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
@@ -606,6 +609,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectCustomPluginV1Cfg := connectcustompluginv1.NewConfiguration()
 	ccpmV1Cfg := ccpmv1.NewConfiguration()
 	cmkV2Cfg := cmkv2.NewConfiguration()
+	configurationcontrolV1Cfg := configurationcontrolv1.NewConfiguration()
 	connectV1Cfg := connectv1.NewConfiguration()
 	flinkArtifactV1Cfg := flinkartifactv1.NewConfiguration()
 	flinkV2Cfg := flinkv2.NewConfiguration()
@@ -641,6 +645,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.Servers[0].URL = endpoint
 	camV1Cfg.Servers[0].URL = endpoint
 	cmkV2Cfg.Servers[0].URL = endpoint
+	configurationcontrolV1Cfg.Servers[0].URL = endpoint
 	connectV1Cfg.Servers[0].URL = endpoint
 	flinkArtifactV1Cfg.Servers[0].URL = endpoint
 	flinkV2Cfg.Servers[0].URL = endpoint
@@ -677,6 +682,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.UserAgent = userAgent
 	camV1Cfg.UserAgent = userAgent
 	cmkV2Cfg.UserAgent = userAgent
+	configurationcontrolV1Cfg.UserAgent = userAgent
 	connectV1Cfg.UserAgent = userAgent
 	flinkArtifactV1Cfg.UserAgent = userAgent
 	flinkV2Cfg.UserAgent = userAgent
@@ -725,6 +731,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	configurationcontrolV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(rateLimitedAPIMaxRetries(maxRetries))).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -821,6 +828,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		providerIntegrationV2Client:     providerintegrationv2.NewAPIClient(providerIntegrationV2Cfg),
 		srcmV3Client:                    srcmv3.NewAPIClient(srcmV3Cfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
+		configurationcontrolV1Client:    configurationcontrolv1.NewAPIClient(configurationcontrolV1Cfg),
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,

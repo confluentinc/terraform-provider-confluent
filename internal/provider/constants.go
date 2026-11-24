@@ -705,6 +705,13 @@ const (
 	paramZoneId                                          = "zone_id"
 	paramZoneInfo                                        = "zone_info"
 	paramZones                                           = "zones"
+	paramPolicyType                                      = "policy_type"
+	paramAction                                          = "action"
+	paramRules                                           = "rules"
+	paramMatch                                           = "match"
+	paramMutate                                          = "mutate"
+	paramErrorMessage                                    = "error_message"
+	paramScope                                           = "scope"
 	// cli-tfgen:tf-constants
 	peeringLoggingKey                         = "peering_id"
 	pluginLoggingKey                          = "plugin_key_id"
