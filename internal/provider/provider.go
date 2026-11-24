@@ -725,7 +725,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, connectMaxRetriesFloor)), WithRateLimitBackoff()).CreateRetryableClient()
+	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, connectMaxRetriesFloor))).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetriesWithFloor(maxRetries, iamAndRBACMaxRetriesFloor))).CreateRetryableClient()

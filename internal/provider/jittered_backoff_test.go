@@ -37,7 +37,7 @@ func TestJitteredBackoffAddsUpTo20PercentToExponentialWaits(t *testing.T) {
 		"502 with Retry-After: 20":      responseWithRetryAfter(http.StatusBadGateway, "20"),
 	} {
 		t.Run(name, func(t *testing.T) {
-			for attemptNum := 0; attemptNum <= rateLimitedAPIMinMaxRetries; attemptNum++ {
+			for attemptNum := 0; attemptNum <= apiKeysMaxRetriesFloor; attemptNum++ {
 				checkUpTo20PercentJitter(t, jitteredBackoff, attemptNum, resp)
 			}
 		})
