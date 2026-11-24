@@ -76,6 +76,7 @@ const (
 	configOAuthBearer                         = "OAUTHBEARER"
 	configOperationDelete                     = "DELETE"
 	rateLimitedAPIMinMaxRetries               = 12
+	retryWaitJitterDivisor                    = 5 // retry waits get up to 1/5 (20%) extra
 	connectAPICreateTimeout                   = 24 * time.Hour
 	connectAPIWaitAfterCreate                 = 5 * time.Second
 	connectArtifactLoggingKey                 = "connect_artifact_id"
@@ -190,6 +191,8 @@ const (
 	linkModeSource                                       = "SOURCE"
 	listCertificatePoolsPageSize                         = 99
 	listComputePoolsPageSize                             = 99
+	listConnectorsPageSize                               = 100
+	listConnectorsNextPageTokenHeader                    = "X-Next-Page-Token"
 	listEndpointsPageSize                                = 100
 	listEnvironmentsPageSize                             = 99
 	listFlinkArtifactsPageSize                           = 99
@@ -728,6 +731,7 @@ const (
 	regionKind                                = "Region"
 	remoteLinkConnectionMode                  = "remote.link.connection.mode"
 	resumeFlinkStatementErrorFormat           = "error resuming Flink Statement: %s"
+	retryExponentialBackoffFactor             = 1.6
 	roleBindingLoggingKey                     = "role_binding_id"
 	saslJaasConfigConfigKey                   = "sasl.jaas.config"
 	saslLoginCallbackHandlerClassConfigKey    = "sasl.login.callback.handler.class"

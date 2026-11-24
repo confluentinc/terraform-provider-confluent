@@ -160,6 +160,8 @@ The following arguments are supported:
 
 -> **Note:** If you use _Option A: recreate_on_update = false_ and create a schema that already existed as one of the previous versions, make sure to follow [this workaround](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) to prevent persistent Terraform drift.
 
+-> **Note:** Re-adding a ruleset (with the same subject) after it was deleted is not supported.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:

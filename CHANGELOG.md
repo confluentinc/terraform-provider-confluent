@@ -1,7 +1,22 @@
-## 2.95.0 (Unreleased)
+## 2.97.0 (Unreleased)
 
 **New features:**
 * Added a new `confluent_client_request_policy` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_client_request_policy) to support [Client Request Policies](https://docs.confluent.io/cloud/current/).
+
+## 2.96.0 (November 19th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.95.0...v2.96.0)
+
+**Bug fixes:**
+* Improved retry behavior for rate-limited requests (HTTP 429/503) across all resources and data sources, using randomized exponential backoff from 1-2 seconds up to 15-30 seconds while respecting longer `Retry-After` values.
+* Added up to 20% random jitter to retries for other server errors and connection failures, and changed the backoff multiplier from 2x to 1.6x.
+
+## 2.95.0 (November 11th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.94.0...v2.95.0)
+
+**New features:**
+* Added a public `xpprovider` Go package that exports the provider constructor, since `internal` packages can't be imported by other Go modules.
 
 ## 2.94.0 (November 6th, 2026)
 

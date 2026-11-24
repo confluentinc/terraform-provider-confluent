@@ -121,14 +121,14 @@ resource "confluent_network" "aws-transit-gateway-attachment" {
 
 The following arguments are supported:
 
-- `display_name` - (Required String) The name of the Network.
+- `display_name` - (Optional String) The name of the Network.
 - `cloud` - (Required String) The cloud service provider in which the network exists. Accepted values are: `AWS`, `AZURE`, and `GCP`.
 - `region` - (Required String) The cloud provider region where the network exists.
 - `cidr` - (Optional String) The IPv4 CIDR block to be used for the network. Must be `/16`. Required for VPC peering and AWS TransitGateway.
 - `reserved_cidr` - (Optional String) The reserved IPv4 CIDR block to be used for the network. Must be `/24`. If not specified, Confluent Cloud Network uses `172.20.255.0/24`.
 - `zone_info` (Optional Configuration Blocks) Each item represents information related to a single zone. It supports the following:
-  - `zone_id` - (Required String) Cloud provider zone ID.
-  - `cidr` - (Required String) The IPv4 CIDR block to be used for the network. Must be `/27`. Required for VPC peering and AWS TransitGateway.
+  - `zone_id` - (Optional String) Cloud provider zone ID.
+  - `cidr` - (Optional String) The IPv4 CIDR block to be used for the network. Must be `/27`. Required for VPC peering and AWS TransitGateway.
 
 - `connection_types` - (Required List of String) The list of connection types that may be used with the network. Accepted connection types are: `PEERING`, `TRANSITGATEWAY`, and `PRIVATELINK`.
 - `zones` - (Optional List of String) The 3 availability zones for this network. They can optionally be specified for AWS networks

@@ -46,6 +46,15 @@ var ignoredConnectorConfigs = []string{
 	"confluent.custom.plugin.type",
 	"confluent.resource.connector.tier",
 }
+var kafkaAuthConnectorConfigs = []string{
+	"kafka.auth.mode",
+	"kafka.api.key",
+	"kafka.api.secret",
+	"kafka.service.account.id",
+	"kafka.service.account.api.key",
+	"kafka.service.account.api.secret",
+}
+
 var twoStarsOrMoreRegExp = regexp.MustCompile(twoStarsOrMorePattern)
 
 func connectorResource() *schema.Resource {
@@ -229,20 +238,83 @@ func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, e
 	return req.Execute()
 }
 
+// executeConnectorRead finds a connector, together with its ID, by paging through the connector list.
+// Only create and import use it, because they don't have the connector's ID yet.
 func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1ConnectorExpansion, *http.Response, error) {
-	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).Execute()
-	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
-		return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
-	}
-	if err != nil {
-		return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, createDescriptiveError(err, resp)
-	}
-	// Find the target connector in a list of connectors by its name
-	if connector, ok := connectors[displayName]; ok {
-		return connector, resp, nil
+	pageToken := ""
+	seenTokens := map[string]bool{}
+	for {
+		req := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectV1ApiContext(ctx), environmentId, clusterId).PageSize(listConnectorsPageSize)
+		if pageToken != "" {
+			req = req.PageToken(pageToken)
+		}
+		connectors, resp, err := req.Execute()
+		if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
+			return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
+		}
+		if err != nil {
+			return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, createDescriptiveError(err, resp)
+		}
+		// Find the target connector in a page of connectors by its name
+		if connector, ok := connectors[displayName]; ok {
+			return connector, resp, nil
+		}
+		if pageToken, err = nextConnectorsPageToken(resp, seenTokens); err != nil {
+			return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
+		}
+		if pageToken == "" {
+			break
+		}
 	}
 
 	return *connectv1.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", displayName)
+}
+
+// nextConnectorsPageToken returns the token for the next page of a connector list, or "" after the last page.
+// A page can be short or empty, so the header is the only end-of-list signal. seenTokens holds every token
+// returned so far in this listing; a repeated one means the server is cycling.
+func nextConnectorsPageToken(resp *http.Response, seenTokens map[string]bool) (string, error) {
+	nextToken := resp.Header.Get(listConnectorsNextPageTokenHeader)
+	if nextToken == "" {
+		return "", nil
+	}
+	if seenTokens[nextToken] {
+		return "", fmt.Errorf("connector list returned the page token %q twice", nextToken)
+	}
+	seenTokens[nextToken] = true
+	return nextToken, nil
+}
+
+// executeConnectorGet reads a single connector and its state with two requests, whatever the number of connectors in the cluster.
+func executeConnectorGet(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1Connector, string, *http.Response, error) {
+	connector, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId).Execute()
+	if err == nil && ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
+		err = fmt.Errorf("connector %q: %s", displayName, resp.Status)
+	}
+	if err != nil {
+		return connectv1.ConnectV1Connector{}, "", resp, createDescriptiveError(err, resp)
+	}
+	status, resp, err := executeConnectorStatusCreate(ctx, c, displayName, environmentId, clusterId)
+	if err == nil && ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
+		err = fmt.Errorf("connector %q status: %s", displayName, resp.Status)
+	}
+	if err != nil {
+		return connectv1.ConnectV1Connector{}, "", resp, createDescriptiveError(err, resp)
+	}
+	return connector, status.Connector.State, resp, nil
+}
+
+// withoutUnsetKafkaAuthConfigs drops the Kafka auth configs the single-connector GET returns unmasked
+// (the list masks them and extractNonsensitiveConfigs then drops them), unless the user set them in config_nonsensitive.
+func withoutUnsetKafkaAuthConfigs(config map[string]string, userNonsensitiveConfig map[string]interface{}) map[string]string {
+	filtered := make(map[string]string, len(config))
+	for name, value := range config {
+		if _, isUserSet := userNonsensitiveConfig[name]; !isUserSet && stringInSlice(name, kafkaAuthConnectorConfigs, false) {
+			continue
+		}
+		filtered[name] = value
+	}
+	return filtered
 }
 
 func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -265,7 +337,7 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	connector, resp, err := executeConnectorRead(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
+	connectorId, config, state, resp, err := fetchConnector(ctx, c, d, displayName, environmentId, clusterId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -277,13 +349,13 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 
 		return nil, err
 	}
-	connectorJson, err := json.Marshal(connector)
+	configJson, err := json.Marshal(config)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, connector, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, config, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q: %s", displayName, connectorJson))
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q with status %q: %s", displayName, state, configJson))
 
-	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId); err != nil {
+	if _, err := setConnectorAttributes(d, connectorId, config, state, environmentId, clusterId); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -292,10 +364,29 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setConnectorAttributes(d *schema.ResourceData, connector connectv1.ConnectV1ConnectorExpansion, environmentId, clusterId string) (*schema.ResourceData, error) {
-	// paramSensitiveConfig is set in connectorCreate()
-	config := connector.Info.GetConfig()
+// fetchConnector returns the connector's ID, config and state. A refresh already has the ID in state, so it reads
+// the single connector and never lists the cluster. Import starts from "<env ID>/<cluster ID>/<name>" and the ID
+// is only known after create, so those find the connector, and its ID, in the connector list.
+func fetchConnector(ctx context.Context, c *Client, d *schema.ResourceData, displayName, environmentId, clusterId string) (string, map[string]string, string, *http.Response, error) {
+	if connectorId := d.Id(); connectorId != "" && !strings.Contains(connectorId, "/") {
+		connector, state, resp, err := executeConnectorGet(ctx, c, displayName, environmentId, clusterId)
+		if err != nil {
+			return "", nil, "", resp, err
+		}
+		userNonsensitiveConfig, _ := d.Get(paramNonSensitiveConfig).(map[string]interface{})
+		return connectorId, withoutUnsetKafkaAuthConfigs(connector.GetConfig(), userNonsensitiveConfig), state, resp, nil
+	}
+
+	connector, resp, err := executeConnectorRead(ctx, c, displayName, environmentId, clusterId)
+	if err != nil {
+		return "", nil, "", resp, err
+	}
 	status := connector.Status.GetConnector()
+	return connector.Id.GetId(), connector.Info.GetConfig(), status.GetState(), resp, nil
+}
+
+func setConnectorAttributes(d *schema.ResourceData, connectorId string, config map[string]string, state, environmentId, clusterId string) (*schema.ResourceData, error) {
+	// paramSensitiveConfig is set in connectorCreate()
 	if err := d.Set(paramNonSensitiveConfig, extractNonsensitiveConfigs(config)); err != nil {
 		return nil, err
 	}
@@ -305,10 +396,10 @@ func setConnectorAttributes(d *schema.ResourceData, connector connectv1.ConnectV
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, clusterId, d); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramStatus, status.GetState()); err != nil {
+	if err := d.Set(paramStatus, state); err != nil {
 		return nil, err
 	}
-	d.SetId(connector.Id.GetId())
+	d.SetId(connectorId)
 	return d, nil
 }
 
@@ -612,10 +703,28 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 }
 
 func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Client, environmentId, kafkaClusterId string) ([]string, error) {
-	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1Connectors(c.connectV1ApiContext(ctx), environmentId, kafkaClusterId).Execute()
-	// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
-	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) || err != nil {
-		return nil, createDescriptiveError(err)
+	var connectorNames []string
+	pageToken := ""
+	seenTokens := map[string]bool{}
+	for {
+		req := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1Connectors(c.connectV1ApiContext(ctx), environmentId, kafkaClusterId).PageSize(listConnectorsPageSize)
+		if pageToken != "" {
+			req = req.PageToken(pageToken)
+		}
+		connectors, resp, err := req.Execute()
+		// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
+		if err == nil && ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
+			err = fmt.Errorf("listing connectors: %s", resp.Status)
+		}
+		if err != nil {
+			return nil, createDescriptiveError(err)
+		}
+		connectorNames = append(connectorNames, connectors...)
+		if pageToken, err = nextConnectorsPageToken(resp, seenTokens); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+		if pageToken == "" {
+			return connectorNames, nil
+		}
 	}
-	return connectors, nil
 }
