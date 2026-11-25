@@ -13,13 +13,12 @@ import (
 
 func TestMaxRetriesWithFloor(t *testing.T) {
 	for _, tc := range []struct{ configured, floor, want int }{
-		{4, connectMaxRetriesFloor, 12},
-		{12, connectMaxRetriesFloor, 12},
-		{20, connectMaxRetriesFloor, 20},
-		{6, iamAndRBACMaxRetriesFloor, 14},
-		{15, iamAndRBACMaxRetriesFloor, 15},
-		{6, apiKeysMaxRetriesFloor, 20},
-		{25, apiKeysMaxRetriesFloor, 25},
+		{4, rateLimitedAPIMaxRetriesFloor, 12},
+		{12, rateLimitedAPIMaxRetriesFloor, 12},
+		{20, rateLimitedAPIMaxRetriesFloor, 20},
+		{6, orgMaxRetriesFloor, 9},
+		{9, orgMaxRetriesFloor, 9},
+		{10, orgMaxRetriesFloor, 10},
 	} {
 		if got := maxRetriesWithFloor(tc.configured, tc.floor); got != tc.want {
 			t.Errorf("maxRetriesWithFloor(%d, %d) = %d, want %d", tc.configured, tc.floor, got, tc.want)
@@ -28,7 +27,7 @@ func TestMaxRetriesWithFloor(t *testing.T) {
 }
 
 func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
-	// More 429s in a row than the default 6 retries outlast, but fewer than the lowest floor (Connect's 12).
+	// More 429s in a row than the default 6 retries outlast, but fewer than the rate-limited APIs' floor of 12.
 	const rejections = 10
 	tests := map[string]struct {
 		maxRetries   int
@@ -36,7 +35,7 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 		wantRequests int32
 	}{
 		"default budget runs out":           {maxRetries: 6, wantSuccess: false, wantRequests: 7},
-		"rate-limited API budget is enough": {maxRetries: maxRetriesWithFloor(6, connectMaxRetriesFloor), wantSuccess: true, wantRequests: rejections + 1},
+		"rate-limited API budget is enough": {maxRetries: maxRetriesWithFloor(6, rateLimitedAPIMaxRetriesFloor), wantSuccess: true, wantRequests: rejections + 1},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -70,15 +69,16 @@ func TestRateLimitedAPIRetryBudgetOutlastsRepeated429s(t *testing.T) {
 }
 
 func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBackoff(t *testing.T) {
-	// Retries per client for each max_retries: a lower max_retries doesn't lower the floors, a higher one raises all.
+	// Retries per client for each max_retries: a lower max_retries doesn't lower the floors, a higher one raises them.
 	// Every client uses rateLimitBackoff.
 	for _, want := range []struct {
-		name, maxRetriesEnv                  string
-		apiKeys, iamAndRBAC, connect, others int
+		name, maxRetriesEnv       string
+		rateLimitedAPIs, org, cmk int
 	}{
-		{"max_retries not set (6)", "", 20, 14, 12, 6},
-		{"max_retries = 4, below the floors", "4", 20, 14, 12, 4},
-		{"max_retries = 25, above the floors", "25", 25, 25, 25, 25},
+		{"max_retries not set (6)", "", 12, 9, 6},
+		{"max_retries = 4, below the floors", "4", 12, 9, 4},
+		{"max_retries = 10, between the floors", "10", 12, 10, 10},
+		{"max_retries = 25, above the floors", "25", 25, 25, 25},
 	} {
 		t.Run(want.name, func(t *testing.T) {
 			_, c := configureWithMaxRetriesEnv(t, want.maxRetriesEnv)
@@ -86,11 +86,12 @@ func TestProviderConfigureGivesRateLimitedAPIClientsTheLongerRetryBudgetAndBacko
 				httpClient *http.Client
 				want       int
 			}{
-				"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, want.apiKeys},
-				"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, want.connect},
-				"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, want.iamAndRBAC},
-				"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, want.iamAndRBAC},
-				"Org (keeps max_retries)": {c.orgV2Client.GetConfig().HTTPClient, want.others},
+				"API keys":                {c.apiKeysV2Client.GetConfig().HTTPClient, want.rateLimitedAPIs},
+				"Connect":                 {c.connectV1Client.GetConfig().HTTPClient, want.rateLimitedAPIs},
+				"IAM":                     {c.iamV2Client.GetConfig().HTTPClient, want.rateLimitedAPIs},
+				"RBAC":                    {c.mdsV2Client.GetConfig().HTTPClient, want.rateLimitedAPIs},
+				"Org":                     {c.orgV2Client.GetConfig().HTTPClient, want.org},
+				"CMK (keeps max_retries)": {c.cmkV2Client.GetConfig().HTTPClient, want.cmk},
 			} {
 				client := retryClientOf(t, name, tc.httpClient)
 				if client.RetryMax != tc.want {

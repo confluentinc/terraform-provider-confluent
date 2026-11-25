@@ -50,8 +50,8 @@ func TestProviderMaxRetriesDefaultsToSix(t *testing.T) {
 		t.Fatalf("max_retries = %d, want 6", got)
 	}
 	for name, httpClient := range map[string]*http.Client{
-		"Org": c.orgV2Client.GetConfig().HTTPClient,
-		"CMK": c.cmkV2Client.GetConfig().HTTPClient,
+		"BYOK": c.byokV1Client.GetConfig().HTTPClient,
+		"CMK":  c.cmkV2Client.GetConfig().HTTPClient,
 	} {
 		if got := retryMaxOf(t, name, httpClient); got != 6 {
 			t.Errorf("%s client: RetryMax = %d, want 6", name, got)
@@ -60,9 +60,12 @@ func TestProviderMaxRetriesDefaultsToSix(t *testing.T) {
 	if got := *c.kafkaRestClientFactory.maxRetries; got != 6 {
 		t.Errorf("Kafka REST client factory: maxRetries = %d, want 6", got)
 	}
-	// The rate-limited APIs keep their higher floor.
-	if got := retryMaxOf(t, "IAM", c.iamV2Client.GetConfig().HTTPClient); got != iamAndRBACMaxRetriesFloor {
-		t.Errorf("IAM client: RetryMax = %d, want %d", got, iamAndRBACMaxRetriesFloor)
+	// The rate-limited APIs and Org keep their higher floors.
+	if got := retryMaxOf(t, "IAM", c.iamV2Client.GetConfig().HTTPClient); got != rateLimitedAPIMaxRetriesFloor {
+		t.Errorf("IAM client: RetryMax = %d, want %d", got, rateLimitedAPIMaxRetriesFloor)
+	}
+	if got := retryMaxOf(t, "Org", c.orgV2Client.GetConfig().HTTPClient); got != orgMaxRetriesFloor {
+		t.Errorf("Org client: RetryMax = %d, want %d", got, orgMaxRetriesFloor)
 	}
 }
 
@@ -72,8 +75,8 @@ func TestProviderMaxRetriesFromEnvironmentVariable(t *testing.T) {
 	if got := d.Get("max_retries").(int); got != 4 {
 		t.Fatalf("max_retries = %d, want 4 from %s", got, maxRetriesEnvVar)
 	}
-	if got := retryMaxOf(t, "Org", c.orgV2Client.GetConfig().HTTPClient); got != 4 {
-		t.Errorf("Org client: RetryMax = %d, want 4", got)
+	if got := retryMaxOf(t, "CMK", c.cmkV2Client.GetConfig().HTTPClient); got != 4 {
+		t.Errorf("CMK client: RetryMax = %d, want 4", got)
 	}
 
 	validate := New("test", "")().Schema["max_retries"].ValidateFunc

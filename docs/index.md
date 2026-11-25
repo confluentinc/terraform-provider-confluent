@@ -181,14 +181,15 @@ provider "confluent" {
 }
 ```
 
-Requests to the API keys, IAM, RBAC and Connect APIs, where large configurations are most often rate-limited, always retry at least a minimum number of times, even when `max_retries` is lower:
+Requests to the API keys, IAM, RBAC, Connect and Org APIs, where large configurations are most often rate-limited, always retry at least a minimum number of times, even when `max_retries` is lower:
 
 | Requests to | Made by | Retries |
 |---|---|---|
-| API keys | the `confluent_api_key` and `confluent_tf_importer` resources | `max_retries`, at least 20 |
-| IAM | the `confluent_service_account`, `confluent_invitation` and `confluent_tf_importer` resources, and the `confluent_service_account`, `confluent_user`, `confluent_users` and `confluent_invitation` data sources | `max_retries`, at least 14 |
-| RBAC | the `confluent_role_binding` and `confluent_tf_importer` resources, and the `confluent_role_binding` data source | `max_retries`, at least 14 |
+| API keys | the `confluent_api_key` and `confluent_tf_importer` resources | `max_retries`, at least 12 |
+| IAM | the `confluent_service_account`, `confluent_invitation` and `confluent_tf_importer` resources, and the `confluent_service_account`, `confluent_user`, `confluent_users` and `confluent_invitation` data sources | `max_retries`, at least 12 |
+| RBAC | the `confluent_role_binding` and `confluent_tf_importer` resources, and the `confluent_role_binding` data source | `max_retries`, at least 12 |
 | Connect | the `confluent_connector` and `confluent_tf_importer` resources | `max_retries`, at least 12 |
+| Org | the `confluent_environment`, `confluent_kafka_cluster`, `confluent_api_key` and `confluent_tf_importer` resources, and the `confluent_environment`, `confluent_environments`, `confluent_organization` and `confluent_schema_registry_clusters` data sources | `max_retries`, at least 9 |
 | All other APIs | | `max_retries` (default `6`) |
 
 -> **Note:** `max_retries` must be at least `4`.

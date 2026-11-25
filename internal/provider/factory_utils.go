@@ -204,7 +204,7 @@ func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
 }
 
 // maxRetriesWithFloor returns max_retries, but at least floor, for clients that need more retries than the default:
-// API keys, IAM, RBAC and Connect, which large configurations most often rate-limit.
+// API keys, IAM, RBAC, Org, and Connect, which large configurations most often rate-limit.
 // A lower max_retries doesn't lower their retries.
 func maxRetriesWithFloor(configuredMaxRetries, floor int) int {
 	return max(configuredMaxRetries, floor)
@@ -225,7 +225,7 @@ func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFacto
 func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// max_retries defaults to 6, so by default a single HTTP call spends about 26 seconds retrying a 5xx or a connection
 	// error in total: 1 + 1.6 + 2.56 + 4.096 + 6.55 + 10.49
-	// API keys clients retry at least 20 times, IAM and RBAC at least 14, and Connect at least 12.
+	// API keys, IAM, RBAC and Connect clients retry at least 12 times, and Org at least 9.
 	// An exponential backoff equation (retryBackoff):
 	// retryWaitMax = math.Pow(retryExponentialBackoffFactor, float64(attemptNum)) * float64(retryWaitMin)
 	// defaultRetryWaitMin = 1 * time.Second
