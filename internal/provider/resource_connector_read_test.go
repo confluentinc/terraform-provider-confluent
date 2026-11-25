@@ -161,7 +161,10 @@ func newConnectorsFake(t *testing.T) *connectorsFake {
 		config["kafka.auth.mode"] = "KAFKA_API_KEY"
 		config["kafka.api.key"] = "unmasked-key"
 		config["kafka.api.secret"] = "unmasked-secret"
-		writeFakeJSON(w, http.StatusOK, map[string]any{"name": fakeConnectorName, "type": "source", "config": config})
+		writeFakeJSON(w, http.StatusOK, map[string]any{
+			"name": fakeConnectorName, "type": "source", "config": config, "id": fakeConnectorId,
+			"status": map[string]any{"name": fakeConnectorName, "type": "source", "connector": map[string]string{"state": "RUNNING"}},
+		})
 	})
 	mux.HandleFunc("GET "+base+"/connectors/{name}/status", func(w http.ResponseWriter, r *http.Request) {
 		f.statusCalls.Add(1)
@@ -233,7 +236,7 @@ func TestExecuteConnectorReadNotFoundAfterLastPage(t *testing.T) {
 func TestAccConnectorRefreshReadsSingleConnector(t *testing.T) {
 	f := newConnectorsFake(t)
 	resourceLabel := "confluent_connector.test"
-	var listCallsAfterCreate, getCallsAfterCreate int64
+	var listCallsAfterCreate, getCallsAfterCreate, statusCallsAfterCreate int64
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -249,7 +252,7 @@ func TestAccConnectorRefreshReadsSingleConnector(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceLabel, fmt.Sprintf("%s.kafka.api.key", paramNonSensitiveConfig)),
 					resource.TestCheckNoResourceAttr(resourceLabel, fmt.Sprintf("%s.kafka.auth.mode", paramNonSensitiveConfig)),
 					func(*terraform.State) error {
-						listCallsAfterCreate, getCallsAfterCreate = f.listCalls.Load(), f.getCalls.Load()
+						listCallsAfterCreate, getCallsAfterCreate, statusCallsAfterCreate = f.listCalls.Load(), f.getCalls.Load(), f.statusCalls.Load()
 						require.Equal(t, int64(2), listCallsAfterCreate, "create looks up the ID in the list, following the next page token")
 						return nil
 					},
@@ -261,6 +264,7 @@ func TestAccConnectorRefreshReadsSingleConnector(t *testing.T) {
 				Check: func(*terraform.State) error {
 					require.Equal(t, listCallsAfterCreate, f.listCalls.Load(), "refresh must not list the connectors")
 					require.Greater(t, f.getCalls.Load(), getCallsAfterCreate, "refresh must read the connector by name")
+					require.Equal(t, statusCallsAfterCreate, f.statusCalls.Load(), "refresh takes the status from the GET, not from /status")
 					return nil
 				},
 			},
@@ -514,4 +518,58 @@ func TestFetchConnectorKafkaAuthConfigsOnRefresh(t *testing.T) {
 			require.ElementsMatch(t, c.want, got)
 		})
 	}
+}
+
+func connectorGetWithIdAndStatus(id, state string, config map[string]string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body := map[string]any{"name": fakeConnectorName, "type": "source", "config": config}
+		if id != "" {
+			body["id"] = id
+		}
+		if state != "" {
+			body["status"] = map[string]any{"name": fakeConnectorName, "type": "source", "connector": map[string]string{"state": state}}
+		}
+		writeFakeJSON(w, http.StatusOK, body)
+	}
+}
+
+func TestFetchConnectorUsesIdAndStatusFromGet(t *testing.T) {
+	for name, c := range map[string]struct {
+		getId, getState   string
+		wantId, wantState string
+		wantStatusCalls   int64
+	}{
+		"id and status in the GET":  {fakeConnectorId, "PAUSED", fakeConnectorId, "PAUSED", 0},
+		"GET id differs from state": {"lcc-recreated", "RUNNING", "lcc-recreated", "RUNNING", 0},
+		"no id in the GET":          {"", "PAUSED", fakeConnectorId, "PAUSED", 0},
+		"no status in the GET":      {fakeConnectorId, "", fakeConnectorId, "RUNNING", 1},
+		"neither id nor status":     {"", "", fakeConnectorId, "RUNNING", 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			statusCalls := atomic.Int64{}
+			client := singleConnectorServer(t, connectorGetWithIdAndStatus(c.getId, c.getState, map[string]string{"name": fakeConnectorName}), func(w http.ResponseWriter, r *http.Request) {
+				statusCalls.Add(1)
+				runningStatus(w, r)
+			})
+			d := connectorInState(t, map[string]any{"name": fakeConnectorName})
+
+			id, _, state, _, err := fetchConnector(context.Background(), client, d, fakeConnectorName, fakeEnvironmentId, fakeClusterId)
+
+			require.NoError(t, err)
+			require.Equal(t, c.wantId, id)
+			require.Equal(t, c.wantState, state)
+			require.Equal(t, c.wantStatusCalls, statusCalls.Load())
+		})
+	}
+}
+
+func TestRefreshAdoptsIdOfConnectorRecreatedOutsideTerraform(t *testing.T) {
+	client := singleConnectorServer(t, connectorGetWithIdAndStatus("lcc-recreated", "RUNNING", map[string]string{"name": fakeConnectorName}), statusReturning(http.StatusInternalServerError))
+	d := connectorInState(t, map[string]any{"name": fakeConnectorName})
+
+	_, err := readConnectorAndSetAttributes(context.Background(), d, client, fakeConnectorName, fakeEnvironmentId, fakeClusterId)
+
+	require.NoError(t, err)
+	require.Equal(t, "lcc-recreated", d.Id())
+	require.Equal(t, "RUNNING", d.Get(paramStatus))
 }
