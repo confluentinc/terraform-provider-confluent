@@ -66,7 +66,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** Set `filename = ""` or use `IMPORT_CUSTOM_CONNECTOR_PLUGIN_VERSION_FILENAME` environment variables before importing a Custom Connector Plugin Version.
 
--> **Note:** Set `cloud = ""` or use `IMPORT_CLOUD` environment variables before importing a Custom Connector Plugin Version.
+-> **Note:** Set the `IMPORT_CLOUD` environment variable (one of `AWS`, `AZURE`, or `GCP`) before importing a Custom Connector Plugin Version. Setting `cloud = ""` is not supported, because `cloud` only accepts `AWS`, `AZURE`, or `GCP`.
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Custom Connector Plugin.
 
