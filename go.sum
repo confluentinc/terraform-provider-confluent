@@ -83,10 +83,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3 h1:jagGRDq
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3/go.mod h1:Lt0BOSolRuMvnaV+aASN8KlPpkLl6+TNQKiqJosGaws=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0 h1:+gYZW03VI+szvwdG+7j9Gi6YcOcO9HRnsaCsfEIkLxY=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0/go.mod h1:Gc8Hj0KbZjh3Rr3c3Khhl1uiRkTxvBK/sAmpRXrAteA=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0 h1:ISrVOX9qJ2Sxiu/fGBqqHeaA0SRJQujc8yP7qAZRL3Y=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0/go.mod h1:zHG/3DzsnoHC81B1AY9K/8bMX3mxbIp5/nHHdypa//w=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.0 h1:0XZ+50jtmXbajaHAB+JxT8zi1kBfdyaLgwFNpilP9EA=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.0/go.mod h1:2ZfV0R43sezd8iy92vg/1YgzjZRQ31fZFmCNgFruwuM=
+github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.1-0.20261125065515-8715872d16ad h1:x7pcaBOUlMb9zlcjbAQbIyUyR9NHbZFRyPzk2aAwsWM=
+github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.1-0.20261125065515-8715872d16ad/go.mod h1:GyaTKedWYqLp8RkiVuPb+gEa/GRitEgxfXjdGE0rtg4=
 github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2 h1:NSiuOYjZOKxHTRGYI7X9wFvf57ZNzWpZaChmWv7/UQw=
 github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2/go.mod h1:AaF39Acy3LFnHSHExaUtqNmbs7kL5/AL54CXX61+Il8=
 github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0 h1:Ted29jiU4jrfmnMhCVNwS02IGgUKS71lbkJ9602Od2Y=
@@ -599,8 +597,8 @@ golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4Iltr
 golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20210218202405-ba52d332ba99/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
-golang.org/x/oauth2 v0.37.0 h1:JUlcxA8oAtauLfiH8FX2/FkAWHAdi0QtGCGc+hofE98=
-golang.org/x/oauth2 v0.37.0/go.mod h1:IxwZNxUULJmpBFf9K/9NTMSIfZZuvuTy1gGxhigP/58=
+golang.org/x/oauth2 v0.38.0 h1:uW7XQbcu1eoiQS7uMJvLOjPMl04bTbmY1VeRPxvbspI=
+golang.org/x/oauth2 v0.38.0/go.mod h1:IxwZNxUULJmpBFf9K/9NTMSIfZZuvuTy1gGxhigP/58=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
