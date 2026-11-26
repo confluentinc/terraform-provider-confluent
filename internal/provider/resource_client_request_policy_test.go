@@ -1,0 +1,262 @@
+// Copyright 2026 Confluent Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package provider
+
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
+)
+
+const (
+	scenarioStatePolicyHasBeenCreated = "The new policy has been just created"
+	scenarioStatePolicyHasBeenUpdated = "The policy has been just updated"
+	scenarioStatePolicyHasBeenDeleted = "The policy has been deleted"
+	policyScenarioName                = "confluent_client_request_policy Resource Lifecycle"
+	policyName                        = "payments-cluster-compression"
+)
+
+func TestAccConfigurationcontrolPolicy(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createPolicyResponse, _ := ioutil.ReadFile("../testdata/client_request_policy/create_policy.json")
+	createPolicyStub := wiremock.Post(wiremock.URLPathEqualTo("/configurationcontrol/v1/policies")).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStatePolicyHasBeenCreated).
+		WillReturn(
+			string(createPolicyResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createPolicyStub)
+
+	readCreatedPolicyResponse, _ := ioutil.ReadFile("../testdata/client_request_policy/read_created_policy.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/configurationcontrol/v1/policies/%s", policyName))).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(scenarioStatePolicyHasBeenCreated).
+		WillReturn(
+			string(readCreatedPolicyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedPolicyResponse, _ := ioutil.ReadFile("../testdata/client_request_policy/read_updated_policy.json")
+	patchPolicyStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("/configurationcontrol/v1/policies/%s", policyName))).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(scenarioStatePolicyHasBeenCreated).
+		// full_object_update: the update must send the full object, so assert every
+		// updatable field is present in the PATCH body. Without this the stub matches on
+		// method+URL only and a regression that drops a field (e.g. omitempty cidr_blocks)
+		// would go unnoticed.
+		WithBodyPattern(wiremock.Contains("\"action\"")).
+		WithBodyPattern(wiremock.Contains("\"mode\"")).
+		// Step 3 moves the policy from AUDIT to ACTIVE; the PATCH must carry the new mode.
+		WithBodyPattern(wiremock.Contains("\"ACTIVE\"")).
+		WillSetStateTo(scenarioStatePolicyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedPolicyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchPolicyStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/configurationcontrol/v1/policies/%s", policyName))).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(scenarioStatePolicyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedPolicyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedPolicyResponse, _ := ioutil.ReadFile("../testdata/client_request_policy/read_deleted_policy.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/configurationcontrol/v1/policies/%s", policyName))).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(scenarioStatePolicyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedPolicyResponse),
+			contentTypeJSONHeader,
+			http.StatusForbidden,
+		))
+
+	deletePolicyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/configurationcontrol/v1/policies/%s", policyName))).
+		InScenario(policyScenarioName).
+		WhenScenarioStateIs(scenarioStatePolicyHasBeenUpdated).
+		WillSetStateTo(scenarioStatePolicyHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deletePolicyStub)
+	// OVERRIDE, not DENY: the rule carries a mutate expression, which the API rejects on DENY policies.
+	action := "OVERRIDE"
+	mode := "AUDIT"
+	rulesName := "cap-compression-to-zstd-or-lz4"
+	rulesMatch := "resource.config[\"compression.type\"] in [\"zstd\", \"lz4\"]"
+	rulesMutate := "resource.config.merge({\"compression.type\": \"zstd\"})"
+	scopeResourceName := "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/environment=env-456xy/cloud-cluster=lkc-123abc/kafka=lkc-123abc"
+	typeValue := "CompressionPolicy"
+	name := "payments-cluster-compression"
+	// in order to test tf update (step #3). Every updatable attribute is an enum or a nested block,
+	// which the generated test never mutates, so step 3 changed nothing and no PATCH was sent.
+	modeUpdated := "ACTIVE"
+	policyResourceLabel := "test_policy_resource_label"
+	fullPolicyResourceLabel := fmt.Sprintf("confluent_client_request_policy.%s", policyResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckConfigurationcontrolPolicyDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckConfigurationcontrolPolicyConfig(mockServerUrl, policyResourceLabel, action, mode, rulesName, rulesMatch, rulesMutate, scopeResourceName, typeValue, name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConfigurationcontrolPolicyExists(fullPolicyResourceLabel),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "id", fmt.Sprintf("%s", name)),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "action", action),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "mode", mode),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.name", rulesName),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.match", rulesMatch),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.mutate", rulesMutate),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "scope.0.resource_name", scopeResourceName),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "policy_type", typeValue),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "api_version", "configurationcontrol/v1"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "kind", "Policy"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "resource_name", "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/configuration-policy=payments-cluster-compression"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "name", name),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "phase", "READY"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "error_message", ""),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullPolicyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckConfigurationcontrolPolicyConfig(mockServerUrl, policyResourceLabel, action, modeUpdated, rulesName, rulesMatch, rulesMutate, scopeResourceName, typeValue, name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConfigurationcontrolPolicyExists(fullPolicyResourceLabel),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "id", fmt.Sprintf("%s", name)),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "action", action),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "mode", modeUpdated),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.name", rulesName),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.match", rulesMatch),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "rules.0.mutate", rulesMutate),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "scope.0.resource_name", scopeResourceName),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "policy_type", typeValue),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "api_version", "configurationcontrol/v1"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "kind", "Policy"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "resource_name", "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/configuration-policy=payments-cluster-compression"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "name", name),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "phase", "READY"),
+					resource.TestCheckResourceAttr(fullPolicyResourceLabel, "error_message", ""),
+				),
+			},
+			{
+				ResourceName:      fullPolicyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createPolicyStub, "POST /configurationcontrol/v1/policies", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchPolicyStub, fmt.Sprintf("PATCH /configurationcontrol/v1/policies/%s", policyName), expectedCountOne)
+	checkStubCount(t, wiremockClient, deletePolicyStub, fmt.Sprintf("DELETE /configurationcontrol/v1/policies/%s", policyName), expectedCountOne)
+}
+
+func testAccCheckConfigurationcontrolPolicyDestroy(s *terraform.State) error {
+	c := testAccProvider.Meta().(*Client)
+	// Loop through the resources in state, verifying each policy is destroyed
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "confluent_client_request_policy" {
+			continue
+		}
+		name := rs.Primary.Attributes[paramName]
+		req := c.configurationcontrolV1Client.PoliciesConfigurationcontrolV1Api.GetConfigurationcontrolV1Policy(c.configurationcontrolV1ApiContext(context.Background()), name)
+		deletedPolicy, response, err := req.Execute()
+		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
+			return nil
+		} else if err == nil && deletedPolicy.Metadata.GetName() == name {
+			return fmt.Errorf("policy (%q) still exists", rs.Primary.ID)
+		}
+		return err
+	}
+	return nil
+}
+
+func testAccCheckConfigurationcontrolPolicyConfig(mockServerUrl, policyResourceLabel string, action string, mode string, rulesName string, rulesMatch string, rulesMutate string, scopeResourceName string, typeValue string, name string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_client_request_policy" "%s" {
+		action = %q
+		mode = %q
+		rules {
+			name = %q
+			match = %q
+			mutate = %q
+		}
+		scope {
+			resource_name = %q
+		}
+		policy_type = %q
+		name = %q
+	}
+	`, mockServerUrl, policyResourceLabel, action, mode, rulesName, rulesMatch, rulesMutate, scopeResourceName, typeValue, name)
+}
+
+func testAccCheckConfigurationcontrolPolicyExists(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("%s policy has not been found", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("ID has not been set for %s policy", n)
+		}
+
+		return nil
+	}
+}
