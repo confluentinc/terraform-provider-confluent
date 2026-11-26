@@ -855,6 +855,7 @@ const (
 	scenarioStateTableflowApiKeyHasBeenUpdated                          = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowTopicHasBeenCreated                           = "The new tableflow topic has been just created"
 	scenarioStateTableflowTopicHasBeenUpdated                           = "The new tableflow topic has been updated"
+	scenarioStateTableflowTopicIcebergHasBeenDisabled                   = "The ICEBERG format of the tableflow topic has been disabled"
 	scenarioStateTableflowTopicIsProvisioning                           = "The new tableflow topic is provisioning"
 	scenarioStateTagBindingHasBeenCreated                               = "A new tag binding has been just created"
 	scenarioStateTagBindingHasBeenPending                               = "A new tag binding has been just pending"
