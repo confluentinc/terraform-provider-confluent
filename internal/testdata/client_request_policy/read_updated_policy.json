@@ -12,8 +12,8 @@
     "updated_at": "2006-01-02T15:04:05-07:00"
   },
   "spec": {
-    "action": "DENY",
-    "mode": "AUDIT",
+    "action": "OVERRIDE",
+    "mode": "ACTIVE",
     "rules": [
       {
         "match": "resource.config[\"compression.type\"] in [\"zstd\", \"lz4\"]",
