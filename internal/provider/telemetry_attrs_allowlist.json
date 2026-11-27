@@ -15,6 +15,7 @@
     "description",
     "disable_wait_for_ready",
     "display_name",
+    "expires_at",
     "managed_resource",
     "owner",
     "secret"
