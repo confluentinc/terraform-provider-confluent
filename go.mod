@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.26.10
+go 1.26.11
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
@@ -9,7 +9,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0
-	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.0
+	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.8.1-0.20261125065515-8715872d16ad
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/endpoint v0.4.0
@@ -69,7 +69,7 @@ require (
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/oauth2 v0.37.0 // indirect
+	golang.org/x/oauth2 v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 )
 

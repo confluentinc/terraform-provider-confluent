@@ -285,7 +285,8 @@ func nextConnectorsPageToken(resp *http.Response, seenTokens map[string]bool) (s
 	return nextToken, nil
 }
 
-// executeConnectorGet reads a single connector and its state with two requests, whatever the number of connectors in the cluster.
+// executeConnectorGet reads a single connector with one request, whatever the number of connectors in the cluster.
+// The response carries the connector's ID and status. If it carries no status, the status is read with a second request.
 func executeConnectorGet(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connectv1.ConnectV1Connector, string, *http.Response, error) {
 	connector, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId).Execute()
 	if err == nil && ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
@@ -293,6 +294,9 @@ func executeConnectorGet(ctx context.Context, c *Client, displayName, environmen
 	}
 	if err != nil {
 		return connectv1.ConnectV1Connector{}, "", resp, createDescriptiveError(err, resp)
+	}
+	if connector.Status != nil {
+		return connector, connector.Status.Connector.State, resp, nil
 	}
 	status, resp, err := executeConnectorStatusCreate(ctx, c, displayName, environmentId, clusterId)
 	if err == nil && ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
@@ -364,14 +368,18 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-// fetchConnector returns the connector's ID, config and state. A refresh already has the ID in state, so it reads
-// the single connector and never lists the cluster. Import starts from "<env ID>/<cluster ID>/<name>" and the ID
-// is only known after create, so those find the connector, and its ID, in the connector list.
+// fetchConnector returns the connector's ID, config and state. A refresh reads the single connector and never lists
+// the cluster: the ID comes from the response, or from state if the response has none. Import starts from
+// "<env ID>/<cluster ID>/<name>" and the ID is only known after create, so those find the connector, and its ID,
+// in the connector list.
 func fetchConnector(ctx context.Context, c *Client, d *schema.ResourceData, displayName, environmentId, clusterId string) (string, map[string]string, string, *http.Response, error) {
 	if connectorId := d.Id(); connectorId != "" && !strings.Contains(connectorId, "/") {
 		connector, state, resp, err := executeConnectorGet(ctx, c, displayName, environmentId, clusterId)
 		if err != nil {
 			return "", nil, "", resp, err
+		}
+		if id := connector.GetId(); id != "" {
+			connectorId = id
 		}
 		userNonsensitiveConfig, _ := d.Get(paramNonSensitiveConfig).(map[string]interface{})
 		return connectorId, withoutUnsetKafkaAuthConfigs(connector.GetConfig(), userNonsensitiveConfig), state, resp, nil
