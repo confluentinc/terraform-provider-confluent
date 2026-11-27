@@ -155,7 +155,7 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 
 	// Wait for async provisioning to complete
 	createEnvironmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	if err := waitForTransitGatewayAttachmentToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id()); err != nil {
+	if err := waitForTransitGatewayAttachmentToProvision(c.networkingV1ApiContext(ctx), c, createEnvironmentId, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error waiting for transit gateway attachment %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -228,7 +228,7 @@ func transitGatewayAttachmentDelete(ctx context.Context, d *schema.ResourceData,
 	}
 
 	// Wait for async deletion to complete
-	if err := waitForTransitGatewayAttachmentToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForTransitGatewayAttachmentToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id(), d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for transit gateway attachment %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 

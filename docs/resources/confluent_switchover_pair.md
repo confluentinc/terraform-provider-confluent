@@ -14,7 +14,7 @@ description: |-
 
 `confluent_switchover_pair` provides a switchover pair resource that models a cluster-level disaster recovery (DR) pairing between two Kafka clusters (an active member and a passive member) on Confluent Cloud.
 
-Creating a pair is asynchronous on the API side; the resource waits until the pair reaches `READY_TO_FAILOVER` (up to 30 minutes) before completing, so a `confluent_switchover_endpoint` created in the same apply is not rejected while the pair is still `PROVISIONING`.
+Creating a pair is asynchronous on the API side; the resource waits until the pair reaches `READY_TO_FAILOVER` (up to the `create` timeout, 30 minutes by default) before completing, so a `confluent_switchover_endpoint` created in the same apply is not rejected while the pair is still `PROVISIONING`.
 
 `active_member` chooses which member is active when the pair is created. After that the Switchover service owns it: a failover (the Switchover API's `:failover` operation, for example `confluent switchover pair failover <id> --active-member <name>`) changes the active member on the server, and the resource reads the current value back without showing drift or forcing a replacement. Editing `active_member` in the configuration of an existing pair has no effect — the difference is suppressed, and no plan is produced. See the [complete example](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/switchover-pair).
 
@@ -71,6 +71,14 @@ In addition to the preceding arguments, the following attributes are exported:
 - `members` (Required Configuration Block) In addition to the arguments above, each member exports the following:
   - `cloud` - (Required String) The cloud provider of the member's cluster.
   - `region` - (Required String) The cloud region of the member's cluster.
+
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
+
+- `create` - (Default `30m`) How long to wait for the switchover pair to be ready to fail over.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
 
 ## Import
 

@@ -83,6 +83,15 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws` - (Required Configuration Block) The AWS-specific Transit Gateway Attachment details. It supports the following:
     - `transit_gateway_attachment_id` - (Required String) The ID of the AWS Transit Gateway VPC Attachment that attaches Confluent VPC to Transit Gateway.
 
+## Timeouts
+
+The `timeouts` block sets how long Terraform waits for these operations to finish ([Terraform documentation](https://developer.hashicorp.com/terraform/language/resources/configure#define-operation-timeouts)):
+
+- `create` - (Default `2h`) How long to wait for the transit gateway attachment to be provisioned, or to be waiting for you to accept it.
+- `delete` - (Default `5h`) How long to wait for the transit gateway attachment to be deleted.
+
+-> **Note:** Each value limits the whole operation, including retried API requests, and can be set higher or lower than the default. See [Timeouts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#timeouts) for details.
+
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Transit Gateway Attachment.
